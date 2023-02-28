@@ -12,7 +12,6 @@ export
     PropagatorConstraint,
 
     propagate,
-    propagate_index,
 
     ComesAfter,
     Forbidden,

@@ -24,17 +24,3 @@ function propagate(c::Ordered, context::GrammarContext, domain::Vector{Int})
 
 	return filter((x) -> !(x in rules_to_remove), domain) 
 end
-
-function propagate_index(c::Ordered, context::GrammarContext, domain::Vector{Int})
-	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
-	
-	last_rule_index = 0
-	for r in c.order
-		r in rules_on_left ? last_rule_index = r : break
-	end
-
-	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
-
-	return reduce((acc, x) -> (!(x[2] in rules_to_remove) ? push!(acc, x[1]) : acc), enumerate(domain); init=Vector{Int}()) 
-end
-

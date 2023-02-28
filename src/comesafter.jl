@@ -25,16 +25,3 @@ function propagate(c::ComesAfter, context::GrammarContext, domain::Vector{Int})
 		return domain
 	end
 end
-
-function propagate_index(c::ComesAfter, context::GrammarContext, domain::Vector{Int})
-	ancestors = get_rulesequence(context.originalExpr, context.nodeLocation[begin:end-1])  # remove the current node from the node sequence
-	if c.rule in domain  # if rule is in domain, check the ancestors
-		if Grammars.containedin(c.predecessors, ancestors)
-			return 1:length(domain)
-		else
-			return reduce((acc, x) -> (!(x[2] == c.rule) ? push!(acc, x[1]) : acc), enumerate(domain); init=Vector{Int}())
-		end
-	else # if it is not in the domain, just return domain
-		return 1:length(domain)
-	end	
-end
