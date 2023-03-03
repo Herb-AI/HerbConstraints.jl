@@ -1,6 +1,6 @@
-module Constraints
+module HerbConstraints
 
-using ..Grammars
+using ..HerbGrammar
 
 abstract type PropagatorConstraint <: Constraint end
 
@@ -17,4 +17,4 @@ export
     Forbidden,
     Ordered
 
-end # module Constraints
+end # module HerbConstraints
