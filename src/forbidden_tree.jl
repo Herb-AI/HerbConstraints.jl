@@ -62,7 +62,7 @@ function _match_expr(
 )::Tuple{Union{Int, Symbol, Nothing}, Union{Dict{Symbol, RuleNode}, Nothing}}
     if hole_location == []
         if cmn isa ConstraintMatchVar
-            return cmn.variable_name, Dict()
+            return cmn.var_name, Dict()
         elseif cmn isa ConstraintMatchNode && cmn.children == []
             return cmn.rule_ind, Dict()
         end
@@ -72,9 +72,9 @@ end
 
 _match_expr(::Hole, ::AbstractConstraintMatchNode)::Union{Dict{Int, RuleNode}, Nothing} = nothing
 
-function _match_expr(rn::RuleNode, cmn::AbstractConstraintMatchNode)::Union{Dict{Int, RuleNode}, Nothing}
+function _match_expr(rn::RuleNode, cmn::AbstractConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}
     if cmn isa ConstraintMatchVar
-        return cmn.variable_name, Dict()
+        return Dict(cmn.var_name => rn)
     elseif cmn isa ConstraintMatchNode
         if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
             return nothing
@@ -128,7 +128,7 @@ function propagate(c::ForbiddenTree, grammar::Grammar, context::GrammarContext, 
             continue
         elseif domain_match isa Symbol
             # The matched domain is a variable, so we check if it is assigned
-            if domain_match ∈ keys(vars) && vars[forbidden_domain].children == []
+            if domain_match ∈ keys(vars) && vars[domain_match].children == []
                 # A terminal rulenode is assigned to the variable, so we retrieve the assigned value
                 remove_from_domain = vars[domain_match].ind
             else

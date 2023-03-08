@@ -11,5 +11,5 @@ end
 ConstraintMatchNode(rule_ind::Int) = ConstraintMatchNode(rule_ind, [])
 
 struct ConstraintMatchVar <: AbstractConstraintMatchNode
-    variable_name::Symbol
+    var_name::Symbol
 end
