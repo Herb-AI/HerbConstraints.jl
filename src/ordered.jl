@@ -12,7 +12,7 @@ Propagates the Ordered constraint.
 It removes every element from the domain that does not have a necessary 
 predecessor in the left subtree.
 """
-function propagate(c::Ordered, context::GrammarContext, domain::Vector{Int})
+function propagate(c::Ordered, ::Grammar, context::GrammarContext, domain::Vector{Int})
 	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
 	
 	last_rule_index = 0
