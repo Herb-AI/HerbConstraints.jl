@@ -19,8 +19,6 @@ export
 
     propagate,
 
-    _match_expr, # Temporary
-
     ComesAfter,
     Forbidden,
     Ordered,
