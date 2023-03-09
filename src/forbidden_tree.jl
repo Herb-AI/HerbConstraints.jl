@@ -9,6 +9,9 @@ struct ForbiddenTree <: PropagatorConstraint
 	tree::AbstractConstraintMatchNode
 end
 
+containshole(rn::RuleNode) = any(containsHole(c) for c ∈ rn.children)
+containshole(::Hole) = true
+
 
 # Matching RuleNode with ConstraintMatchNode
 """
@@ -36,20 +39,31 @@ function _match_expr_with_hole(
         for (i, rnᵢ, cmnᵢ) ∈ zip(1:length(rn.children), rn.children, cmn.children)
             if i == hole_location[1]
                 # Match with finding domain of hole
-                forbidden_domain, varsᵢ = _match_expr_with_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end])
+                match = _match_expr_with_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end])
+                if match ≡ nothing
+                    # unsuccessful match
+                    return nothing
+                end
+                forbidden_domain, varsᵢ = match
             else
                 # Regular match
                 varsᵢ = _match_expr(rnᵢ, cmnᵢ)
+                if varsᵢ ≡ nothing
+                    # unsuccessful match
+                    return nothing
+                end
             end
 
-            if varsᵢ ≡ nothing
-                # unsuccessful match
-                return nothing
-            end
             # Check if another argument already assigned the same variables
             for (k, v) ∈ varsᵢ
-                if k ∈ keys(vars) && v ≠ vars[k]
-                    return nothing
+                if k ∈ keys(vars) 
+                    # If the assignments are unequal, the match is unsuccessful
+                    # Additionally, if the trees are equal but contain a hole, 
+                    # we cannot reason about equality because we don't know how
+                    # the hole will be expanded yet.
+                    if v ≠ vars[k] || containshole(v)
+                        return nothing
+                    end
                 end
                 vars[k] = v
             end
