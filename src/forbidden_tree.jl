@@ -175,13 +175,16 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
         domain_match, vars = match
         remove_from_domain::Int=0
         if domain_match isa Symbol
-            # The matched domain is a variable, so we check if it is assigned
-            if domain_match ∈ keys(vars) && vars[domain_match].children == []
+            if domain_match ∉ keys(vars)
+                # Variable is not assigned, so it acts as a wildcard
+                return []
+            elseif vars[domain_match].children == []
                 # A terminal rulenode is assigned to the variable, so we retrieve the assigned value
                 remove_from_domain = vars[domain_match].ind
             else
-                # Variable is not assigned, so it acts as a wildcard.
-                return []
+                # A non-terminal rulenode is assigned to the variable.
+                # This is too specific to reduce the domain
+                continue
             end
         elseif domain_match isa Int
             # The domain match is an actual (terminal) rule
@@ -193,6 +196,7 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
         if loc !== nothing
             deleteat!(domain, loc)
         end
+
 
         if domain == []
             return []
