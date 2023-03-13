@@ -1,17 +1,18 @@
 """
 Forbids the subtree to be generated.
-A subtree is defined as a tree of `AbstractConstraintMatchNode`s. 
-Such a node can either be a `ConstraintMatchNode`, which contains a rule index corresponding to the 
+A subtree is defined as a tree of `AbstractMatchNode`s. 
+Such a node can either be a `MatchNode`, which contains a rule index corresponding to the 
 rule index in the grammar of the rulenode we are trying to match.
-It can also contain a `ConstraintMatchVar`, which contains a single identifier symbol.
+It can also contain a `MatchVar`, which contains a single identifier symbol.
 """
 struct ForbiddenTree <: PropagatorConstraint
-	tree::AbstractConstraintMatchNode
+	tree::AbstractMatchNode
 end
 
-# Matching RuleNode with ConstraintMatchNode
+
+# Matching RuleNode with MatchNode
 """
-Tries to match RuleNode `rn` with ConstraintMatchNode `cmn` and fill in 
+Tries to match RuleNode `rn` with MatchNode `cmn` and fill in 
 the domain of the hole at `hole_location`. 
 Returns if match is successful:
 
@@ -22,7 +23,7 @@ Returns nothing if the match is unsuccessful.
 """
 function _match_tree_containing_hole(
     rn::RuleNode, 
-    cmn::ConstraintMatchNode, 
+    cmn::MatchNode, 
     hole_location::Vector{Int},
     vars::Dict{Symbol, RuleNode}
 )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
@@ -82,10 +83,10 @@ function _match_tree_containing_hole(
     end
 end
 
-# Matching RuleNode with ConstraintMatchVar
+# Matching RuleNode with MatchVar
 function _match_tree_containing_hole(
     rn::RuleNode, 
-    cmn::ConstraintMatchVar, 
+    cmn::MatchVar, 
     hole_location::Vector{Int},
     vars::Dict{Symbol, RuleNode}
 )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
@@ -96,10 +97,10 @@ function _match_tree_containing_hole(
     return (:unique_symbol_dont_use_this_name_this_should_be_fixed, Dict(cmn.var_name => rn))
 end
 
-# Matching Hole with ConstraintMatchNode
+# Matching Hole with MatchNode
 function _match_tree_containing_hole(
     ::Hole, 
-    cmn::ConstraintMatchNode, 
+    cmn::MatchNode, 
     hole_location::Vector{Int},
     ::Dict{Symbol, RuleNode}
  )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
@@ -109,10 +110,10 @@ function _match_tree_containing_hole(
     return nothing
 end
 
-# Matching Hole with ConstraintMatchVar
+# Matching Hole with MatchVar
 function _match_tree_containing_hole(
     ::Hole, 
-    cmn::ConstraintMatchVar, 
+    cmn::MatchVar, 
     hole_location::Vector{Int},
     ::Dict{Symbol, RuleNode}
  )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
@@ -122,12 +123,12 @@ function _match_tree_containing_hole(
     return nothing
 end
 
-# Matching RuleNode with ConstraintMatchNode
+# Matching RuleNode with MatchNode
 """
-Tries to match RuleNode `rn` with ConstraintMatchNode `cmn`.
+Tries to match RuleNode `rn` with MatchNode `cmn`.
 Returns a dictionary of values assigned to variables if the match is successful.
 """
-function _match_tree(rn::RuleNode, cmn::ConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}  
+function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}  
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
         return nothing
     else
@@ -156,11 +157,11 @@ function _match_tree(rn::RuleNode, cmn::ConstraintMatchNode)::Union{Dict{Symbol,
     end
 end
 
-# Matching RuleNode with ConstraintMatchVar
-_match_tree(rn::RuleNode, cmn::ConstraintMatchVar)::Union{Dict{Symbol, RuleNode}, Nothing} = Dict(cmn.var_name => rn)
+# Matching RuleNode with MatchVar
+_match_tree(rn::RuleNode, cmn::MatchVar)::Union{Dict{Symbol, RuleNode}, Nothing} = Dict(cmn.var_name => rn)
 
 # Matching Hole
-_match_tree(::Hole, ::AbstractConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing} = nothing
+_match_tree(::Hole, ::AbstractMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing} = nothing
 
 """
 Retrieves a rulenode at the original location by reference. 

@@ -4,7 +4,7 @@ using ..HerbGrammar
 
 abstract type PropagatorConstraint <: Constraint end
 
-include("constraintmatchnode.jl")
+include("matchnode.jl")
 
 include("comesafter.jl")
 include("forbidden.jl")
@@ -12,8 +12,9 @@ include("ordered.jl")
 include("forbidden_tree.jl")
 
 export
-    ConstraintMatchNode,
-    ConstraintMatchVar,
+    AbstractMatchNode,
+    MatchNode,
+    MatchVar,
 
     PropagatorConstraint,
 

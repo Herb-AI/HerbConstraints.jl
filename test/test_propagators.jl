@@ -30,7 +30,7 @@
 
     @testset "Propagating forbidden_tree without variables" begin
         constraint = ForbiddenTree(
-            ConstraintMatchNode(10, [ConstraintMatchNode(1), ConstraintMatchNode(1)])
+            MatchNode(10, [MatchNode(1), MatchNode(1)])
         )
         context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2])
         domain = propagate(constraint, g₁, context, Vector(1:9))
@@ -39,7 +39,7 @@
 
     @testset "Propagating forbidden_tree with one variable" begin
         constraint = ForbiddenTree(
-            ConstraintMatchNode(10, [ConstraintMatchNode(1), ConstraintMatchVar(:x)])
+            MatchNode(10, [MatchNode(1), MatchVar(:x)])
         )
         context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2])
         domain = propagate(constraint, g₁, context, Vector(1:9))
@@ -48,7 +48,7 @@
 
     @testset "Propagating forbidden_tree with two variables" begin
         constraint = ForbiddenTree(
-            ConstraintMatchNode(10, [ConstraintMatchVar(:x), ConstraintMatchVar(:x)])
+            MatchNode(10, [MatchVar(:x), MatchVar(:x)])
         )
         context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2])
         domain = propagate(constraint, g₁, context, Vector(1:9))
@@ -61,7 +61,7 @@
 
     @testset "Propagating forbidden_tree with tree assigned to variables" begin
         constraint = ForbiddenTree(
-            ConstraintMatchNode(10, [ConstraintMatchVar(:x), ConstraintMatchVar(:x)])
+            MatchNode(10, [MatchVar(:x), MatchVar(:x)])
         )
         expr = RuleNode(10, [RuleNode(10, [RuleNode(2), RuleNode(1)]), RuleNode(10, [RuleNode(2), Hole(Herb.HerbGrammar.get_domain(g₁, :Real))])])
         context=Herb.HerbGrammar.GrammarContext(expr, [2, 2])
