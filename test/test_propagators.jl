@@ -59,4 +59,15 @@
         @test domain == append!(Vector(1:4), Vector(6:9))
     end
 
+    @testset "Propagating forbidden_tree with tree assigned to variables" begin
+        constraint = ForbiddenTree(
+            ConstraintMatchNode(10, [ConstraintMatchVar(:x), ConstraintMatchVar(:x)])
+        )
+        expr = RuleNode(10, [RuleNode(10, [RuleNode(2), RuleNode(1)]), RuleNode(10, [RuleNode(2), Hole(Herb.HerbGrammar.get_domain(g₁, :Real))])])
+        context=Herb.HerbGrammar.GrammarContext(expr, [2, 2])
+        domain = propagate(constraint, g₁, context, [1,2,3])
+        @test domain == [3]
+    end
+
+
 end

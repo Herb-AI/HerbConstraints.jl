@@ -9,10 +9,6 @@ struct ForbiddenTree <: PropagatorConstraint
 	tree::AbstractConstraintMatchNode
 end
 
-containshole(rn::RuleNode) = any(containsHole(c) for c ∈ rn.children)
-containshole(::Hole) = true
-
-
 # Matching RuleNode with ConstraintMatchNode
 """
 Tries to match RuleNode `rn` with ConstraintMatchNode `cmn` and fill in 
@@ -24,34 +20,25 @@ Returns if match is successful:
 A variable is represented by the index of its rulenode.
 Returns nothing if the match is unsuccessful.
 """
-function _match_expr_with_hole(
+function _match_tree_containing_hole(
     rn::RuleNode, 
     cmn::ConstraintMatchNode, 
-    hole_location::Vector{Int}
+    hole_location::Vector{Int},
+    vars::Dict{Symbol, RuleNode}
 )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
     hole_location == [] && throw(ArgumentError("The hole location doesn't point to a hole!"))
 
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
         return nothing
     else
-        vars = Dict()
         forbidden_domain = nothing
-        for (i, rnᵢ, cmnᵢ) ∈ zip(1:length(rn.children), rn.children, cmn.children)
-            if i == hole_location[1]
-                # Match with finding domain of hole
-                match = _match_expr_with_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end])
-                if match ≡ nothing
-                    # unsuccessful match
-                    return nothing
-                end
-                forbidden_domain, varsᵢ = match
-            else
-                # Regular match
-                varsᵢ = _match_expr(rnᵢ, cmnᵢ)
-                if varsᵢ ≡ nothing
-                    # unsuccessful match
-                    return nothing
-                end
+        child_tuples = collect(zip(rn.children, cmn.children))
+        for (rnᵢ, cmnᵢ) ∈ Iterators.flatten((child_tuples[1:hole_location[1]-1], child_tuples[hole_location[1]+1:end]))
+            # Regular match
+            varsᵢ = _match_tree(rnᵢ, cmnᵢ)
+            if varsᵢ ≡ nothing
+                # unsuccessful match
+                return nothing
             end
 
             # Check if another argument already assigned the same variables
@@ -61,31 +48,60 @@ function _match_expr_with_hole(
                     # Additionally, if the trees are equal but contain a hole, 
                     # we cannot reason about equality because we don't know how
                     # the hole will be expanded yet.
-                    if v ≠ vars[k] || containshole(v)
+                    if v ≠ vars[k] || contains_hole(v)
                         return nothing
                     end
                 end
                 vars[k] = v
             end
         end
+
+        # Match with finding domain of hole
+        rnᵢ = rn.children[hole_location[1]]
+        cmnᵢ = cmn.children[hole_location[1]]
+        match = _match_tree_containing_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end], vars)
+        if match ≡ nothing
+            # unsuccessful match
+            return nothing
+        end
+        forbidden_domain, varsᵢ = match
+        # Check if another argument already assigned the same variables
+        for (k, v) ∈ varsᵢ
+            if k ∈ keys(vars) 
+                # If the assignments are unequal, the match is unsuccessful
+                # Additionally, if the trees are equal but contain a hole, 
+                # we cannot reason about equality because we don't know how
+                # the hole will be expanded yet.
+                if v ≠ vars[k] || contains_hole(v)
+                    return nothing
+                end
+            end
+            vars[k] = v
+        end
         return forbidden_domain, vars
     end
 end
 
 # Matching RuleNode with ConstraintMatchVar
-function _match_expr_with_hole(
-    ::RuleNode, 
-    ::ConstraintMatchVar, 
-    ::Vector{Int}
+function _match_tree_containing_hole(
+    rn::RuleNode, 
+    cmn::ConstraintMatchVar, 
+    hole_location::Vector{Int},
+    vars::Dict{Symbol, RuleNode}
 )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
-    return nothing
+    if cmn.var_name ∈ keys(vars)
+        match = _get_domain_from_rulenodes(rn, vars[cmn.var_name], hole_location)
+        return (match, Dict())
+    end
+    return (:unique_symbol_dont_use_this_name_this_should_be_fixed, Dict(cmn.var_name => rn))
 end
 
 # Matching Hole with ConstraintMatchNode
-function _match_expr_with_hole(
+function _match_tree_containing_hole(
     ::Hole, 
     cmn::ConstraintMatchNode, 
-    hole_location::Vector{Int}
+    hole_location::Vector{Int},
+    ::Dict{Symbol, RuleNode}
  )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
     if hole_location == [] && cmn.children == []
         return cmn.rule_ind, Dict()
@@ -94,10 +110,11 @@ function _match_expr_with_hole(
 end
 
 # Matching Hole with ConstraintMatchVar
-function _match_expr_with_hole(
+function _match_tree_containing_hole(
     ::Hole, 
     cmn::ConstraintMatchVar, 
-    hole_location::Vector{Int}
+    hole_location::Vector{Int},
+    ::Dict{Symbol, RuleNode}
  )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
     if hole_location == []
         return cmn.var_name, Dict()
@@ -110,21 +127,27 @@ end
 Tries to match RuleNode `rn` with ConstraintMatchNode `cmn`.
 Returns a dictionary of values assigned to variables if the match is successful.
 """
-function _match_expr(rn::RuleNode, cmn::ConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}
+function _match_tree(rn::RuleNode, cmn::ConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}  
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
         return nothing
     else
         # Root nodes match, now we check the child nodes
         vars = Dict()
-        for varsᵢ ∈ map(ab -> _match_expr(ab[1], ab[2]), zip(rn.children, cmn.children)) 
+        for varsᵢ ∈ map(ab -> _match_tree(ab[1], ab[2]), zip(rn.children, cmn.children)) 
             if varsᵢ ≡ nothing 
                 # unsuccessful match
                 return nothing
             end
             # Check if another argument already assigned the same variables
             for (k, v) ∈ varsᵢ
-                if k ∈ keys(vars) && v ≠ vars[k]
-                    return nothing
+                if k ∈ keys(vars) 
+                    # If the assignments are unequal, the match is unsuccessful
+                    # Additionally, if the trees are equal but contain a hole, 
+                    # we cannot reason about equality because we don't know how
+                    # the hole will be expanded yet.
+                    if v ≠ vars[k] || contains_hole(v)
+                        return nothing
+                    end
                 end
                 vars[k] = v
             end
@@ -134,10 +157,10 @@ function _match_expr(rn::RuleNode, cmn::ConstraintMatchNode)::Union{Dict{Symbol,
 end
 
 # Matching RuleNode with ConstraintMatchVar
-_match_expr(rn::RuleNode, cmn::ConstraintMatchVar)::Union{Dict{Symbol, RuleNode}, Nothing} = Dict(cmn.var_name => rn)
+_match_tree(rn::RuleNode, cmn::ConstraintMatchVar)::Union{Dict{Symbol, RuleNode}, Nothing} = Dict(cmn.var_name => rn)
 
 # Matching Hole
-_match_expr(::Hole, ::AbstractConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing} = nothing
+_match_tree(::Hole, ::AbstractConstraintMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing} = nothing
 
 """
 Retrieves a rulenode at the original location by reference. 
@@ -165,7 +188,7 @@ It removes the elements from the domain that would complete the forbidden tree.
 function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain::Vector{Int})
     for i ∈ 0:length(context.nodeLocation)
         n = get_node_at_location(context.originalExpr, context.nodeLocation[1:i])
-        match = _match_expr_with_hole(n, c.tree, context.nodeLocation[i+1:end])
+        match = _match_tree_containing_hole(n, c.tree, context.nodeLocation[i+1:end], Dict{Symbol, RuleNode}())
         
         # Try to match the parent in the next level if there is no match
         if match ≡ nothing
@@ -183,7 +206,7 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
                 remove_from_domain = vars[domain_match].ind
             else
                 # A non-terminal rulenode is assigned to the variable.
-                # This is too specific to reduce the domain
+                # This is too specific to reduce the domain.
                 continue
             end
         elseif domain_match isa Int
@@ -197,10 +220,36 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
             deleteat!(domain, loc)
         end
 
-
         if domain == []
             return []
         end
     end
+
     return domain
+end
+
+
+function _get_domain_from_rulenodes(rn₁::RuleNode, rn₂::RuleNode, hole_location::Vector{Int})
+    if rn₁.ind ≠ rn₂.ind || hole_location == [] || length(rn₁.children) ≠ length(rn₂.children)
+        return nothing
+    else
+        domain = nothing
+        for (i, c₁, c₂) ∈ zip(Iterators.countfrom(), rn₁.children, rn₂.children)
+            if i == hole_location[1]
+                domain = _get_domain_from_rulenodes(c₁, c₂, hole_location[2:end])
+                # Immediately return if we didn't get a match
+                domain ≡ nothing && return nothing
+            elseif c₁ ≠ c₂
+                return nothing
+            end
+        end
+        return domain
+    end
+end
+
+function _get_domain_from_rulenodes(::Hole, rn₂::RuleNode, hole_location::Vector{Int})
+    if hole_location == [] && rn₂.children == []
+        return rn₂.ind
+    end
+    return nothing
 end
