@@ -117,6 +117,7 @@ function _match_tree_containing_hole(rn::RuleNode, cmn::MatchVar, hole_location:
 )::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
     if cmn.var_name ∈ keys(vars)
         match = _get_domain_from_rulenodes(rn, vars[cmn.var_name], hole_location)
+        match ≡ nothing && return nothing
         return (match, Dict())
     end
     # 0 is the special case for matching any rulenode.
@@ -145,7 +146,7 @@ function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}
         return nothing
     else
         # Root nodes match, now we check the child nodes
-        vars = Dict()
+        vars::Dict{Symbol, RuleNode} = Dict()
         for varsᵢ ∈ map(ab -> _match_tree(ab[1], ab[2]), zip(rn.children, cmn.children)) 
             # Immediately return if we didn't get a match
             varsᵢ ≡ nothing && return nothing
