@@ -21,6 +21,13 @@ function ForbiddenTree(rn::RuleNode, vars::Vector{Int}=Int[])
     return ForbiddenTree(r, pvars)
 end
 
+function ForbiddenTree(mn::MatchNode)
+    pvars = Symbol[]
+    lhs_pattern = mn2pattern(mn, pvars)
+    r = DynamicRule(lhs_pattern, (_, _, pvars...) -> pvars, nothing)
+    return ForbiddenTree(r, pvars)
+end
+
 """
 Converts a rulenode to a pattern that can be used for matching.
 No holes allowed!
@@ -39,11 +46,39 @@ function rn2pattern(rn::RuleNode, vars::Vector{Int}, pvars::Vector{Symbol}=Symbo
     end
 end
 
-TermInterface.istree(e::RuleNode) = e.children ≠ []
+function mn2pattern(mn::MatchNode, pvars::Vector{Symbol}=Symbol[])
+    return PatTerm(:call, mn.rule_ind, [mn2pattern(c, pvars) for c ∈ mn.children])
+end
+
+function mn2pattern(mn::MatchVar, pvars::Vector{Symbol}=Symbol[])
+    mn.var_name ∈ pvars || push!(pvars, mn.var_name)
+    return PatVar(mn.var_name)
+end
+
+TermInterface.istree(e::RuleNode) = true
 TermInterface.exprhead(::RuleNode) = :call
 TermInterface.operation(e::RuleNode) = e.ind
 TermInterface.arguments(e::RuleNode) = e.children
 TermInterface.metadata(e::RuleNode) = e._val
+
+struct HoleWrapper
+    hole::Hole
+end
+
+Base.:(==)(i::Int, c::HoleWrapper) = c == i
+function Base.:(==)(c::HoleWrapper, i::Int)
+    if c.hole.domain[i] && c.hole.expanding
+        c.hole.domain[i] = false
+        return true
+    end
+    return false
+end
+
+TermInterface.istree(::Hole) = true
+TermInterface.exprhead(::Hole) = :call
+TermInterface.operation(h::Hole) = HoleWrapper(h)
+TermInterface.arguments(::Hole) = []
+TermInterface.metadata(::Hole) = nothing
 
 """
 Propagates the ForbiddenTree constraint.
@@ -74,7 +109,6 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
             # If the domain was unchanged, but the match successful, 
             # the hole must be assigned to one of the variables.
             # This is essentially a 'wildcard' variable and means the domain is emptied
-            @assert htbf ∈ match
             for i ∈ 1:length(htbf.domain)
                 htbf.domain[i] = false 
             end
