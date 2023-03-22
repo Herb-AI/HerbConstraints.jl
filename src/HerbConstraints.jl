@@ -7,6 +7,7 @@ abstract type PropagatorConstraint <: Constraint end
 abstract type LocalConstraint <: Constraint end
 
 include("matchnode.jl")
+include("context.jl")
 
 include("comesafter.jl")
 include("forbidden.jl")
@@ -20,13 +21,20 @@ export
     MatchNode,
     MatchVar,
 
+    GrammarContext,
+    addparent!,
+    copy_and_insert,
+
     PropagatorConstraint,
+    LocalConstraint,
 
     propagate,
 
     ComesAfter,
     Forbidden,
     Ordered,
-    ForbiddenTree
+    ForbiddenTree,
+
+    NotEquals
 
 end # module HerbConstraints
