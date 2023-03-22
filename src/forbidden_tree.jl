@@ -14,45 +14,13 @@ end
 Propagates the ForbiddenTree constraint.
 It removes the elements from the domain that would complete the forbidden tree.
 """
-function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain::Vector{Int})
-    for i ∈ 0:length(context.nodeLocation)
-        n = get_node_at_location(context.originalExpr, context.nodeLocation[1:i])
-        match = _match_tree_containing_hole(n, c.tree, context.nodeLocation[i+1:end], Dict{Symbol, RuleNode}())
-        
-        # Immediately go to next level if match is unsuccessful
-        match ≡ nothing && continue
+function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    
+    # TODO: This returned constraint will only be checked in subsequent iterations. 
+    # Should we run it already in case the match node has a single rulenode or variable?
+    return NotEquals(context.nodeLocation, c.tree)
 
-        domain_match, vars = match
-        remove_from_domain::Int=0
-        if domain_match isa Symbol
-            if domain_match ∉ keys(vars)
-                # Variable is not assigned, so it acts as a wildcard
-                return []
-            elseif vars[domain_match].children == []
-                # A terminal rulenode is assigned to the variable, so we retrieve the assigned value
-                remove_from_domain = vars[domain_match].ind
-            else
-                # A non-terminal rulenode is assigned to the variable.
-                # This is too specific to reduce the domain.
-                continue
-            end
-        elseif domain_match isa Int
-            # The domain match is an actual (terminal) rule.
-            # 0 is the special case for when any rule matches the hole.
-            domain_match == 0 && return []
-            remove_from_domain = domain_match
-        end
-
-        # Remove the rule that would complete the forbidden tree from the domain
-        loc = findfirst(isequal(remove_from_domain), domain)
-        if loc !== nothing
-            deleteat!(domain, loc)
-        end
-
-        # No need to match in other layers if the domain is empty 
-        domain == [] && return []
-    end
-    return domain
+    match = _match_tree_containing_hole(n, c.tree, context.nodeLocation[i+1:end], Dict{Symbol, RuleNode}())
 end
 
 
@@ -74,7 +42,7 @@ function _match_tree_containing_hole(
     cmn::MatchNode, 
     hole_location::Vector{Int},
     vars::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing}
     hole_location == [] && throw(ArgumentError("The hole location doesn't point to a hole!"))
 
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
@@ -102,6 +70,7 @@ function _match_tree_containing_hole(
 
         # Immediately return if we didn't get a match
         match ≡ nothing && return nothing
+        match ≡ missing && return missing
 
         domain, varsᵢ = match
         # Update variables and check if another instance has a different assignment
@@ -114,10 +83,11 @@ end
 
 # Matching RuleNode with MatchVar
 function _match_tree_containing_hole(rn::RuleNode, cmn::MatchVar, hole_location::Vector{Int}, vars::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing}
     if cmn.var_name ∈ keys(vars)
         match = _get_domain_from_rulenodes(rn, vars[cmn.var_name], hole_location)
         match ≡ nothing && return nothing
+        match ≡ missing && return missing
         return (match, Dict())
     end
     # 0 is the special case for matching any rulenode.
@@ -127,13 +97,13 @@ end
 
 # Matching Hole with MatchNode
 _match_tree_containing_hole(::Hole, cmn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing} = 
-    hole_location == [] && cmn.children == [] ? (cmn.rule_ind, Dict()) : nothing
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing} = 
+    hole_location == [] && cmn.children == [] ? (cmn.rule_ind, Dict()) : missing
 
 # Matching Hole with MatchVar
 _match_tree_containing_hole(::Hole, cmn::MatchVar, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing} =
-    hole_location == [] ? (cmn.var_name, Dict()) : nothing
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing} =
+    hole_location == [] ? (cmn.var_name, Dict()) : missing
 
 
 # Matching RuleNode with MatchNode
@@ -150,6 +120,7 @@ function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}
         for varsᵢ ∈ map(ab -> _match_tree(ab[1], ab[2]), zip(rn.children, cmn.children)) 
             # Immediately return if we didn't get a match
             varsᵢ ≡ nothing && return nothing
+            varsᵢ ≡ missing && return missing
 
             # Update variables and check if another instance has a different assignment
             if !_update_variables!(vars, varsᵢ)
@@ -161,10 +132,11 @@ function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}
 end
 
 # Matching RuleNode with MatchVar
-_match_tree(rn::RuleNode, cmn::MatchVar)::Union{Dict{Symbol, RuleNode}, Nothing} = Dict(cmn.var_name => rn)
+_match_tree(rn::RuleNode, cmn::MatchVar)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = Dict(cmn.var_name => rn)
 
 # Matching Hole
-_match_tree(::Hole, ::AbstractMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing} = nothing
+_match_tree(h::Hole, rn::RuleNode)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = h.domain[rn.ind] ? missing : nothing
+_match_tree(::Hole, ::AbstractMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = missing
 
 
 """
@@ -185,6 +157,7 @@ function _get_domain_from_rulenodes(rn₁::RuleNode, rn₂::RuleNode, hole_locat
                 domain = _get_domain_from_rulenodes(c₁, c₂, hole_location[2:end])
                 # Immediately return if we didn't get a match
                 domain ≡ nothing && return nothing
+                domain ≡ missing && return missing
             elseif c₁ ≠ c₂
                 return nothing
             end
@@ -197,10 +170,10 @@ function _get_domain_from_rulenodes(::Hole, rn₂::RuleNode, hole_location::Vect
     if hole_location == [] && rn₂.children == []
         return rn₂.ind
     end
-    return nothing
+    return missing
 end
 
-_get_domain_from_rulenodes(::AbstractRuleNode, ::Hole) = nothing
+_get_domain_from_rulenodes(::AbstractRuleNode, ::Hole) = missing
 
 
 """
@@ -217,6 +190,7 @@ function _update_variables!(existing_vars::Dict{Symbol, RuleNode}, new_vars::Dic
             if v ≠ existing_vars[k] || contains_hole(v)
                 return false
             end
+
         end
         existing_vars[k] = v
     end
