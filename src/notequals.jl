@@ -44,7 +44,7 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
         # The domain matched with a rulenode in the match pattern tree
         # The match function returns a domain of 0 if the hole is matched 
         # with an otherwise unassigned variable (wildcard).
-        domain_match == 0 && return [], [], true, 
+        domain_match == 0 && return [], [], true
         remove_from_domain = domain_match
     end
 
