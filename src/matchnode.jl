@@ -33,4 +33,3 @@ This matches `RuleNode(3, [RuleNode(1), RuleNode(1)])`, `RuleNode(3, [RuleNode(2
 struct MatchVar <: AbstractMatchNode
     var_name::Symbol
 end
-
