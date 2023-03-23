@@ -33,3 +33,24 @@ This matches `RuleNode(3, [RuleNode(1), RuleNode(1)])`, `RuleNode(3, [RuleNode(2
 struct MatchVar <: AbstractMatchNode
     var_name::Symbol
 end
+
+
+function Base.show(io::IO, node::MatchNode; separator=",", last_child::Bool=true)
+	print(io, node.rule_ind)
+	if !isempty(node.children)
+	    print(io, "{")
+	    for (i,c) in enumerate(node.children)
+		    show(io, c, separator=separator, last_child=(i == length(node.children)))
+	    end
+	    print(io, "}")
+	elseif !last_child
+	    print(io, separator)
+	end
+end
+
+function Base.show(io::IO, node::MatchVar; separator=",", last_child::Bool=true)
+	print(io, node.var_name)
+	if !last_child
+		print(io, separator)
+	end
+end
