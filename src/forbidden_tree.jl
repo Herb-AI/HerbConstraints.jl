@@ -18,9 +18,7 @@ function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain:
     
     # TODO: This returned constraint will only be checked in subsequent iterations. 
     # Should we run it already in case the match node has a single rulenode or variable?
-    return NotEquals(context.nodeLocation, c.tree)
-
-    match = _match_tree_containing_hole(n, c.tree, context.nodeLocation[i+1:end], Dict{Symbol, RuleNode}())
+    return domain, [NotEquals(context.nodeLocation, c.tree)]
 end
 
 
@@ -55,6 +53,7 @@ function _match_tree_containing_hole(
             varsᵢ = _match_tree(rnᵢ, cmnᵢ)
             # Immediately return if we didn't get a match
             varsᵢ ≡ nothing && return nothing
+            varsᵢ ≡ missing && return missing
 
             # Update variables and check if another instance has a different assignment
             if !_update_variables!(vars, varsᵢ)
