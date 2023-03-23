@@ -1,8 +1,18 @@
+
+"""
+Forbids the a subtree that matches the MatchNode tree to be generated at the location 
+provided by the path. 
+"""
 mutable struct NotEquals <: LocalConstraint
 	path::Vector{Int}
     tree::MatchNode
 end
 
+"""
+Propagates the NotEquals constraint.
+It removes rules from the domain that would make
+the RuleNode at the given path match the pattern defined by the MatchNode.
+"""
 function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
         return domain, [c]
@@ -12,9 +22,8 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
 
     hole_location = context.nodeLocation[length(c.path)+1:end]
 
-    # TODO: Create a single var dict that is modified instead of creating multiples and combining.
-    # Instead of a dict, we might also be able to use e.g. a tuple or vector.
-    match = _pattern_match_with_hole(n, c.tree, hole_location, Dict{Symbol, RuleNode}())
+    vars = Dict{Symbol, RuleNode}()
+    match = _pattern_match_with_hole(n, c.tree, hole_location, vars)
     
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
@@ -26,27 +35,26 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
         return domain, [c]
     end
 
-    domain_match, vars = match
     remove_from_domain::Int = 0
-    if domain_match isa Symbol
+    if match isa Symbol
         # The domain matched with a variable in the match pattern tree
-        if domain_match ∉ keys(vars)
+        if match ∉ keys(vars)
             # Variable is not assigned, so it acts as a wildcard
             return [], []
-        elseif vars[domain_match].children == []
+        elseif vars[match].children == []
             # A terminal rulenode is assigned to the variable, so we retrieve the assigned value
-            remove_from_domain = vars[domain_match].ind
+            remove_from_domain = vars[match].ind
         else
             # A non-terminal rulenode is assigned to the variable.
             # This is too specific to reduce the domain.
             return domain, [c]
         end
-    elseif domain_match isa Int
+    elseif match isa Int
         # The domain matched with a rulenode in the match pattern tree
         # The match function returns a domain of 0 if the hole is matched 
         # with an otherwise unassigned variable (wildcard).
-        domain_match == 0 && return [], []
-        remove_from_domain = domain_match
+        match == 0 && return [], []
+        remove_from_domain = match
     end
 
     # Remove the rule that would complete the forbidden tree from the domain

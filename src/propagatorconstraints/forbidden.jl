@@ -11,13 +11,13 @@ end
 Propagates the Forbidden constraint.
 It removes the elements from the domain that would complete the forbidden sequence.
 """
-function propagate(c::Forbidden, ::Grammar, context::GrammarContext, domain::Vector{Int})
+function propagate(c::Forbidden, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 	ancestors = get_rulesequence(context.originalExpr, context.nodeLocation[begin:end-1])
 	
 	if subsequenceof(c.sequence[begin:end-1], ancestors)
 		last_in_seq = c.sequence[end]
-		return filter(x -> !(x == last_in_seq), domain)
+		return filter(x -> !(x == last_in_seq), domain), []
 	end
 
-	return domain
+	return domain, []
 end

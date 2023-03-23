@@ -6,15 +6,18 @@ abstract type PropagatorConstraint <: Constraint end
 
 abstract type LocalConstraint <: Constraint end
 
-include("matchnode.jl")
+include("matchfail.jl")
+include("patternnode.jl")
 include("context.jl")
+include("patternmatch.jl")
+include("rulenodematch.jl")
 
-include("comesafter.jl")
-include("forbidden.jl")
-include("ordered.jl")
-include("forbidden_tree.jl")
+include("propagatorconstraints/comesafter.jl")
+include("propagatorconstraints/forbidden.jl")
+include("propagatorconstraints/ordered.jl")
+include("propagatorconstraints/forbidden_tree.jl")
 
-include("notequals.jl")
+include("localconstraints/notequals.jl")
 
 export
     AbstractMatchNode,
