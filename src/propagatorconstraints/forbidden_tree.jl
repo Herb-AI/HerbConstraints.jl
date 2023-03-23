@@ -16,8 +16,6 @@ It removes the elements from the domain that would complete the forbidden tree.
 """
 function propagate(c::ForbiddenTree, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
     notequals_constraint = NotEquals(context.nodeLocation, c.tree)
-    @show domain
     new_domain, new_constraints = propagate(notequals_constraint, g, context, domain)
-    @show new_domain
     return new_domain, new_constraints
 end
