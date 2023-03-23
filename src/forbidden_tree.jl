@@ -9,16 +9,16 @@ struct ForbiddenTree <: PropagatorConstraint
 	tree::AbstractMatchNode
 end
 
+@enum MatchFail hardfail softfail
 
 """
 Propagates the ForbiddenTree constraint.
 It removes the elements from the domain that would complete the forbidden tree.
 """
-function propagate(c::ForbiddenTree, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
-    
-    # TODO: This returned constraint will only be checked in subsequent iterations. 
-    # Should we run it already in case the match node has a single rulenode or variable?
-    return domain, [NotEquals(context.nodeLocation, c.tree)]
+function propagate(c::ForbiddenTree, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    notequals_constraint = NotEquals(context.nodeLocation, c.tree)
+    new_domain, new_constraints = propagate(notequals_constraint, g, context, domain)
+    return new_domain, new_constraints
 end
 
 
@@ -32,32 +32,34 @@ Returns if match is successful:
     - The id for the node which fills the hole
     - 0 if any node could fill the hole
     - A symbol for the variable that fills the hole
-A variable is represented by the index of its rulenode.
-Returns nothing if the match is unsuccessful.
+If the match is unsuccessful, it returns:
+  - hardfail if there are no holes that can be filled in such a way that the match will become succesful
+  - softfail if the match could become succesful if the holes are filled in a certain way
 """
-function _match_tree_containing_hole(
+function _pattern_match_with_hole(
     rn::RuleNode, 
     cmn::MatchNode, 
     hole_location::Vector{Int},
     vars::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, MatchFail}
     hole_location == [] && throw(ArgumentError("The hole location doesn't point to a hole!"))
 
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
-        return nothing
+        return hardfail
     else
         child_tuples = collect(zip(rn.children, cmn.children))
 
         # Match all children that aren't part of the path to the hole
         for (rnᵢ, cmnᵢ) ∈ Iterators.flatten((child_tuples[1:hole_location[1]-1], child_tuples[hole_location[1]+1:end]))
-            varsᵢ = _match_tree(rnᵢ, cmnᵢ)
+            varsᵢ = _pattern_match(rnᵢ, cmnᵢ)
             # Immediately return if we didn't get a match
-            varsᵢ ≡ nothing && return nothing
-            varsᵢ ≡ missing && return missing
+            varsᵢ ≡ hardfail && return hardfail
+            varsᵢ ≡ softfail && return softfail
 
             # Update variables and check if another instance has a different assignment
-            if !_update_variables!(vars, varsᵢ)
-                return nothing
+            variable_match = _update_variables!(vars, varsᵢ)
+            if variable_match !== nothing
+                return variable_match 
             end
         end
 
@@ -65,29 +67,30 @@ function _match_tree_containing_hole(
         # Doing this in after all other children makes sure all variables are assigned when the hole is matched.
         rnᵢ = rn.children[hole_location[1]]
         cmnᵢ = cmn.children[hole_location[1]]
-        match = _match_tree_containing_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end], vars)
+        match = _pattern_match_with_hole(rnᵢ, cmnᵢ, hole_location[begin+1:end], vars)
 
         # Immediately return if we didn't get a match
-        match ≡ nothing && return nothing
-        match ≡ missing && return missing
+        match ≡ hardfail && return hardfail
+        match ≡ softfail && return softfail
 
         domain, varsᵢ = match
         # Update variables and check if another instance has a different assignment
-        if !_update_variables!(vars, varsᵢ)
-            return nothing
+        variable_match = _update_variables!(vars, varsᵢ)
+        if variable_match !== nothing
+            return variable_match 
         end
         return domain, vars
     end
 end
 
 # Matching RuleNode with MatchVar
-function _match_tree_containing_hole(rn::RuleNode, cmn::MatchVar, hole_location::Vector{Int}, vars::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing}
+function _pattern_match_with_hole(rn::RuleNode, cmn::MatchVar, hole_location::Vector{Int}, vars::Dict{Symbol, RuleNode}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, MatchFail}
     if cmn.var_name ∈ keys(vars)
-        match = _get_domain_from_rulenodes(rn, vars[cmn.var_name], hole_location)
-        match ≡ nothing && return nothing
-        match ≡ missing && return missing
-        return (match, Dict())
+        match = _rulenode_match_with_hole(rn, vars[cmn.var_name], hole_location)
+        match ≡ hardfail && return hardfail
+        match ≡ softfail && return softfail
+        return (match, Dict{Symbol, RuleNode}())
     end
     # 0 is the special case for matching any rulenode.
     # This is the case if the hole matches an unassigned variable (wildcard).
@@ -95,14 +98,14 @@ function _match_tree_containing_hole(rn::RuleNode, cmn::MatchVar, hole_location:
 end
 
 # Matching Hole with MatchNode
-_match_tree_containing_hole(::Hole, cmn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing} = 
-    hole_location == [] && cmn.children == [] ? (cmn.rule_ind, Dict()) : missing
+_pattern_match_with_hole(::Hole, cmn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, MatchFail} = 
+    hole_location == [] && cmn.children == [] ? (cmn.rule_ind, Dict()) : softfail
 
 # Matching Hole with MatchVar
-_match_tree_containing_hole(::Hole, cmn::MatchVar, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
-)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, Nothing, Missing} =
-    hole_location == [] ? (cmn.var_name, Dict()) : missing
+_pattern_match_with_hole(::Hole, cmn::MatchVar, hole_location::Vector{Int}, ::Dict{Symbol, RuleNode}
+)::Union{Tuple{Union{Int, Symbol}, Dict{Symbol, RuleNode}}, MatchFail} =
+    hole_location == [] ? (cmn.var_name, Dict{Symbol, RuleNode}()) : softfail
 
 
 # Matching RuleNode with MatchNode
@@ -110,20 +113,22 @@ _match_tree_containing_hole(::Hole, cmn::MatchVar, hole_location::Vector{Int}, :
 Tries to match RuleNode `rn` with MatchNode `cmn`.
 Returns a dictionary of values assigned to variables if the match is successful.
 """
-function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}, Nothing}  
+function _pattern_match(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}, MatchFail}  
     if rn.ind ≠ cmn.rule_ind || length(rn.children) ≠ length(cmn.children)
-        return nothing
+        return hardfail
     else
         # Root nodes match, now we check the child nodes
         vars::Dict{Symbol, RuleNode} = Dict()
-        for varsᵢ ∈ map(ab -> _match_tree(ab[1], ab[2]), zip(rn.children, cmn.children)) 
+        for varsᵢ ∈ map(ab -> _pattern_match(ab[1], ab[2]), zip(rn.children, cmn.children)) 
             # Immediately return if we didn't get a match
-            varsᵢ ≡ nothing && return nothing
-            varsᵢ ≡ missing && return missing
+            varsᵢ ≡ hardfail && return hardfail
+            varsᵢ ≡ softfail && return softfail
 
             # Update variables and check if another instance has a different assignment
-            if !_update_variables!(vars, varsᵢ)
-                return nothing
+            variable_match = _update_variables!(vars, varsᵢ)
+            # If variable match returned either hard or soft fail
+            if variable_match !== nothing 
+                return variable_match 
             end
         end
         return vars
@@ -131,11 +136,11 @@ function _match_tree(rn::RuleNode, cmn::MatchNode)::Union{Dict{Symbol, RuleNode}
 end
 
 # Matching RuleNode with MatchVar
-_match_tree(rn::RuleNode, cmn::MatchVar)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = Dict(cmn.var_name => rn)
+_pattern_match(rn::RuleNode, cmn::MatchVar)::Union{Dict{Symbol, RuleNode}, MatchFail} = Dict(cmn.var_name => rn)
 
 # Matching Hole
-_match_tree(h::Hole, rn::RuleNode)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = h.domain[rn.ind] ? missing : nothing
-_match_tree(::Hole, ::AbstractMatchNode)::Union{Dict{Symbol, RuleNode}, Nothing, Missing} = missing
+_pattern_match(h::Hole, rn::RuleNode)::Union{Dict{Symbol, RuleNode}, MatchFail} = h.domain[rn.ind] ? softfail : hardfail
+_pattern_match(::Hole, ::AbstractMatchNode)::Union{Dict{Symbol, RuleNode}, MatchFail} = softfail
 
 
 """
@@ -144,54 +149,77 @@ Returns how to fill in the hole in rn₁ to make it match rn₂ if:
   - rn₁ has a single hole at the provided location
   - rn₂ doesn't have any holes
   - rn₁ matches rn₂ apart from the single hole location.
-If one or more of these conditions aren't met, nothing is returned. 
 """
-function _get_domain_from_rulenodes(rn₁::RuleNode, rn₂::RuleNode, hole_location::Vector{Int})
+function _rulenode_match_with_hole(rn₁::RuleNode, rn₂::RuleNode, hole_location::Vector{Int})
     if rn₁.ind ≠ rn₂.ind || hole_location == [] || length(rn₁.children) ≠ length(rn₂.children)
-        return nothing
+        return hardfail
     else
-        domain = nothing
+        domain = hardfail
         for (i, c₁, c₂) ∈ zip(Iterators.countfrom(), rn₁.children, rn₂.children)
             if i == hole_location[1]
-                domain = _get_domain_from_rulenodes(c₁, c₂, hole_location[2:end])
+                domain = _rulenode_match_with_hole(c₁, c₂, hole_location[2:end])
                 # Immediately return if we didn't get a match
-                domain ≡ nothing && return nothing
-                domain ≡ missing && return missing
-            elseif c₁ ≠ c₂
-                return nothing
+                domain ≡ hardfail && return hardfail
+                domain ≡ softfail && return softfail
+            else 
+                rulenode_match = _rulenode_match(c₁, c₂)
+                rulenode_match ≡ hardfail && return hardfail
+                rulenode_match ≡ softfail && return softfail
             end
         end
         return domain
     end
 end
 
-function _get_domain_from_rulenodes(::Hole, rn₂::RuleNode, hole_location::Vector{Int})
+function _rulenode_match_with_hole(::Hole, rn₂::RuleNode, hole_location::Vector{Int})
     if hole_location == [] && rn₂.children == []
         return rn₂.ind
     end
-    return missing
+    return softfail
 end
 
-_get_domain_from_rulenodes(::AbstractRuleNode, ::Hole) = missing
+_rulenode_match_with_hole(rn::RuleNode, h::Hole) = h.domain[rn.ind] ? softfail : hardfail
 
+# TODO: It might be worth checking if domains don't overlap and getting a hardfail 
+_rulenode_match_with_hole(::Hole, ::Hole) = softfail
+
+function _rulenode_match(rn₁::RuleNode, rn₂::RuleNode)
+    if rn₁.ind ≠ rn₂.ind || length(rn₁.children) ≠ length(rn₂.children)
+        return hardfail
+    else
+        for (c₁, c₂) ∈ zip(rn₁.children, rn₂.children)
+            rulenode_match = _rulenode_match(c₁, c₂)
+            rulenode_match ≡ hardfail && return hardfail
+            rulenode_match ≡ softfail && return softfail
+
+        end
+    end
+end
+
+_rulenode_match(rn::RuleNode, h::Hole) = h.domain[rn.ind] ? softfail : hardfail
+_rulenode_match(h::Hole, rn::RuleNode) = h.domain[rn.ind] ? softfail : hardfail
+# TODO: It might be worth checking if domains don't overlap and getting a hardfail 
+_rulenode_match(::Hole, ::Hole) = softfail
 
 """
 Updates the existing variables with the new variables.
 Returns true if there are no conflicting assignments.
 """
-function _update_variables!(existing_vars::Dict{Symbol, RuleNode}, new_vars::Dict{Symbol, RuleNode})::Bool
+@inline function _update_variables!(existing_vars::Dict{Symbol, RuleNode}, new_vars::Dict{Symbol, RuleNode})::Union{MatchFail, Nothing}
     for (k, v) ∈ new_vars
+
         if k ∈ keys(existing_vars) 
             # If the assignments are unequal, the match is unsuccessful
             # Additionally, if the trees are equal but contain a hole, 
             # we cannot reason about equality because we don't know how
             # the hole will be expanded yet.
-            if v ≠ existing_vars[k] || contains_hole(v)
-                return false
+            if contains_hole(v) || contains_hole(existing_vars[k]) 
+                return softfail
+            elseif v ≠ existing_vars[k]
+                return hardfail
             end
-
         end
         existing_vars[k] = v
     end
-    return true
+    return
 end

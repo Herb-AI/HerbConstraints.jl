@@ -14,13 +14,13 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
 
     # TODO: Create a single var dict that is modified instead of creating multiples and combining.
     # Instead of a dict, we might also be able to use e.g. a tuple or vector.
-    match = _match_tree_containing_hole(n, c.tree, hole_location, Dict{Symbol, RuleNode}())
+    match = _pattern_match_with_hole(n, c.tree, hole_location, Dict{Symbol, RuleNode}())
     
-    if match ≡ nothing
+    if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
         return domain, []
-    elseif match ≡ missing
+    elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
         return domain, [c]
