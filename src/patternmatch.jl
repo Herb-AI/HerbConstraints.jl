@@ -2,11 +2,12 @@
 """
 Tries to match RuleNode `rn` with MatchNode `mn` and fill in 
 the domain of the hole at `hole_location`. 
-Returns if match is successful:
-  - Either 
-    - The id for the node which fills the hole
-    - A symbol for the variable that fills the hole
-    - TODO: Tuple
+Returns if match is successful either:
+  - The id for the node which fills the hole
+  - A symbol for the variable that fills the hole
+  - A tuple containing:
+    - The variable that matched (the subtree containing) the hole
+    - The location of the hole in this subtree
 
 If the match is unsuccessful, it returns:
   - hardfail if there are no holes that can be filled in such a way that the match will become succesful

@@ -37,7 +37,6 @@ function propagate(c::Commutativity, ::Grammar, context::GrammarContext, domain:
         hole_index = findfirst(isequal(hole_var), c.order) 
 
         for var ∈ c.order[1:hole_index-1]
-            @show hole_var, var
             new_domain = make_greater_or_equal(vars[hole_var], vars[var], domain, hole_path)
             new_domain ≡ softfail && continue
             domain = new_domain
