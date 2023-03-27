@@ -7,7 +7,7 @@ abstract type PropagatorConstraint <: Constraint end
 abstract type LocalConstraint <: Constraint end
 
 include("matchfail.jl")
-include("patternnode.jl")
+include("matchnode.jl")
 include("context.jl")
 include("patternmatch.jl")
 include("rulenodematch.jl")
@@ -18,6 +18,7 @@ include("propagatorconstraints/ordered.jl")
 include("propagatorconstraints/forbidden_tree.jl")
 
 include("localconstraints/notequals.jl")
+include("localconstraints/commutativity.jl")
 
 export
     AbstractMatchNode,
@@ -38,6 +39,7 @@ export
     Ordered,
     ForbiddenTree,
 
-    NotEquals
+    NotEquals,
+    Commutativity
 
 end # module HerbConstraints
