@@ -15,8 +15,8 @@ Example usage:
 This matches `RuleNode(3, [RuleNode(1), RuleNode(2)])`
 """
 struct MatchNode <: AbstractMatchNode
-    rule_ind::Int
-    children::Vector{AbstractMatchNode}
+	rule_ind::Int
+	children::Vector{AbstractMatchNode}
 end
 
 MatchNode(rule_ind::Int) = MatchNode(rule_ind, [])
@@ -34,17 +34,16 @@ struct MatchVar <: AbstractMatchNode
     var_name::Symbol
 end
 
-
 function Base.show(io::IO, node::MatchNode; separator=",", last_child::Bool=true)
 	print(io, node.rule_ind)
 	if !isempty(node.children)
-	    print(io, "{")
-	    for (i,c) in enumerate(node.children)
-		    show(io, c, separator=separator, last_child=(i == length(node.children)))
-	    end
-	    print(io, "}")
+		print(io, "{")
+		for (i,c) in enumerate(node.children)
+			show(io, c, separator=separator, last_child=(i == length(node.children)))
+		end
+		print(io, "}")
 	elseif !last_child
-	    print(io, separator)
+		print(io, separator)
 	end
 end
 

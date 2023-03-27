@@ -22,7 +22,7 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
 
     hole_location = context.nodeLocation[length(c.path)+1:end]
 
-    vars = Dict{Symbol, RuleNode}()
+    vars = Dict{Symbol, AbstractRuleNode}()
     match = _pattern_match_with_hole(n, c.tree, hole_location, vars)
     
     if match ≡ hardfail
@@ -36,25 +36,12 @@ function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vec
     end
 
     remove_from_domain::Int = 0
-    if match isa Symbol
-        # The domain matched with a variable in the match pattern tree
-        if match ∉ keys(vars)
-            # Variable is not assigned, so it acts as a wildcard
-            return [], []
-        elseif vars[match].children == []
-            # A terminal rulenode is assigned to the variable, so we retrieve the assigned value
-            remove_from_domain = vars[match].ind
-        else
-            # A non-terminal rulenode is assigned to the variable.
-            # This is too specific to reduce the domain.
-            return domain, [c]
-        end
-    elseif match isa Int
+    if match isa Int
         # The domain matched with a rulenode in the match pattern tree
-        # The match function returns a domain of 0 if the hole is matched 
-        # with an otherwise unassigned variable (wildcard).
-        match == 0 && return [], []
         remove_from_domain = match
+    elseif match isa Tuple{Symbol, Vector{Int}}
+        # The hole is matched with an otherwise unassigned variable (wildcard).
+        return [], []
     end
 
     # Remove the rule that would complete the forbidden tree from the domain
