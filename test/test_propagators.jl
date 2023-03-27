@@ -78,5 +78,41 @@
         @test domain == [3]
     end
 
+    @testset "Propagating Commutativity with lower bound" begin
+        constraint₁ = Commutativity(
+            [],
+            MatchNode(10, [MatchVar(:x), MatchVar(:y)]),
+            [:x, :y]
+        )
+
+        expr = RuleNode(10, [RuleNode(8), Hole(get_domain(g₁, :Real))])
+        context = GrammarContext(expr, [2], [])
+        domain, _ = propagate(constraint₁, g₁, context, collect(1:9))
+        @test domain == [8, 9]
+    end
+
+    @testset "Propagating Commutativity with trees" begin
+        expr = RuleNode(10, [
+            RuleNode(10, [
+                RuleNode(1),
+                RuleNode(1)
+            ]),
+            RuleNode(10, [
+                RuleNode(1),
+                Hole(get_domain(g₁, :Real))
+            ])
+        ])
+        context = GrammarContext(expr, [2, 2], [])
+        
+        constraint = Commutativity(
+            [], 
+            MatchNode(10, [MatchVar(:x₁), MatchVar(:x₂)]),
+            [:x₂, :x₁]
+        )
+        
+        domain, _ = propagate(constraint, g₁, context, [1,2,3])
+        
+        @test domain == [1]
+    end
 
 end
