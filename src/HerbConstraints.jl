@@ -16,6 +16,7 @@ include("propagatorconstraints/comesafter.jl")
 include("propagatorconstraints/forbidden.jl")
 include("propagatorconstraints/ordered.jl")
 include("propagatorconstraints/forbidden_tree.jl")
+include("propagatorconstraints/global_commutativity.jl")
 
 include("localconstraints/notequals.jl")
 include("localconstraints/commutativity.jl")
@@ -33,11 +34,13 @@ export
     LocalConstraint,
 
     propagate,
+    check_tree,
 
     ComesAfter,
     Forbidden,
     Ordered,
     ForbiddenTree,
+    GlobalCommutativity,
 
     NotEquals,
     Commutativity

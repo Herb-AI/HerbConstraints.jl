@@ -1,0 +1,40 @@
+"""
+Enforces a specific order in MatchVar assignments in the grammar
+The tree is defined as a tree of `AbstractMatchNode`s. 
+Such a node can either be a `MatchNode`, which contains a rule index corresponding to the 
+rule index in the grammar of the rulenode we are trying to match.
+It can also contain a `MatchVar`, which contains a single identifier symbol.
+The order defines in what order the variable assignments should be. 
+For example, if the order is `[x, y]`, the constraint will require 
+the assignment to `x` to be less than or equal to the assignment to `y`.
+"""
+struct GlobalCommutativity <: PropagatorConstraint
+    tree::AbstractMatchNode
+    order::Vector{Symbol}
+end
+
+
+"""
+Propagates the GlobalCommutativity constraint.
+"""
+function propagate(c::GlobalCommutativity, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    commutativity_constraint = Commutativity(context.nodeLocation, c.tree, c.order)
+    new_domain, new_constraints = propagate(commutativity_constraint, g, context, domain)
+    return new_domain, new_constraints
+end
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::GlobalCommutativity, g::Grammar, tree::RuleNode)::Bool
+    vars = Dict{Symbol, AbstractRuleNode}()
+    if _pattern_match(tree, c.tree, vars) ≡ nothing
+        # Check variable ordering
+        for (var₁, var₂) ∈ zip(c.order[1:end-1], c.order[2:end])
+            _rulenode_compare(vars[var₁], vars[var₂]) == 1 && return false
+        end
+    end
+    return all(check_tree(c, g, child) for child ∈ tree.children)
+end
+
+check_tree(c::GlobalCommutativity, g::Grammar, tree::Hole)::Bool = true

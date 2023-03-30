@@ -19,3 +19,19 @@ function propagate(c::ForbiddenTree, g::Grammar, context::GrammarContext, domain
     new_domain, new_constraints = propagate(notequals_constraint, g, context, domain)
     return new_domain, new_constraints
 end
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::ForbiddenTree, g::Grammar, tree::RuleNode)::Bool
+    vars = Dict{Symbol, AbstractRuleNode}()
+    if _pattern_match(tree, c.tree, vars) ≡ nothing
+        return false
+    end
+    return all(check_tree(c, g, child) for child ∈ tree.children)
+end
+
+function check_tree(c::ForbiddenTree, g::Grammar, tree::Hole)::Bool
+    vars = Dict{Symbol, AbstractRuleNode}()
+    return _pattern_match(tree, c.tree, vars) !== nothing
+end
