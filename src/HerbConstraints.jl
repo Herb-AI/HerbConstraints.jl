@@ -30,6 +30,8 @@ export
     addparent!,
     copy_and_insert,
 
+    contains_var,
+
     PropagatorConstraint,
     LocalConstraint,
 

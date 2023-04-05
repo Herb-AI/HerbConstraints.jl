@@ -53,3 +53,9 @@ function Base.show(io::IO, node::MatchVar; separator=",", last_child::Bool=true)
 		print(io, separator)
 	end
 end
+
+contains_var(mv::MatchVar) = true
+contains_var(mn::MatchNode) = any(contains_var(c) for c ∈ mn.children)
+
+contains_var(mv::MatchVar, var::Symbol) = mv == var
+contains_var(mn::MatchNode, var::Symbol) = any(contains_var(c, var) for c ∈ mn.children)
