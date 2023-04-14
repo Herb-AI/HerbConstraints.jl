@@ -3,17 +3,17 @@
 Forbids the a subtree that matches the MatchNode tree to be generated at the location 
 provided by the path. 
 """
-mutable struct NotEquals <: LocalConstraint
+mutable struct LocalForbidden <: LocalConstraint
 	path::Vector{Int}
     tree::MatchNode
 end
 
 """
-Propagates the NotEquals constraint.
+Propagates the LocalForbidden constraint.
 It removes rules from the domain that would make
 the RuleNode at the given path match the pattern defined by the MatchNode.
 """
-function propagate(c::NotEquals, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(c::LocalForbidden, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
         return domain, [c]
     end

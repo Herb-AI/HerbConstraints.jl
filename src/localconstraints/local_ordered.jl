@@ -1,11 +1,18 @@
-
-mutable struct Commutativity <: LocalConstraint
+"""
+Enforces an order in the 
+"""
+mutable struct LocalOrdered <: LocalConstraint
     path::Vector{Int}
     tree::MatchNode
     order::Vector{Symbol}
 end
 
-function propagate(c::Commutativity, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+"""
+Propagates the LocalOrdered constraint.
+It removes rules from the domain that would violate the order of variables as defined in the 
+constraint.
+"""
+function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
         return domain, [c]
     end

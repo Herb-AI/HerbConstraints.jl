@@ -13,13 +13,13 @@ include("patternmatch.jl")
 include("rulenodematch.jl")
 
 include("propagatorconstraints/comesafter.jl")
+include("propagatorconstraints/forbidden_path.jl")
+include("propagatorconstraints/ordered_path.jl")
 include("propagatorconstraints/forbidden.jl")
 include("propagatorconstraints/ordered.jl")
-include("propagatorconstraints/forbidden_tree.jl")
-include("propagatorconstraints/global_commutativity.jl")
 
-include("localconstraints/notequals.jl")
-include("localconstraints/commutativity.jl")
+include("localconstraints/local_forbidden.jl")
+include("localconstraints/local_ordered.jl")
 
 export
     AbstractMatchNode,
@@ -39,12 +39,12 @@ export
     check_tree,
 
     ComesAfter,
+    ForbiddenPath,
+    OrderedPath,
     Forbidden,
     Ordered,
-    ForbiddenTree,
-    GlobalCommutativity,
 
-    NotEquals,
-    Commutativity
+    LocalForbidden,
+    LocalOrdered
 
 end # module HerbConstraints

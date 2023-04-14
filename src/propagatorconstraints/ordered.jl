@@ -1,26 +1,40 @@
 """
-Rules have to be used in the specified order.
-That is, rule at index K can only be used if rules at indices [1...K-1] are used in the left subtree of the current expression
+Enforces a specific order in MatchVar assignments in the grammar
+The tree is defined as a tree of `AbstractMatchNode`s. 
+Such a node can either be a `MatchNode`, which contains a rule index corresponding to the 
+rule index in the grammar of the rulenode we are trying to match.
+It can also contain a `MatchVar`, which contains a single identifier symbol.
+The order defines in what order the variable assignments should be. 
+For example, if the order is `[x, y]`, the constraint will require 
+the assignment to `x` to be less than or equal to the assignment to `y`.
 """
 struct Ordered <: PropagatorConstraint
-	order::Vector{Int}
+    tree::AbstractMatchNode
+    order::Vector{Symbol}
 end
 
 
 """
 Propagates the Ordered constraint.
-It removes every element from the domain that does not have a necessary 
-predecessor in the left subtree.
 """
-function propagate(c::Ordered, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
-	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
-	
-	last_rule_index = 0
-	for r in c.order
-		r in rules_on_left ? last_rule_index = r : break
-	end
-
-	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
-
-	return filter((x) -> !(x in rules_to_remove), domain), []
+function propagate(c::Ordered, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    commutativity_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
+    new_domain, new_constraints = propagate(commutativity_constraint, g, context, domain)
+    return new_domain, new_constraints
 end
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::Ordered, g::Grammar, tree::RuleNode)::Bool
+    vars = Dict{Symbol, AbstractRuleNode}()
+    if _pattern_match(tree, c.tree, vars) ≡ nothing
+        # Check variable ordering
+        for (var₁, var₂) ∈ zip(c.order[1:end-1], c.order[2:end])
+            _rulenode_compare(vars[var₁], vars[var₂]) == 1 && return false
+        end
+    end
+    return all(check_tree(c, g, child) for child ∈ tree.children)
+end
+
+check_tree(c::Ordered, g::Grammar, tree::Hole)::Bool = true
