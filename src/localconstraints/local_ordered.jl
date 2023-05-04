@@ -191,7 +191,7 @@ function _rulenode_compare(rn₁::RuleNode, rn₂::RuleNode)::Union{Int, MatchFa
             comparison = _rulenode_compare(c₁, c₂)
             comparison ≡ softfail && return softfail
             if comparison ≠ 0
-                return o
+                return comparison
             end
         end
         return 0
