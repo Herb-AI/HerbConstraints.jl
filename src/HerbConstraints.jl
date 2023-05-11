@@ -25,6 +25,7 @@ export
     AbstractMatchNode,
     MatchNode,
     MatchVar,
+    matchnode2expr,
 
     GrammarContext,
     addparent!,

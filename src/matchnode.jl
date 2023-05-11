@@ -59,3 +59,71 @@ contains_var(mn::MatchNode) = any(contains_var(c) for c ∈ mn.children)
 
 contains_var(mv::MatchVar, var::Symbol) = mv == var
 contains_var(mn::MatchNode, var::Symbol) = any(contains_var(c, var) for c ∈ mn.children)
+
+
+"""
+Converts a matchnode into a Julia expression. 
+This is primarily useful for pretty-printing a pattern.
+"""
+function matchnode2expr(pattern::MatchNode, grammar::Grammar)
+	root = deepcopy(grammar.rules[pattern.rule_ind])
+	if !grammar.isterminal[pattern.rule_ind] # not terminal
+		root,_ = _matchnode2expr(root, pattern, grammar)
+	end
+	return root
+end
+
+
+function _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::Grammar, j=0)
+	for (k,arg) ∈ enumerate(expr.args)
+		if isa(arg, Expr)
+			expr.args[k],j = _matchnode2expr(arg, pattern, grammar, j)
+		elseif haskey(grammar.bytype, arg)
+			child = pattern.children[j+=1]
+            if child isa MatchNode
+			    expr.args[k] = deepcopy(grammar.rules[child.rule_ind])
+                if child.children ≠ []
+                    expr.args[k],_ = _matchnode2expr(expr.args[k], child, grammar, 0)
+                end
+            elseif child isa MatchVar
+                expr.args[k] = deepcopy(child.var_name)
+            end
+		end
+	end
+	return expr, j
+end
+
+function _matchnode2expr(expr::Expr, pattern::MatchVar, grammar::Grammar, j=0)
+	for (k,arg) ∈ enumerate(expr.args)
+		if isa(arg, Expr)
+			expr.args[k],j = _matchnode2expr(arg, pattern, grammar, j)
+		elseif haskey(grammar.bytype, arg)
+			child = pattern.children[j+=1]
+			expr.args[k] = deepcopy(grammar.rules[child.ind])
+			if !isterminal(grammar, child)
+				expr.args[k],_ = _matchnode2expr(expr.args[k], child, grammar, 0)
+			end
+		end
+	end
+	return expr, j
+end
+
+function _matchnode2expr(typ::Symbol, pattern::MatchVar, grammar::Grammar, j=0)
+	return pattern.var_name, j
+end
+
+function _matchnode2expr(typ::Symbol, pattern::MatchNode, grammar::Grammar, j=0)
+	retval = typ
+    if haskey(grammar.bytype, typ)
+        child = pattern.children[1]
+        if child isa MatchNode
+            retval = deepcopy(grammar.rules[child.rule_ind])
+            if !grammar.isterminal[child.rule_ind]
+                retval,_ = _matchnode2expr(retval, child, grammar, 0)
+            end
+        elseif child isa MatchVar
+            retval = deepcopy(child.var_name)
+        end
+    end
+	return retval, j
+end
