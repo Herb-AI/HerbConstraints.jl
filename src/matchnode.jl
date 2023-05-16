@@ -62,7 +62,7 @@ contains_var(mn::MatchNode, var::Symbol) = any(contains_var(c, var) for c ∈ mn
 
 
 """
-Converts a matchnode into a Julia expression. 
+Converts a MatchNode tree into a Julia expression. 
 This is primarily useful for pretty-printing a pattern.
 """
 function matchnode2expr(pattern::MatchNode, grammar::Grammar)
@@ -73,6 +73,9 @@ function matchnode2expr(pattern::MatchNode, grammar::Grammar)
 	return root
 end
 
+function matchnode2expr(pattern::MatchVar, ::Grammar)
+	return pattern.var_name
+end
 
 function _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::Grammar, j=0)
 	for (k,arg) ∈ enumerate(expr.args)

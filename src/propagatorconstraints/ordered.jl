@@ -18,8 +18,8 @@ end
 Propagates the Ordered constraint.
 """
 function propagate(c::Ordered, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
-    commutativity_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
-    new_domain, new_constraints = propagate(commutativity_constraint, g, context, domain)
+    ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
+    new_domain, new_constraints = propagate(ordered_constraint, g, context, domain)
     return new_domain, new_constraints
 end
 
