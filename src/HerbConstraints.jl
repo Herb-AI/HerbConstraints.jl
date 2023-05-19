@@ -17,9 +17,11 @@ include("propagatorconstraints/forbidden_path.jl")
 include("propagatorconstraints/ordered_path.jl")
 include("propagatorconstraints/forbidden.jl")
 include("propagatorconstraints/ordered.jl")
+include("propagatorconstraints/programmatic.jl")
 
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
+include("localconstraints/local_programmatic.jl")
 
 export
     AbstractMatchNode,
@@ -44,8 +46,10 @@ export
     OrderedPath,
     Forbidden,
     Ordered,
+    Programmatic,
 
     LocalForbidden,
-    LocalOrdered
+    LocalOrdered,
+    LocalProgrammatic
 
 end # module HerbConstraints
