@@ -4,8 +4,7 @@
 Meta-constraint that enforces the disjunction of its given constraints.
 """
 mutable struct LocalDisjunctive <: LocalConstraint
-    first::PropagatorConstraint
-    second::PropagatorConstraint
+    constraints::Vector{PropagatorConstraint}
 end
 
 
@@ -14,28 +13,42 @@ Propagates the LocalDisjunctive constraint.
 It enforces that at least one of its given constraints hold.
 """
 function propagate(c::LocalDisjunctive, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
-    # Propagate the two member propagators
-    first_new_domain, first_new_constraints = propagate(c.first, g, context, copy(domain))
-    second_new_domain, second_new_constraints = propagate(c.second, g, context, copy(domain))
-
-    # Take the union of the two resulting domains
-    new_domains::Vector{Int} = unique!([first_new_domain; second_new_domain])
+    # Special case for when the constraint is empty
+    if length(c.constraints) == 0
+        return domain, []
+    end
     
-    # Return itself if neither were removed
-    if first_new_constraints != [] && second_new_constraints != []
-        return new_domains, [c]
+    # Set up lists (with empty elements for domains)
+    res_domains::Vector{Int} = fill!(resize!(Vector(), length(domain)), -1)
+    res_constraints::Vector{LocalConstraint} = []
+    res_constraints_count::Int = 0
+
+    # Loop over all constraints
+    for constraint ∈ c.constraints
+        # Propagate the constraints
+        new_domain, new_constraints = propagate(constraint, g, context, copy(domain))
+
+        # Append the new constraints to the result
+        res_constraints = [res_constraints; new_constraints]
+        if new_constraints == [constraint]
+            res_constraints_count += 1
+        end
+
+        # Add all domain values in the correct spots
+        for v ∈ new_domain
+            res_domains[findfirst(isequal(v), domain)] = v
+        end
     end
 
-    # return the first constraint if it was not removed
-    if first_new_constraints != []
-        return new_domains, c.first
+    # Filter all empty elements in domains
+    # (this ensures that the order of the domains remains the same)
+    filter!(!=(-1), res_domains)
+
+    # Return the original constraint if all constraints returned themselves
+    if res_constraints_count == length(c.constraints)
+        return res_domains, [c]
     end
 
-    # return the second constraint if it was not removed
-    if second_new_constraints != []
-        return new_domains, c.second
-    end
-
-    # return no remaining constraints if both were removed
-    return new_domains, []
+    # Return all constraints that were returned
+    return res_domains, res_constraints
 end
