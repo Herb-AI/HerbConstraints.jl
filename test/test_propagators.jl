@@ -14,11 +14,11 @@
         @test domain == Vector(2:9)
     end
 
-    @testset "Propagating ordered path" begin
-        constraint = OrderedPath([2, 1])
+    @testset "Propagating require on left" begin
+        constraint = RequireOnLeft([2, 1])
         context = GrammarContext(RuleNode(10, [RuleNode(3), Hole(get_domain(g₁, :Real))]), [2], [])
         domain, _ = propagate(constraint, g₁, context, Vector(1:9))
-        @test domain == Vector(2:9)
+        @test domain == Vector(2:9)        
     end
 
     @testset "Propagating forbidden path" begin
