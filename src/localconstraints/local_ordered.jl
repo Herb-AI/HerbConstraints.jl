@@ -26,8 +26,8 @@ function propagate(
         return domain, Set([c])
     end
 
-    # Skip the propagator if the hole that was filled isn't a parent of the current hole
-	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+    # Skip the propagator if the filled hole wasn't part of the path
+	if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
 		return domain, Set([c])
 	end
 
