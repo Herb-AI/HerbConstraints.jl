@@ -9,7 +9,7 @@ function propagate(
     ::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
-    ::Union{HoleReference, Nothing}
+    filled_hole::Union{HoleReference, Nothing}
 )::Tuple{Vector{Int}, Set{LocalConstraint}}
     # Skip the propagator if a node is being propagated that it isn't targeting
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
@@ -17,7 +17,7 @@ function propagate(
     end
 
     # Skip the propagator if the filled hole wasn't part of the path
-	if !isnothing(filled_hole) && c.path ≠ filled_hole.path[1:length(c.path)]
+	if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
 		return domain, Set([c])
 	end
 
