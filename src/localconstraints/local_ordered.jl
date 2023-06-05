@@ -14,10 +14,22 @@ Propagates the LocalOrdered constraint.
 It removes rules from the domain that would violate the order of variables as defined in the 
 constraint.
 """
-function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::LocalOrdered, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
+    # Skip the propagator if a node is being propagated that it isn't targeting
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, [c]
+        return domain, Set([c])
     end
+
+    # Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set([c])
+	end
 
     n = get_node_at_location(context.originalExpr, c.path)
 
@@ -29,11 +41,11 @@ function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
-        return domain, []
+        return domain, Set()
     elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, [c]
+        return domain, Set([c])
     else
         hole_var = nothing
         hole_path::Vector{Int} = []
@@ -58,7 +70,7 @@ function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::
         end
     end
 
-    return domain, []
+    return domain, Set()
 end
 
 function make_smaller_or_equal(

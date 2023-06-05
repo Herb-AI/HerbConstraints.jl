@@ -14,9 +14,17 @@ end
 Propagates the Forbidden constraint.
 It removes the elements from the domain that would complete the forbidden tree.
 """
-function propagate(c::Forbidden, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::Forbidden, 
+    g::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
     notequals_constraint = LocalForbidden(context.nodeLocation, c.tree)
-    new_domain, new_constraints = propagate(notequals_constraint, g, context, domain)
+    if in(notequals_constraint, context.constraints) return domain, Set() end
+
+    new_domain, new_constraints = propagate(notequals_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
 

@@ -4,10 +4,22 @@ mutable struct LocalProgrammatic <: LocalConstraint
     condition::Function
 end
 
-function propagate(c::LocalProgrammatic, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::LocalProgrammatic, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    ::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
+    # Skip the propagator if a node is being propagated that it isn't targeting
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, [c]
+        return domain, Set([c])
     end
+
+    # Skip the propagator if the filled hole wasn't part of the path
+	if !isnothing(filled_hole) && c.path ≠ filled_hole.path[1:length(c.path)]
+		return domain, Set([c])
+	end
 
     n = get_node_at_location(context.originalExpr, c.path)
 
@@ -19,11 +31,11 @@ function propagate(c::LocalProgrammatic, ::Grammar, context::GrammarContext, dom
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
-        return domain, []
+        return domain, Set()
     elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, [c]
+        return domain, Set([c])
     end
 
     function is_in_domain(rule)
@@ -32,6 +44,5 @@ function propagate(c::LocalProgrammatic, ::Grammar, context::GrammarContext, dom
         return c.condition(vars_copy)
     end
 
-    # Cannot remove the propagator (I think?) as assignments to other holes could still make it invalid
-    return filter(is_in_domain, domain), [c]
+    return filter(is_in_domain, domain), Set()
 end

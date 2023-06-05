@@ -17,9 +17,17 @@ end
 """
 Propagates the Ordered constraint.
 """
-function propagate(c::Ordered, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::Ordered, 
+    g::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
     ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
-    new_domain, new_constraints = propagate(ordered_constraint, g, context, domain)
+    if in(ordered_constraint, context.constraints) return domain, Set() end
+
+    new_domain, new_constraints = propagate(ordered_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
 

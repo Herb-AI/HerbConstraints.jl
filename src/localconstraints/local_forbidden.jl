@@ -14,10 +14,22 @@ Propagates the LocalForbidden constraint.
 It removes rules from the domain that would make
 the RuleNode at the given path match the pattern defined by the MatchNode.
 """
-function propagate(c::LocalForbidden, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::LocalForbidden, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
+    # Skip the propagator if a node is being propagated that it isn't targeting 
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, [c]
+        return domain, Set([c])
     end
+
+    # Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set([c])
+	end
 
     n = get_node_at_location(context.originalExpr, c.path)
 
@@ -29,11 +41,11 @@ function propagate(c::LocalForbidden, ::Grammar, context::GrammarContext, domain
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
-        return domain, []
+        return domain, Set()
     elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, [c]
+        return domain, Set([c])
     end
 
     remove_from_domain::Int = 0
@@ -42,7 +54,7 @@ function propagate(c::LocalForbidden, ::Grammar, context::GrammarContext, domain
         remove_from_domain = match
     elseif match isa Tuple{Symbol, Vector{Int}}
         # The hole is matched with an otherwise unassigned variable (wildcard).
-        return [], []
+        return [], Set()
     end
 
     # Remove the rule that would complete the forbidden tree from the domain
@@ -52,5 +64,5 @@ function propagate(c::LocalForbidden, ::Grammar, context::GrammarContext, domain
     end
     # If the domain is pruned, we do not need this constraint anymore after expansion,
     # since no equality is possible with the new domain.
-    return domain, []
+    return domain, Set()
 end

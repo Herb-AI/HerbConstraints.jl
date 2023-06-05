@@ -12,7 +12,18 @@ Propagates the OrderedPath constraint.
 It removes every element from the domain that does not have a necessary 
 predecessor in the left subtree.
 """
-function propagate(c::OrderedPath, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::OrderedPath, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    ::Union{HoleReference, Nothing}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
+	# Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set()
+	end
+
 	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
 	
 	last_rule_index = 0
@@ -22,5 +33,5 @@ function propagate(c::OrderedPath, ::Grammar, context::GrammarContext, domain::V
 
 	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
 
-	return filter((x) -> !(x in rules_to_remove), domain), []
+	return filter((x) -> !(x in rules_to_remove), domain), Set()
 end

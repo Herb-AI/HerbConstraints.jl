@@ -9,7 +9,7 @@ Contains:
 mutable struct GrammarContext
 	originalExpr::AbstractRuleNode			# original expression being modified
 	nodeLocation::Vector{Int}   			# path to he current node in the expression, 
-	constraints::Vector{LocalConstraint}	# local constraints that should be propagated
+	constraints::Set{LocalConstraint}		# local constraints that should be propagated
 end
 
 GrammarContext(originalExpr::AbstractRuleNode) = GrammarContext(originalExpr, [], [])
