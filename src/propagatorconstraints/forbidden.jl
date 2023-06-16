@@ -19,7 +19,7 @@ function propagate(
     g::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
-    filled_hole::Union{HoleReference, Nothing}
+    filled_hole::Union{HoleReference, Nothing} = nothing
 )::Tuple{Vector{Int}, Set{LocalConstraint}}
     notequals_constraint = LocalForbidden(context.nodeLocation, c.tree)
     if in(notequals_constraint, context.constraints) return domain, Set() end

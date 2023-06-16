@@ -12,15 +12,20 @@ end
 Propagates the LocalDisjunctive constraint.
 It enforces that at least one of its given constraints hold.
 """
-function propagate(c::LocalDisjunctive, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::LocalDisjunctive,
+    g::Grammar,
+    context::GrammarContext,
+    domain::Vector{Int}
+)::Tuple{Vector{Int}, Set{LocalConstraint}}
     # Special case for when the constraint is empty
     if length(c.constraints) == 0
-        return domain, []
+        return domain, Set()
     end
     
     # Set up lists (with empty elements for domains)
     res_domains::Vector{Int} = fill!(resize!(Vector(), length(domain)), -1)
-    res_constraints::Vector{LocalConstraint} = []
+    res_constraints::Set{LocalConstraint} = Set()
     res_constraints_count::Int = 0
 
     # Loop over all constraints
@@ -29,8 +34,8 @@ function propagate(c::LocalDisjunctive, g::Grammar, context::GrammarContext, dom
         new_domain, new_constraints = propagate(constraint, g, context, copy(domain))
 
         # Append the new constraints to the result
-        res_constraints = [res_constraints; new_constraints]
-        if new_constraints == [constraint]
+        union!(res_constraints, new_constraints)
+        if collect(new_constraints) == [constraint] # hack
             res_constraints_count += 1
         end
 
@@ -46,7 +51,7 @@ function propagate(c::LocalDisjunctive, g::Grammar, context::GrammarContext, dom
 
     # Return the original constraint if all constraints returned themselves
     if res_constraints_count == length(c.constraints)
-        return res_domains, [c]
+        return res_domains, Set(c)
     end
 
     # Return all constraints that were returned
