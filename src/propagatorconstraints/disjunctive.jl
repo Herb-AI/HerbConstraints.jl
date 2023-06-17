@@ -26,3 +26,11 @@ function propagate(
     new_domain, new_constraints = propagate(disjunctive_constraint, g, context, domain)
     return new_domain, new_constraints
 end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::Disjunctive, g::Grammar, tree::AbstractRuleNode)::Bool
+    return any(check_tree(cons, g, tree) for cons in c.constraints)
+end
