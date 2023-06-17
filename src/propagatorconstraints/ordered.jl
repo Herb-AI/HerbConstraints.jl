@@ -22,10 +22,10 @@ function propagate(
     g::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
-    filled_hole::Union{HoleReference, Nothing} = nothing
-)::Tuple{Vector{Int}, Set{LocalConstraint}}
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
     ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
-    if in(ordered_constraint, context.constraints) return domain, Set() end
+    if in(ordered_constraint, context.constraints) return unchanged_domain, Set() end
 
     new_domain, new_constraints = propagate(ordered_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints

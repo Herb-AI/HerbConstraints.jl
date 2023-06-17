@@ -20,15 +20,15 @@ function propagate(
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
-)::Tuple{Vector{Int}, Set{LocalConstraint}}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
     # Skip the propagator if a node is being propagated that it isn't targeting 
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, Set([c])
+        return unchanged_domain, Set([c])
     end
 
     # Skip the propagator if the filled hole wasn't part of the path
 	if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
-		return domain, Set([c])
+		return unchanged_domain, Set([c])
 	end
 
     n = get_node_at_location(context.originalExpr, c.path)
@@ -41,11 +41,11 @@ function propagate(
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
-        return domain, Set()
+        return unchanged_domain, Set()
     elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, Set([c])
+        return unchanged_domain, Set([c])
     end
 
     remove_from_domain::Int = 0

@@ -1,10 +1,9 @@
-# include("../HerbConstraints.jl")
-
 """
 Meta-constraint that enforces the disjunction of its given constraints.
 """
 mutable struct LocalDisjunctive <: LocalConstraint
-    constraints::Vector{PropagatorConstraint}
+    global_constraints::Vector{PropagatorConstraint}
+    local_constraints::Set{LocalConstraint}
 end
 
 
@@ -13,47 +12,41 @@ Propagates the LocalDisjunctive constraint.
 It enforces that at least one of its given constraints hold.
 """
 function propagate(
-    c::LocalDisjunctive,
-    g::Grammar,
-    context::GrammarContext,
-    domain::Vector{Int}
-)::Tuple{Vector{Int}, Set{LocalConstraint}}
-    # Special case for when the constraint is empty
-    if length(c.constraints) == 0
+    c::LocalDisjunctive, 
+    g::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int},
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}} 
+    if length(c.global_constraints) == 0
         return domain, Set()
     end
-    
-    # Set up lists (with empty elements for domains)
-    res_domains::Vector{Int} = fill!(resize!(Vector(), length(domain)), -1)
-    res_constraints::Set{LocalConstraint} = Set()
-    res_constraints_count::Int = 0
 
-    # Loop over all constraints
-    for constraint ∈ c.constraints
-        # Propagate the constraints
-        new_domain, new_constraints = propagate(constraint, g, context, copy(domain))
+    # Copy the context to add the local constraints belonging to this disjunctive constraint as well.
+    # This way, we don't unnecessarily keep creating new local constraints.
+    new_context = deepcopy(context)
+    union!(new_context.constraints, c.local_constraints)
 
-        # Append the new constraints to the result
-        union!(res_constraints, new_constraints)
-        if collect(new_constraints) == [constraint] # hack
-            res_constraints_count += 1
+    new_local_constraints::Set{LocalConstraint} = Set()
+    new_domain = BitVector(undef, length(g.rules))
+
+    # Iterate over the global constraints & local constraints
+    any_domain_updated = false
+    for constraint ∈ Iterators.flatten((c.global_constraints, c.local_constraints))
+        curr_domain, curr_local_constraints = propagate(constraint, g, new_context, copy(domain), filled_hole)
+
+        # If we are actually intending to update the domain, OR it and set the domain updated flag to true.
+        if !isa(curr_domain, PropagateFailureReason)
+            new_domain .|= get_domain(g, curr_domain)
+            any_domain_updated = true
         end
 
-        # Add all domain values in the correct spots
-        for v ∈ new_domain
-            res_domains[findfirst(isequal(v), domain)] = v
-        end
+        union!(new_local_constraints, curr_local_constraints)
     end
 
-    # Filter all empty elements in domains
-    # (this ensures that the order of the domains remains the same)
-    filter!(!=(-1), res_domains)
+    # If we have updated the domain, use that domain. Otherwise, simply return the original domain.
+    returned_domain = any_domain_updated ? findall(new_domain) : domain
 
-    # Return the original constraint if all constraints returned themselves
-    if res_constraints_count == length(c.constraints)
-        return res_domains, Set(c)
-    end
-
-    # Return all constraints that were returned
-    return res_domains, res_constraints
+    # Make a copy of the disjunctive constraint. Otherwise, every tree will have the same reference to it (as we only create 1).
+    return returned_domain, Set([LocalDisjunctive(c.global_constraints, new_local_constraints)])
 end

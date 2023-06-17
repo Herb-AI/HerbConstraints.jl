@@ -6,6 +6,9 @@ abstract type PropagatorConstraint <: Constraint end
 
 abstract type LocalConstraint <: Constraint end
 
+@enum PropagateFailureReason unchanged_domain=1
+PropagatedDomain = Union{PropagateFailureReason, Vector{Int}}
+
 include("matchfail.jl")
 include("matchnode.jl")
 include("context.jl")
@@ -39,6 +42,8 @@ export
 
     PropagatorConstraint,
     LocalConstraint,
+    PropagateFailureReason,
+    PropagatedDomain,
 
     propagate,
     check_tree,
