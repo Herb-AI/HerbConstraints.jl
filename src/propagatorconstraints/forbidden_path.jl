@@ -32,3 +32,13 @@ function propagate(
 
 	return domain, Set()
 end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::ForbiddenPath, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "ForbiddenPath.check_tree not implemented!"
+
+	return true
+end

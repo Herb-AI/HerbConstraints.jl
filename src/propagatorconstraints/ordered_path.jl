@@ -35,3 +35,13 @@ function propagate(
 
 	return filter((x) -> !(x in rules_to_remove), domain), Set()
 end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::OrderedPath, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "OrderedPath.check_tree not implemented!"
+
+	return true
+end

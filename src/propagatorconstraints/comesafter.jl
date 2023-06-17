@@ -36,3 +36,13 @@ function propagate(
 		return unchanged_domain, Set()
 	end
 end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::ComesAfter, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "ComesAfter.check_tree not implemented!"
+
+	return true
+end

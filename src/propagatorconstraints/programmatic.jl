@@ -17,3 +17,13 @@ function propagate(
     new_domain, new_constraints = propagate(programmatic_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::Programmatic, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "Programmatic.check_tree not implemented!"
+
+	return true
+end
