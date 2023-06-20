@@ -54,7 +54,7 @@ function propagate(
         remove_from_domain = match
     elseif match isa Tuple{Symbol, Vector{Int}}
         # The hole is matched with an otherwise unassigned variable (wildcard).
-        return [], Set()
+        return Vector{Int}(), Set()
     end
 
     # Remove the rule that would complete the forbidden tree from the domain
