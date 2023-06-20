@@ -15,6 +15,8 @@ include("context.jl")
 include("patternmatch.jl")
 include("rulenodematch.jl")
 
+include("csg_annotated/csg_annotated.jl")
+
 include("propagatorconstraints/comesafter.jl")
 include("propagatorconstraints/forbidden_path.jl")
 include("propagatorconstraints/ordered_path.jl")
@@ -47,6 +49,8 @@ export
 
     propagate,
     check_tree,
+
+    generateconstraints!,
 
     ComesAfter,
     ForbiddenPath,
