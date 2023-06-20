@@ -1,11 +1,11 @@
-struct Programmatic <: PropagatorConstraint
+struct SatisfyCondition <: PropagatorConstraint
     tree::AbstractMatchNode
     condition::Function
 end
     
 
 function propagate(
-    c::Programmatic, 
+    c::SatisfyCondition, 
     g::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
@@ -16,10 +16,10 @@ function propagate(
 		return unchanged_domain, Set()
 	end
 
-    programmatic_constraint = LocalProgrammatic(context.nodeLocation, c.tree, c.condition)
-    if in(programmatic_constraint, context.constraints) return unchanged_domain, Set() end
+    satisfy_condition_constraint = LocalSatisfyCondition(context.nodeLocation, c.tree, c.condition)
+    if in(satisfy_condition_constraint, context.constraints) return unchanged_domain, Set() end
 
-    new_domain, new_constraints = propagate(programmatic_constraint, g, context, domain, filled_hole)
+    new_domain, new_constraints = propagate(satisfy_condition_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
 
@@ -27,8 +27,8 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::Programmatic, g::Grammar, tree::AbstractRuleNode)::Bool
-	@warn "Programmatic.check_tree not implemented!"
+function check_tree(c::SatisfyCondition, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "SatisfyCondition.check_tree not implemented!"
 
 	return true
 end

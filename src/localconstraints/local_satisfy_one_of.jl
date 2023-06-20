@@ -1,18 +1,18 @@
 """
 Meta-constraint that enforces the disjunction of its given constraints.
 """
-mutable struct LocalDisjunctive <: LocalConstraint
+mutable struct LocalSatisfyOneOf <: LocalConstraint
     global_constraints::Vector{PropagatorConstraint}
     local_constraints::Set{LocalConstraint}
 end
 
 
 """
-Propagates the LocalDisjunctive constraint.
+Propagates the LocalSatisfyOneOf constraint.
 It enforces that at least one of its given constraints hold.
 """
 function propagate(
-    c::LocalDisjunctive, 
+    c::LocalSatisfyOneOf, 
     g::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int},
@@ -22,7 +22,7 @@ function propagate(
         return domain, Set()
     end
 
-    # Copy the context to add the local constraints belonging to this disjunctive constraint as well.
+    # Copy the context to add the local constraints belonging to this one of constraint as well.
     # This way, we don't unnecessarily keep creating new local constraints.
     new_context = deepcopy(context)
     union!(new_context.constraints, c.local_constraints)
@@ -47,6 +47,6 @@ function propagate(
     # If we have updated the domain, use that domain. Otherwise, simply return the original domain.
     returned_domain = any_domain_updated ? findall(new_domain) : domain
 
-    # Make a copy of the disjunctive constraint. Otherwise, every tree will have the same reference to it (as we only create 1).
-    return returned_domain, Set([LocalDisjunctive(c.global_constraints, new_local_constraints)])
+    # Make a copy of the one of constraint. Otherwise, every tree will have the same reference to it (as we only create 1).
+    return returned_domain, Set([LocalSatisfyOneOf(c.global_constraints, new_local_constraints)])
 end

@@ -20,13 +20,13 @@ include("propagatorconstraints/forbidden_path.jl")
 include("propagatorconstraints/ordered_path.jl")
 include("propagatorconstraints/forbidden.jl")
 include("propagatorconstraints/ordered.jl")
-include("propagatorconstraints/programmatic.jl")
-include("propagatorconstraints/disjunctive.jl")
+include("propagatorconstraints/satisfy_condition.jl")
+include("propagatorconstraints/satisfy_one_of.jl")
 
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
-include("localconstraints/local_programmatic.jl")
-include("localconstraints/local_disjunctive.jl")
+include("localconstraints/local_satisfy_condition.jl")
+include("localconstraints/local_satisfy_one_of.jl")
 
 export
     AbstractMatchNode,
@@ -53,13 +53,13 @@ export
     OrderedPath,
     Forbidden,
     Ordered,
-    Programmatic,
-    Disjunctive,
+    SatisfyCondition,
+    SatisfyOneOf,
 
     LocalForbidden,
     LocalOrdered,
-    LocalProgrammatic
+    LocalSatisfyCondition
     LocalOrdered,
-    LocalDisjunctive
+    LocalSatisfyOneOf
 
 end # module HerbConstraints
