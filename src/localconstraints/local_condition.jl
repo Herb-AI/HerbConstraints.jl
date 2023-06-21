@@ -1,11 +1,11 @@
-mutable struct LocalSatisfyCondition <: LocalConstraint
+mutable struct LocalCondition <: LocalConstraint
     path::Vector{Int}
     tree::AbstractMatchNode
     condition::Function
 end
 
 function propagate(
-    c::LocalSatisfyCondition, 
+    c::LocalCondition, 
     ::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 

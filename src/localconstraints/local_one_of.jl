@@ -1,18 +1,18 @@
 """
 Meta-constraint that enforces the disjunction of its given constraints.
 """
-mutable struct LocalSatisfyOneOf <: LocalConstraint
+mutable struct LocalOneOf <: LocalConstraint
     global_constraints::Vector{PropagatorConstraint}
     local_constraints::Set{LocalConstraint}
 end
 
 
 """
-Propagates the LocalSatisfyOneOf constraint.
+Propagates the LocalOneOf constraint.
 It enforces that at least one of its given constraints hold.
 """
 function propagate(
-    c::LocalSatisfyOneOf, 
+    c::LocalOneOf, 
     g::Grammar, 
     context::GrammarContext, 
     domain::Vector{Int},
@@ -48,5 +48,5 @@ function propagate(
     returned_domain = any_domain_updated ? findall(new_domain) : domain
 
     # Make a copy of the one of constraint. Otherwise, every tree will have the same reference to it (as we only create 1).
-    return returned_domain, Set([LocalSatisfyOneOf(c.global_constraints, new_local_constraints)])
+    return returned_domain, Set([LocalOneOf(c.global_constraints, new_local_constraints)])
 end

@@ -144,7 +144,7 @@ Converts an annotation to a constraint.
 commutative: creates an Ordered constraint
 transitive: creates an (incorrect) Forbidden constraint
 forbidden_path(path::Vector{Union{Symbol, Int}}): creates a ForbiddenPath constraint with the original rule included
-... || ...: creates a SatisfyOneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
+... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
 """
 function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::Constraint
     if annotation isa Expr
@@ -165,7 +165,7 @@ function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{
 
         # disjunctive annotations
         if annotation.head == :||
-            return SatisfyOneOf(
+            return OneOf(
                 @show [annotation2constraint(a, rule_index, labels) for a in annotation.args]
             )
         end
