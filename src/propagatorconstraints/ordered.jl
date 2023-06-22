@@ -26,8 +26,11 @@ function propagate(
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
 	# Skip the propagator if the hole that was filled isn't a parent of the current hole
 	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+        global prop_skip_count += 1
 		return unchanged_domain, Set()
 	end
+
+    global prop_count += 1
 
     ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
     if in(ordered_constraint, context.constraints) return unchanged_domain, Set() end

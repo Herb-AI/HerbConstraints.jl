@@ -23,6 +23,8 @@ function propagate(
     # Only ever create 1 instance mounted at the root. We do require a local constraint to have multiple instances (one for every PQ node).
     if context.nodeLocation != [] return unchanged_domain, Set() end
 
+    global prop_count += 1
+
     _one_of_constraint = LocalOneOf(c.constraints, Set())
     new_domain, new_constraints = propagate(_one_of_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints

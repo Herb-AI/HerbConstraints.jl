@@ -19,8 +19,11 @@ function propagate(
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}} 
     if length(c.global_constraints) == 0
+        global prop_skip_local_count += 1
         return domain, Set()
     end
+
+    global prop_local_count += 1
 
     # Copy the context to add the local constraints belonging to this one of constraint as well.
     # This way, we don't unnecessarily keep creating new local constraints.

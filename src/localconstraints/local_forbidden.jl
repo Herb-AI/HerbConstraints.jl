@@ -23,13 +23,17 @@ function propagate(
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
     # Skip the propagator if a node is being propagated that it isn't targeting 
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
+        global prop_skip_local_count += 1
         return unchanged_domain, Set([c])
     end
 
     # Skip the propagator if the filled hole wasn't part of the path
 	if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
+        global prop_skip_local_count += 1
 		return unchanged_domain, Set([c])
 	end
+
+    global prop_local_count += 1
 
     n = get_node_at_location(context.originalExpr, c.path)
 
