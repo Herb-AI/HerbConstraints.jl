@@ -12,6 +12,7 @@ Propagates the ForbiddenPath constraint.
 It removes the elements from the domain that would complete the forbidden sequence.
 """
 function propagate(c::ForbiddenPath, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+	global prop_count += 1
 	ancestors = get_rulesequence(context.originalExpr, context.nodeLocation[begin:end-1])
 	
 	if subsequenceof(c.sequence[begin:end-1], ancestors)

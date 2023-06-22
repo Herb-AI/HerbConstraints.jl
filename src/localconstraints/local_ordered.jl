@@ -16,9 +16,11 @@ constraint.
 """
 function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
+        global prop_skip_local_count += 1
         return domain, [c]
     end
 
+    global prop_local_count += 1
     n = get_node_at_location(context.originalExpr, c.path)
 
     hole_location = context.nodeLocation[length(c.path)+1:end]

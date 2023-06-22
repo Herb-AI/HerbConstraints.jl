@@ -13,6 +13,7 @@ It removes every element from the domain that does not have a necessary
 predecessor in the left subtree.
 """
 function propagate(c::OrderedPath, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+	global prop_count += 1
 	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
 	
 	last_rule_index = 0
