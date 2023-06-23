@@ -65,7 +65,7 @@ export
     Ordered,
 
     LocalForbidden,
-    LocalOrdered
+    LocalOrdered,
 
     get_benchmarking_counters,
     reset_benchmarking_counters  
