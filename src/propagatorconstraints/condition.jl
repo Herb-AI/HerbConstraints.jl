@@ -27,8 +27,17 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::Condition, g::Grammar, tree::AbstractRuleNode)::Bool
-	@warn "Condition.check_tree not implemented!"
+function check_tree(c::Condition, g::Grammar, tree::RuleNode)::Bool
+    vars = Dict{Symbol, AbstractRuleNode}()
+    
+    # Return false if the node fits the pattern, but not the condition
+    if _pattern_match(tree, c.tree, vars) ≡ nothing && !c.condition(vars)
+        return false
+    end
 
-	return true
+    return all(check_tree(c, g, child) for child ∈ tree.children)
+end
+
+function check_tree(::Condition, ::Grammar, ::Hole)::Bool
+    return false
 end
