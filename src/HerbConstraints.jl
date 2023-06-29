@@ -19,7 +19,7 @@ include("csg_annotated/csg_annotated.jl")
 
 include("propagatorconstraints/comesafter.jl")
 include("propagatorconstraints/forbidden_path.jl")
-include("propagatorconstraints/ordered_path.jl")
+include("propagatorconstraints/require_on_left.jl")
 include("propagatorconstraints/forbidden.jl")
 include("propagatorconstraints/ordered.jl")
 include("propagatorconstraints/condition.jl")
@@ -54,7 +54,7 @@ export
 
     ComesAfter,
     ForbiddenPath,
-    OrderedPath,
+    RequireOnLeft,
     Forbidden,
     Ordered,
     Condition,
