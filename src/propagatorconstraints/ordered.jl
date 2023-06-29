@@ -26,11 +26,11 @@ function propagate(
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
 	# Skip the propagator if the hole that was filled isn't a parent of the current hole
 	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
-		return unchanged_domain, Set()
+		return domain, Set()
 	end
 
     ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
-    if in(ordered_constraint, context.constraints) return unchanged_domain, Set() end
+    if in(ordered_constraint, context.constraints) return domain, Set() end
 
     new_domain, new_constraints = propagate(ordered_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
