@@ -24,15 +24,18 @@ function propagate(
 		return domain, Set()
 	end
 
-	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
-	
-	last_rule_index = 0
-	for (i, r) ∈ enumerate(c.order)
-		r in rules_on_left ? last_rule_index = i : break
+
+	if context.nodeLocation == []
+		rules_on_left = Set{Int}()
+	else
+		rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
 	end
 
+	last_rule_index = 0
+	for (i, r) ∈ enumerate(c.order)
+		r ∈ rules_on_left ? last_rule_index = i : break
+	end
 	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
-
 	return filter((x) -> !(x in rules_to_remove), domain), Set()
 end
 

@@ -9,22 +9,29 @@
 
     @testset "Propagating comesafter" begin
         constraint = ComesAfter(1, [9])
-        context = GrammarContext(RuleNode(10, [Hole(get_domain(g₁, :Real)), Hole(get_domain(g₁, :Real))]), [1], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [Hole(get_domain(g₁, :Real)), Hole(get_domain(g₁, :Real))]), [1], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == Vector(2:9)
     end
 
     @testset "Propagating require on left" begin
         constraint = RequireOnLeft([2, 1])
-        context = GrammarContext(RuleNode(10, [RuleNode(3), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(3), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == Vector(2:9)        
+    end
+
+    @testset "Propagating require on left 2" begin
+        constraint = RequireOnLeft([2, 1])
+        context = GrammarContext(RuleNode(10, [RuleNode(2), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
+        @test domain == Vector(1:9)
     end
 
     @testset "Propagating forbidden path" begin
         constraint = ForbiddenPath([10, 1])
-        context = GrammarContext(RuleNode(10, [RuleNode(3), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(3), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == Vector(2:9)
     end
 
@@ -33,8 +40,8 @@
             [],
             MatchNode(10, [MatchNode(1), MatchNode(1)])
         )
-        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == Vector(2:9)
     end
 
@@ -43,8 +50,8 @@
             [],
             MatchNode(10, [MatchNode(1), MatchVar(:x)])
         )
-        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == []
     end
 
@@ -53,12 +60,12 @@
             [],
             MatchNode(10, [MatchVar(:x), MatchVar(:x)])
         )
-        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(1), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == Vector(2:9)
 
-        context = GrammarContext(RuleNode(10, [RuleNode(5), Hole(get_domain(g₁, :Real))]), [2], [])
-        domain, _ = propagate(constraint, g₁, context, Vector(1:9))
+        context = GrammarContext(RuleNode(10, [RuleNode(5), Hole(get_domain(g₁, :Real))]), [2], Set{Int}())
+        domain, _ = propagate(constraint, g₁, context, Vector(1:9), nothing)
         @test domain == append!(Vector(1:4), Vector(6:9))
     end
 
@@ -72,9 +79,9 @@
             MatchNode(10, [MatchVar(:x), MatchVar(:x)])
         )
         expr = RuleNode(10, [RuleNode(10, [RuleNode(2), RuleNode(1)]), RuleNode(10, [RuleNode(2), Hole(Herb.HerbGrammar.get_domain(g₁, :Real))])])
-        context = GrammarContext(expr, [2, 2], [])
-        domain, _ = propagate(constraint₁, g₁, context, [1,2,3])
-        domain, _ = propagate(constraint₂, g₁, context, domain)
+        context = GrammarContext(expr, [2, 2], Set{Int}())
+        domain, _ = propagate(constraint₁, g₁, context, [1,2,3], nothing)
+        domain, _ = propagate(constraint₂, g₁, context, domain, nothing)
         @test domain == [3]
     end
 
@@ -86,8 +93,8 @@
         )
 
         expr = RuleNode(10, [RuleNode(8), Hole(get_domain(g₁, :Real))])
-        context = GrammarContext(expr, [2], [])
-        domain, _ = propagate(constraint₁, g₁, context, collect(1:9))
+        context = GrammarContext(expr, [2], Set{Int}())
+        domain, _ = propagate(constraint₁, g₁, context, collect(1:9), nothing)
         @test domain == [8, 9]
     end
 
@@ -102,7 +109,7 @@
                 Hole(get_domain(g₁, :Real))
             ])
         ])
-        context = GrammarContext(expr, [2, 2], [])
+        context = GrammarContext(expr, [2, 2], Set{Int}())
         
         constraint = LocalOrdered(
             [], 
@@ -110,7 +117,7 @@
             [:x₂, :x₁]
         )
         
-        domain, _ = propagate(constraint, g₁, context, [1,2,3])
+        domain, _ = propagate(constraint, g₁, context, [1,2,3], nothing)
         
         @test domain == [1]
     end
