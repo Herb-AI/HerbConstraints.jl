@@ -14,9 +14,21 @@ Propagates the LocalOrdered constraint.
 It removes rules from the domain that would violate the order of variables as defined in the 
 constraint.
 """
-function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::LocalOrdered, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
+    # Skip the propagator if a node is being propagated that it isn't targeting
     if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, [c]
+        return domain, Set([c])
+    end
+
+    # Skip the propagator if the filled hole wasn't part of the path
+    if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
+      return domain, Set([c])
     end
 
     n = get_node_at_location(context.originalExpr, c.path)
@@ -29,13 +41,14 @@ function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::
     if match ≡ hardfail
         # Match attempt failed due to mismatched rulenode indices. 
         # This means that we can remove the current constraint.
-        return domain, []
+        return domain, Set()
     elseif match ≡ softfail
         # Match attempt failed because we had to compare with a hole. 
         # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, [c]
+        return domain, Set([c])
     elseif match isa Tuple{Symbol, Vector{Int}}
         hole_var, hole_path = match
+
         @assert hole_var ∈ keys(vars)
         @assert hole_var ∈ c.order
 
@@ -57,10 +70,10 @@ function propagate(c::LocalOrdered, ::Grammar, context::GrammarContext, domain::
             domain = new_domain
         end
 
-        return domain, can_be_deleted ? [] : [c]
+        return domain, can_be_deleted ? Set() : Set([c])
     else
         @error("Unexpected result from pattern match, not propagating constraint $c")
-        return domain, [c]
+        return domain, Set([c])
     end
 end
 

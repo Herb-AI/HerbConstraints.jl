@@ -12,15 +12,39 @@ Propagates the RequireOnLeft constraint.
 It removes every element from the domain that does not have a necessary 
 predecessor in the left subtree.
 """
-function propagate(c::RequireOnLeft, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
-	rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
-	
-	last_rule_index = 0
-	for (i, r) ∈ enumerate(c.order)
-		r in rules_on_left ? last_rule_index = i : break
+function propagate(
+    c::RequireOnLeft, 
+    ::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
+	# Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set()
 	end
 
-	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
 
-	return filter((x) -> !(x in rules_to_remove), domain), []
+	if context.nodeLocation == []
+		rules_on_left = Set{Int}()
+	else
+		rules_on_left = rulesonleft(context.originalExpr, context.nodeLocation)
+	end
+
+	last_rule_index = 0
+	for (i, r) ∈ enumerate(c.order)
+		r ∈ rules_on_left ? last_rule_index = i : break
+	end
+	rules_to_remove = Set(c.order[last_rule_index+2:end]) # +2 because the one after the last index can be used
+	return filter((x) -> !(x in rules_to_remove), domain), Set()
+end
+
+
+"""
+Checks if the given tree abides the constraint.
+"""
+function check_tree(c::RequireOnLeft, g::Grammar, tree::AbstractRuleNode)::Bool
+	@warn "RequireOnLeft.check_tree not implemented!"
+
+	return true
 end
