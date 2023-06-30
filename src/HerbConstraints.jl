@@ -23,7 +23,7 @@ The [`propagate`](@ref)-function returns a tuple containing
 abstract type PropagatorConstraint <: Constraint end
 
 """
-    LocalConstraint <: Constraint
+    abstract type LocalConstraint <: Constraint
 
 Abstract type representing all local constraints.
 Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
