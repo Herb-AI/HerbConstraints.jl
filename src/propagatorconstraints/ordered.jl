@@ -49,9 +49,22 @@ Any rule that violates the order as defined by the contraint is removed from the
     Therefore, [`Ordered`](@ref) can only be used in implementations that keep track of the 
     [`LocalConstraint`](@ref)s and propagate them at the right moments.
 """
-function propagate(c::Ordered, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::Ordered, 
+    g::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
+	# Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set()
+	end
+
     ordered_constraint = LocalOrdered(context.nodeLocation, c.tree, c.order)
-    new_domain, new_constraints = propagate(ordered_constraint, g, context, domain)
+    if in(ordered_constraint, context.constraints) return domain, Set() end
+
+    new_domain, new_constraints = propagate(ordered_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
 

@@ -42,9 +42,22 @@ It removes the rules from the `domain` that would complete the forbidden tree.
     Therefore, [`Forbidden`](@ref) can only be used in implementations that keep track of the 
     [`LocalConstraint`](@ref)s and propagate them at the right moments.
 """
-function propagate(c::Forbidden, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+function propagate(
+    c::Forbidden, 
+    g::Grammar, 
+    context::GrammarContext, 
+    domain::Vector{Int}, 
+    filled_hole::Union{HoleReference, Nothing}
+)::Tuple{PropagatedDomain, Set{LocalConstraint}}
+	# Skip the propagator if the hole that was filled isn't a parent of the current hole
+	if !isnothing(filled_hole) && filled_hole.path != context.nodeLocation[begin:end-1]
+		return domain, Set()
+	end
+
     notequals_constraint = LocalForbidden(context.nodeLocation, c.tree)
-    new_domain, new_constraints = propagate(notequals_constraint, g, context, domain)
+    if in(notequals_constraint, context.constraints) return domain, Set() end
+
+    new_domain, new_constraints = propagate(notequals_constraint, g, context, domain, filled_hole)
     return new_domain, new_constraints
 end
 
