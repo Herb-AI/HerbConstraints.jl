@@ -1,4 +1,4 @@
-
+using HerbGrammar
 @testset verbose=true "Propagators" begin
 
     g₁ = @csgrammar begin
@@ -78,7 +78,7 @@
             [2],
             MatchNode(10, [MatchVar(:x), MatchVar(:x)])
         )
-        expr = RuleNode(10, [RuleNode(10, [RuleNode(2), RuleNode(1)]), RuleNode(10, [RuleNode(2), Hole(Herb.HerbGrammar.get_domain(g₁, :Real))])])
+        expr = RuleNode(10, [RuleNode(10, [RuleNode(2), RuleNode(1)]), RuleNode(10, [RuleNode(2), Hole(get_domain(g₁, :Real))])])
         context = GrammarContext(expr, [2, 2], Set{Int}())
         domain, _ = propagate(constraint₁, g₁, context, [1,2,3], nothing)
         domain, _ = propagate(constraint₂, g₁, context, domain, nothing)
