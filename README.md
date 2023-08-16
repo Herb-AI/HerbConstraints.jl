@@ -6,4 +6,5 @@ Constraints are formulated as context-sensitive grammars. Further, they are divi
 
 `HerbConstraints.jl` provides functionality to propagate constraints and match constraint patterns efficiently. Further, provides error handling through `matchfail` and `matchnode`.
 
+[![Build Status](https://github.com/Herb-AI/HerbConstraints.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/Herb-AI/HerbConstraints.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 

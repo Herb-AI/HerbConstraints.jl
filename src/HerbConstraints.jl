@@ -1,7 +1,7 @@
 module HerbConstraints
 
-using ..HerbCore
-using ..HerbGrammar
+using HerbCore
+using HerbGrammar
 
 """
     PropagatorConstraint <: Constraint
