@@ -1,4 +1,6 @@
 """
+    mutable struct GrammarContext
+
 Structure used to track the context.
 Contains:
 	- the expression being modified 
@@ -15,6 +17,8 @@ end
 GrammarContext(originalExpr::AbstractRuleNode) = GrammarContext(originalExpr, [], [])
 
 """
+    addparent!(context::GrammarContext, parent::Int)
+
 Adds a parent to the context.
 The parent is defined by the grammar rule id.
 """
@@ -24,6 +28,8 @@ end
 
 
 """
+    copy_and_insert(old_context::GrammarContext, parent::Int)
+
 Copies the given context and insert the parent in the node location.
 """
 function copy_and_insert(old_context::GrammarContext, parent::Int)
