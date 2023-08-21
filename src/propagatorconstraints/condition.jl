@@ -1,8 +1,36 @@
+"""
+    Condition <: PropagatorConstraint
+
+This [`PropagatorConstraint`](@ref) forbids any subtree that matches the pattern defined by `tree` 
+and where the [`RuleNode`](@ref) that is matched to the variable in the pattern violates the predicate given by
+the `condition` function.
+
+The `condition` function takes a `RuleNode` tree and should return a `Bool`.
+
+!!! warning
+    The [`Condition`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
+    are also enforced in the future when the context of a [`Hole`](@ref) changes. 
+    Therefore, [`Condition`](@ref) can only be used in implementations that keep track of the 
+    [`LocalConstraint`](@ref)s and propagate them at the right moments.
+"""
 struct Condition <: PropagatorConstraint
     tree::AbstractMatchNode
     condition::Function
 end
     
+
+"""
+    propagate(c::Condition, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+
+Propagates the [`Condition`](@ref) constraint.
+Rules that violate the [`Condition`](@ref) constraint are removed from the domain.
+
+!!! warning
+    The [`Condition`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
+    are also enforced in the future when the context of a [`Hole`](@ref) changes. 
+    Therefore, [`Condition`](@ref) can only be used in implementations that keep track of the 
+    [`LocalConstraint`](@ref)s and propagate them at the right moments.
+"""
 
 function propagate(
     c::Condition, 
