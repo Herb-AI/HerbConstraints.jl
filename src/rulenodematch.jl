@@ -1,5 +1,7 @@
 
 """
+    _rulenode_match_with_hole(rn₁::RuleNode, rn₂::RuleNode, hole_location::Vector{Int})::Union{Int, MatchFail}
+
 Matches two rulenodes. 
 Returns how to fill in the hole in rn₁ to make it match rn₂ if:
   - rn₁ has a single hole at the provided location

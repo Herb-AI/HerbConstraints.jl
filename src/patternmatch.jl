@@ -1,7 +1,8 @@
 
 """
-Tries to match RuleNode `rn` with MatchNode `mn` and fill in 
-the domain of the hole at `hole_location`. 
+    _pattern_match_with_hole(rn::RuleNode, mn::MatchNode, hole_location::Vector{Int}, vars::Dict{Symbol, AbstractRuleNode})::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}}
+
+Tries to match [`RuleNode`](@ref) `rn` with [`MatchNode`](@ref) `mn` and fill in the domain of the hole at `hole_location`. 
 Returns if match is successful either:
   - The id for the node which fills the hole
   - A symbol for the variable that fills the hole
@@ -53,7 +54,12 @@ function _pattern_match_with_hole(
     end
 end
 
-# Matching RuleNode with MatchVar
+"""
+    _pattern_match_with_hole(rn::RuleNode, mv::MatchVar, hole_location::Vector{Int}, vars::Dict{Symbol, AbstractRuleNode})::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}}
+
+Tries to match [`RuleNode`](@ref) `rn` with [`MatchVar`](@ref) `mv` and fill in the domain of the hole at `hole_location`.
+If the variable name is already assigned in `vars`, the rulenode is matched with the hole. Otherwise the variable and the hole location are returned.
+"""
 function _pattern_match_with_hole(
     rn::RuleNode, 
     mv::MatchVar, 
@@ -68,12 +74,22 @@ function _pattern_match_with_hole(
     end
 end
 
-# Matching Hole with MatchNode
+"""
+    _pattern_match_with_hole(::Hole, mn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, AbstractRuleNode})::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}} 
+
+Matches the [`Hole`](@ref) with the given [`MatchNode`](@ref). 
+
+TODO check this behaviour?
+"""
 _pattern_match_with_hole(::Hole, mn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, AbstractRuleNode}
 )::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}} = 
     hole_location == [] && mn.children == [] ? mn.rule_ind : softfail
 
-# Matching Hole with MatchVar
+"""
+    _pattern_match_with_hole(::Hole, mn::MatchNode, hole_location::Vector{Int}, ::Dict{Symbol, AbstractRuleNode})::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}} 
+
+Matches the [`Hole`](@ref) with the given [`MatchVar`](@ref), similar to [`_pattern_match_with_hole`](@ref).
+"""
 function _pattern_match_with_hole(h::Hole, mv::MatchVar, hole_location::Vector{Int}, vars::Dict{Symbol, AbstractRuleNode}
 )::Union{Int, Symbol, MatchFail, Tuple{Symbol, Vector{Int}}}
     @assert hole_location == []
@@ -85,13 +101,13 @@ function _pattern_match_with_hole(h::Hole, mv::MatchVar, hole_location::Vector{I
     end
 end
 
-# Matching RuleNode with MatchNode
 """
-Tries to match RuleNode `rn` with MatchNode `mn`.
+    _pattern_match(rn::RuleNode, mn::MatchNode, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}  
+
+Tries to match [`RuleNode`](@ref) `rn` with [`MatchNode`](@ref) `mn`.
 Modifies the variable assignment dictionary `vars`.
-Returns nothing if the match is successful.
-If the match is unsuccessful, it returns whether it 
-is a softfail or hardfail (see MatchFail docstring)
+Returns `nothing` if the match is successful.
+If the match is unsuccessful, it returns whether it is a softfail or hardfail (see [`MatchFail`](@ref) docstring)
 """
 function _pattern_match(rn::RuleNode, mn::MatchNode, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}  
     if rn.ind ≠ mn.rule_ind || length(rn.children) ≠ length(mn.children)
@@ -109,7 +125,12 @@ function _pattern_match(rn::RuleNode, mn::MatchNode, vars::Dict{Symbol, Abstract
     return nothing
 end
 
-# Matching RuleNode with MatchVar
+"""
+    _pattern_match(rn::RuleNode, mv::MatchVar, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}
+
+Matching [`RuleNode`](@ref) `rn` with [`MatchVar`](@ref) `mv`. If the variable is already assigned, the rulenode is matched with the specific variable value. Returns `nothing` if the match is succesful. 
+If the match is unsuccessful, it returns whether it is a softfail or hardfail (see [`MatchFail`](@ref) docstring)
+"""
 function _pattern_match(rn::RuleNode, mv::MatchVar, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}
     if mv.var_name ∈ keys(vars) 
         # If the assignments are unequal, the match is unsuccessful
