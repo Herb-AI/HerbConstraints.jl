@@ -72,6 +72,8 @@ include("localconstraints/local_ordered.jl")
 include("localconstraints/local_condition.jl")
 include("localconstraints/local_one_of.jl")
 
+include("solver.jl")
+
 export
     AbstractMatchNode,
     MatchNode,
@@ -106,6 +108,8 @@ export
     LocalOrdered,
     LocalCondition
     LocalOrdered,
-    LocalOneOf
+    LocalOneOf,
+
+    is_subdomain
 
 end # module HerbConstraints
