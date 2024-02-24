@@ -2,6 +2,7 @@ module HerbConstraints
 
 using HerbCore
 using HerbGrammar
+using MLStyle
 
 """
     PropagatorConstraint <: Constraint
@@ -55,7 +56,9 @@ include("matchfail.jl")
 include("matchnode.jl")
 include("context.jl")
 include("patternmatch.jl")
+include("patternmatch2.jl")
 include("rulenodematch.jl")
+include("solver.jl")
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -72,7 +75,6 @@ include("localconstraints/local_ordered.jl")
 include("localconstraints/local_condition.jl")
 include("localconstraints/local_one_of.jl")
 
-include("solver.jl")
 
 export
     AbstractMatchNode,
@@ -106,10 +108,12 @@ export
 
     LocalForbidden,
     LocalOrdered,
-    LocalCondition
+    LocalCondition,
     LocalOrdered,
     LocalOneOf,
 
-    is_subdomain
+    is_subdomain,
+
+    pattern_match
 
 end # module HerbConstraints

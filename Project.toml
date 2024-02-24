@@ -4,13 +4,14 @@ authors = ["Jaap de Jong <jaapdejong15@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-HerbGrammar = "4ef9e186-2fe5-4b24-8de7-9f7291f24af7"
 HerbCore = "2b23ba43-8213-43cb-b5ea-38c12b45bd45"
+HerbGrammar = "4ef9e186-2fe5-4b24-8de7-9f7291f24af7"
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 
 [compat]
-julia = "1.8"
 HerbCore = "0.1.0"
 HerbGrammar = "0.1.0"
+julia = "1.8"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
