@@ -2,6 +2,7 @@ module HerbConstraints
 
 using HerbCore
 using HerbGrammar
+using DataStructures
 using MLStyle
 
 """
@@ -58,8 +59,11 @@ include("context.jl")
 include("patternmatch.jl")
 include("patternmatch2.jl")
 include("rulenodematch.jl")
-include("state.jl")
-include("solver.jl")
+
+include("solver/state.jl")
+include("solver/solver.jl")
+include("solver/treemanipulations.jl")
+include("solver/domainutils.jl")
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -116,6 +120,11 @@ export
     Solver,
     is_subdomain,
     partition,
+
+    remove!,
+    fill!,
+    remove_all_but!,
+    substitute!,
 
     pattern_match
 
