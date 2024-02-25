@@ -1,0 +1,23 @@
+"""
+    struct State 
+
+A state to be solved by the constraint [`Solver`](@ref).
+A state contains of:
+
+- `tree`: A partial AST
+- `size`: The size of the tree. This is a cached value which prevents
+   having to traverse the entire tree each time the size is needed.
+- `constraints`: The local constraints that apply to this tree. 
+   These constraints are enforced each time the tree is modified.
+- `complete`: Flag to indicate if the tree is complete. That is, is doesn't contain any holes
+"""
+struct State
+    tree::AbstractRuleNode
+    size::Int
+    constraints::Set{LocalConstraint}
+    complete::Bool
+end
+
+function Base.copy(state::State) 
+    State(deepcopy(tree), state.size, copy(constraints), state.complete)
+end

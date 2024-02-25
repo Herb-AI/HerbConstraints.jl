@@ -58,6 +58,7 @@ include("context.jl")
 include("patternmatch.jl")
 include("patternmatch2.jl")
 include("rulenodematch.jl")
+include("state.jl")
 include("solver.jl")
 
 include("csg_annotated/csg_annotated.jl")
@@ -112,7 +113,9 @@ export
     LocalOrdered,
     LocalOneOf,
 
+    Solver,
     is_subdomain,
+    partition,
 
     pattern_match
 
