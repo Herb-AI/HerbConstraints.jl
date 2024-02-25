@@ -95,6 +95,7 @@ macro csgrammar_annotated(expression)
 	is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
 	is_eval = [iseval(rule) for rule ∈ rules]
 	childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
+    bychildtypes = [BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for i1 ∈ 1:length(rules)]
 	domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
 
     return ContextSensitiveGrammar(
@@ -105,6 +106,7 @@ macro csgrammar_annotated(expression)
         bytype,
 		domains,
         childtypes,
+        bychildtypes,
         nothing,
         constraints
     )
