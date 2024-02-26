@@ -5,7 +5,7 @@ A [`PropagatorConstraint`](@ref) that enforces a specific order in [`MatchVar`](
 assignments in the pattern defined by `tree`.
 A pattern is a tree of [`AbstractMatchNode`](@ref)s. 
 Such a node can either be a [`MatchNode`](@ref), which contains a rule index corresponding to the 
-rule index in the [`Grammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
+rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
 It can also contain a [`MatchVar`](@ref), which contains a single identifier symbol.
 A [`MatchVar`](@ref) can match any subtree, but if there are multiple instances of the same
 variable in the pattern, the matched subtrees must be identical.
@@ -38,7 +38,7 @@ end
 
 
 """
-    propagate(c::Ordered, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Ordered, g::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Ordered`](@ref) constraint.
 Any rule that violates the order as defined by the contraint is removed from the `domain`.
@@ -51,8 +51,8 @@ Any rule that violates the order as defined by the contraint is removed from the
 """
 function propagate(
     c::Ordered, 
-    g::Grammar, 
-    context::GrammarContext, 
+    g::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
@@ -69,11 +69,11 @@ function propagate(
 end
 
 """
-    check_tree(c::Ordered, g::Grammar, tree::RuleNode)::Bool
+    check_tree(c::Ordered, g::AbstractGrammar, tree::RuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Ordered`](@ref) constraint.
 """
-function check_tree(c::Ordered, g::Grammar, tree::RuleNode)::Bool
+function check_tree(c::Ordered, g::AbstractGrammar, tree::RuleNode)::Bool
     vars = Dict{Symbol, AbstractRuleNode}()
     if _pattern_match(tree, c.tree, vars) ≡ nothing
         # Check variable ordering
@@ -84,4 +84,4 @@ function check_tree(c::Ordered, g::Grammar, tree::RuleNode)::Bool
     return all(check_tree(c, g, child) for child ∈ tree.children)
 end
 
-check_tree(c::Ordered, g::Grammar, tree::Hole)::Bool = true
+check_tree(c::Ordered, g::AbstractGrammar, tree::Hole)::Bool = true

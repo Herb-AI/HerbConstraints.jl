@@ -34,7 +34,7 @@ Creates a [`ComesAfter`](@ref) constraint with only a single `predecessor`.
 ComesAfter(rule::Int, predecessor::Int) = ComesAfter(rule, [predecessor])
 
 """
-	propagate(c::ComesAfter, ::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+	propagate(c::ComesAfter, ::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`ComesAfter`](@ref) [`PropagatorConstraint`](@ref).
 Rules in the domain that would violate the [`ComesAfter`](@ref) constraint are removed.
@@ -42,8 +42,8 @@ Rules in the domain that would violate the [`ComesAfter`](@ref) constraint are r
 
 function propagate(
     c::ComesAfter, 
-    ::Grammar, 
-    context::GrammarContext, 
+    ::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
@@ -69,7 +69,7 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::ComesAfter, g::Grammar, tree::AbstractRuleNode)::Bool
+function check_tree(c::ComesAfter, g::AbstractGrammar, tree::AbstractRuleNode)::Bool
 	@warn "ComesAfter.check_tree not implemented!"
 
 	return true

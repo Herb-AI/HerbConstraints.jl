@@ -17,14 +17,14 @@ mutable struct LocalCondition <: LocalConstraint
 end
 
 """
-    propagate(c::LocalCondition, ::Grammar, context::GrammarContext, domain::Vector{Int}, filled_hole::Union{HoleReference, Nothing})
+    propagate(c::LocalCondition, ::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int}, filled_hole::Union{HoleReference, Nothing})
 
 Propagates the [`LocalCondition`](@ref) constraint.
 """
 function propagate(
     c::LocalCondition, 
-    ::Grammar, 
-    context::GrammarContext, 
+    ::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

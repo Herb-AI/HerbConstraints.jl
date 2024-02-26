@@ -10,7 +10,7 @@ Abstract type representing all propagator constraints.
 Each propagator constraint has an implementation of a [`propagate`](@ref)-function that takes
 
 - the [`PropagatorConstraint`](@ref)
-- a [`Grammar`](@ref)
+- a [`AbstractGrammar`](@ref)
 - a [`GrammarContext`](@ref), which most importantly contains the tree and the location 
   in the tree where propagation should take place.
 - The `domain` which the [`propagate`](@ref)-function prunes. 
@@ -31,7 +31,7 @@ Each local constraint contains a `path` to a specific location in the tree.
 Each local constraint has an implementation of a [`propagate`](@ref)-function that takes
 
 - the [`LocalConstraint`](@ref)
-- a [`Grammar`](@ref)
+- a [`AbstractGrammar`](@ref)
 - a [`GrammarContext`](@ref), which most importantly contains the tree and the location 
   in the tree where propagation should take place.
 - The `domain` which the [`propagate`](@ref)-function prunes. 

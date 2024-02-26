@@ -13,8 +13,8 @@ It enforces that at least one of its given constraints hold.
 """
 function propagate(
     c::LocalOneOf, 
-    g::Grammar, 
-    context::GrammarContext, 
+    g::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int},
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}} 

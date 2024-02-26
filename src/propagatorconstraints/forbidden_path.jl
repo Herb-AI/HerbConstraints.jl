@@ -24,8 +24,8 @@ It removes the elements from the domain that would complete the forbidden sequen
 """
 function propagate(
     c::ForbiddenPath, 
-    ::Grammar, 
-    context::GrammarContext, 
+    ::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
@@ -48,7 +48,7 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::ForbiddenPath, g::Grammar, tree::AbstractRuleNode)::Bool
+function check_tree(c::ForbiddenPath, g::AbstractGrammar, tree::AbstractRuleNode)::Bool
 	@warn "ForbiddenPath.check_tree not implemented!"
 
 	return true

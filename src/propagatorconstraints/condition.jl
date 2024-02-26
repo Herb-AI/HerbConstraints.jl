@@ -20,7 +20,7 @@ end
     
 
 """
-    propagate(c::Condition, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Condition, g::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Condition`](@ref) constraint.
 Rules that violate the [`Condition`](@ref) constraint are removed from the domain.
@@ -34,8 +34,8 @@ Rules that violate the [`Condition`](@ref) constraint are removed from the domai
 
 function propagate(
     c::Condition, 
-    g::Grammar, 
-    context::GrammarContext, 
+    g::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
@@ -55,7 +55,7 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::Condition, g::Grammar, tree::RuleNode)::Bool
+function check_tree(c::Condition, g::AbstractGrammar, tree::RuleNode)::Bool
     vars = Dict{Symbol, AbstractRuleNode}()
     
     # Return false if the node fits the pattern, but not the condition
@@ -66,6 +66,6 @@ function check_tree(c::Condition, g::Grammar, tree::RuleNode)::Bool
     return all(check_tree(c, g, child) for child ∈ tree.children)
 end
 
-function check_tree(::Condition, ::Grammar, ::Hole)::Bool
+function check_tree(::Condition, ::AbstractGrammar, ::Hole)::Bool
     return false
 end

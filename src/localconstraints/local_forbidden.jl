@@ -18,8 +18,8 @@ the RuleNode at the given path match the pattern defined by the MatchNode.
 """
 function propagate(
     c::LocalForbidden, 
-    ::Grammar, 
-    context::GrammarContext, 
+    ::AbstractGrammar, 
+    context::AbstractGrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

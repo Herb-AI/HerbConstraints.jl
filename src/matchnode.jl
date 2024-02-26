@@ -78,12 +78,12 @@ contains_var(mn::MatchNode, var::Symbol) = any(contains_var(c, var) for c ∈ mn
 
 
 """
-    matchnode2expr(pattern::MatchNode, grammar::Grammar)
+    matchnode2expr(pattern::MatchNode, grammar::AbstractGrammar)
 
 Converts a MatchNode tree into a Julia expression. 
 This is primarily useful for pretty-printing a pattern. Returns the corresponding expression.
 """
-function matchnode2expr(pattern::MatchNode, grammar::Grammar)
+function matchnode2expr(pattern::MatchNode, grammar::AbstractGrammar)
 	root = deepcopy(grammar.rules[pattern.rule_ind])
 	if !grammar.isterminal[pattern.rule_ind] # not terminal
 		root,_ = _matchnode2expr(root, pattern, grammar)
@@ -92,21 +92,21 @@ function matchnode2expr(pattern::MatchNode, grammar::Grammar)
 end
 
 """
-    matchnode2expr(pattern::MatchVar, grammar::Grammar)
+    matchnode2expr(pattern::MatchVar, grammar::AbstractGrammar)
 
 Converts a MatchVar into an expression by returning the variable directly.
 This is primarily useful for pretty-printing a pattern.
 """
-function matchnode2expr(pattern::MatchVar, ::Grammar)
+function matchnode2expr(pattern::MatchVar, ::AbstractGrammar)
 	return pattern.var_name
 end
 
 """
-    _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::Grammar, j=0)
+    _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::AbstractGrammar, j=0)
 
 Internal function for [`matchnode2expr`](@ref), recursively iterating over a matched pattern and converting it to an expression. This is primarily useful for pretty-printing a pattern. Returns the corresponding expression and the current child index.
 """
-function _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::Grammar, j=0)
+function _matchnode2expr(expr::Expr, pattern::MatchNode, grammar::AbstractGrammar, j=0)
 	for (k,arg) ∈ enumerate(expr.args)
 		if isa(arg, Expr)
 			expr.args[k],j = _matchnode2expr(arg, pattern, grammar, j)
@@ -127,11 +127,11 @@ end
 
 
 """
-    _matchnode2expr(expr::Expr, pattern::MatchVar, grammar::Grammar, j=0)
+    _matchnode2expr(expr::Expr, pattern::MatchVar, grammar::AbstractGrammar, j=0)
 
 Internal function for [`matchnode2expr`](@ref), recursively iterating over a matched variable and converting it to an expression. This is primarily useful for pretty-printing a pattern. Returns the corresponding expression and the current child index.
 """
-function _matchnode2expr(expr::Expr, pattern::MatchVar, grammar::Grammar, j=0)
+function _matchnode2expr(expr::Expr, pattern::MatchVar, grammar::AbstractGrammar, j=0)
 	for (k,arg) ∈ enumerate(expr.args)
 		if isa(arg, Expr)
 			expr.args[k],j = _matchnode2expr(arg, pattern, grammar, j)
@@ -148,11 +148,11 @@ end
 
 
 """
-    _matchnode2expr(typ::Symbol, pattern::MatchNode, grammar::Grammar, j=0)
+    _matchnode2expr(typ::Symbol, pattern::MatchNode, grammar::AbstractGrammar, j=0)
 
 Internal function for [`matchnode2expr`](@ref), returning the matched translated symbol. This is primarily useful for pretty-printing a pattern. Returns the corresponding expression, i.e. the variable name and the current child index.
 """
-function _matchnode2expr(typ::Symbol, pattern::MatchNode, grammar::Grammar, j=0)
+function _matchnode2expr(typ::Symbol, pattern::MatchNode, grammar::AbstractGrammar, j=0)
 	retval = typ
     if haskey(grammar.bytype, typ)
         child = pattern.children[1]
@@ -170,11 +170,11 @@ end
 
 
 """
-    _matchnode2expr(typ::Symbol, pattern::MatchVar, grammar::Grammar, j=0)
+    _matchnode2expr(typ::Symbol, pattern::MatchVar, grammar::AbstractGrammar, j=0)
 
 Internal function for [`matchnode2expr`](@ref). This is primarily useful for pretty-printing a pattern. Returns the corresponding expression, i.e. the variable name and the current child index.
 """
-function _matchnode2expr(typ::Symbol, pattern::MatchVar, grammar::Grammar, j=0)
+function _matchnode2expr(typ::Symbol, pattern::MatchVar, grammar::AbstractGrammar, j=0)
 	return pattern.var_name, j
 end
 
