@@ -1,5 +1,5 @@
 using HerbGrammar
-@testset verbose=true "Solver" begin
+@testset verbose=true "Domain Utils" begin
 
     @testset "is_subdomain" begin
         domain = BitVector((1, 0, 1, 1, 1, 0, 0, 1))

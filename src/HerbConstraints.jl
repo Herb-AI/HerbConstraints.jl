@@ -118,6 +118,17 @@ export
     LocalOneOf,
 
     Solver,
+    State,
+    new_state!,
+    save_state!,
+    load_state!,
+    get_state,
+    get_tree,
+    get_grammar,
+    get_state,
+    get_node_at_location,
+    get_hole_at_location,
+
     is_subdomain,
     partition,
 

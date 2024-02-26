@@ -19,7 +19,7 @@ end
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
 function Solver(grammar::Grammar, sym::Symbol)
-    solver = Solver(grammar, nothing, Set{Constraint}())
+    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}())
     init_node = Hole(get_domain(grammar, sym))
     new_state!(solver, init_node)
     return solver
@@ -56,7 +56,7 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
     #TODO: rebuild the tree node by node, to add local constraints correctly
-    solver.state = State(tree, length(tree), [], complete)
+    solver.state = State(tree, length(tree), Set{LocalConstraint}())
     fix_point!(solver)
 end
 
@@ -66,7 +66,7 @@ end
 Returns a copy of the current state that can be restored by calling `load_state!(solver, state)`
 """
 function save_state!(solver::Solver)::State
-    return copy(State)
+    return copy(get_state(solver))
 end
 
 """
@@ -90,8 +90,22 @@ function get_state(solver::Solver)::State
     return solver.state
 end
 
-#TODO: replace this function. only relevant constraints should be scheduled
-function schedule_all_constraints()
+#TODO: remove the scope of `HerbCore`?
+function HerbCore.get_node_at_location(solver::Solver, location::Vector{Int})::AbstractRuleNode
+    # dispatches the function on type `AbstractRuleNode` (defined in rulenode_operator.jl in HerbGrammar.jl)
+    node = get_node_at_location(get_tree(solver), location)
+    @assert !isnothing(node) "No node exists at location $location in the current state of the solver"
+    return node
+end
+
+function get_hole_at_location(solver::Solver, location::Vector{Int})::Hole
+    hole = get_node_at_location(get_tree(solver), location)
+    @assert hole isa Hole "Hole $hole is of non-Hole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
+    return hole
+end
+
+#TODO: this is a temporary function for testing. only relevant constraints should be scheduled
+function schedule_all_constraints!(solver::Solver)
     for c ∈ solver.state.constraints
         schedule!(solver, c)
     end
