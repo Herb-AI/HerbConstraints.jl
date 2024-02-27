@@ -17,22 +17,22 @@ end
 GrammarContext(originalExpr::AbstractRuleNode) = GrammarContext(originalExpr, [], [])
 
 """
-    addparent!(context::AbstractGrammarContext, parent::Int)
+    addparent!(context::GrammarContext, parent::Int)
 
 Adds a parent to the context.
 The parent is defined by the grammar rule id.
 """
-function addparent!(context::AbstractGrammarContext, parent::Int)
+function addparent!(context::GrammarContext, parent::Int)
 	push!(context.nodeLocation, parent)
 end
 
 
 """
-    copy_and_insert(old_context::AbstractGrammarContext, parent::Int)
+    copy_and_insert(old_context::GrammarContext, parent::Int)
 
 Copies the given context and insert the parent in the node location.
 """
-function copy_and_insert(old_context::AbstractGrammarContext, parent::Int)
+function copy_and_insert(old_context::GrammarContext, parent::Int)
 	new_context = GrammarContext(old_context.originalExpr, deepcopy(old_context.nodeLocation), deepcopy(old_context.constraints))
 	push!(new_context.nodeLocation, parent)
 	new_context

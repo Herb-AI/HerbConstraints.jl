@@ -16,7 +16,7 @@ It enforces that at least one of its given constraints hold.
 function propagate(
     c::OneOf, 
     g::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

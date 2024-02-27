@@ -31,7 +31,7 @@ end
 
 
 """
-    propagate(c::Forbidden, g::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Forbidden, g::AbstractGrammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Forbidden`](@ref) constraint.
 It removes the rules from the `domain` that would complete the forbidden tree.
@@ -45,7 +45,7 @@ It removes the rules from the `domain` that would complete the forbidden tree.
 function propagate(
     c::Forbidden, 
     g::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

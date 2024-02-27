@@ -17,7 +17,7 @@ constraint.
 function propagate(
     c::LocalOrdered, 
     ::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

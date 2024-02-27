@@ -38,7 +38,7 @@ end
 
 
 """
-    propagate(c::Ordered, g::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Ordered, g::AbstractGrammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Ordered`](@ref) constraint.
 Any rule that violates the order as defined by the contraint is removed from the `domain`.
@@ -52,7 +52,7 @@ Any rule that violates the order as defined by the contraint is removed from the
 function propagate(
     c::Ordered, 
     g::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

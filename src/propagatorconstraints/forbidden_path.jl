@@ -25,7 +25,7 @@ It removes the elements from the domain that would complete the forbidden sequen
 function propagate(
     c::ForbiddenPath, 
     ::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}

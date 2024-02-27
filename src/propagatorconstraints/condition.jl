@@ -20,7 +20,7 @@ end
     
 
 """
-    propagate(c::Condition, g::AbstractGrammar, context::AbstractGrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Condition, g::AbstractGrammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Condition`](@ref) constraint.
 Rules that violate the [`Condition`](@ref) constraint are removed from the domain.
@@ -35,7 +35,7 @@ Rules that violate the [`Condition`](@ref) constraint are removed from the domai
 function propagate(
     c::Condition, 
     g::AbstractGrammar, 
-    context::AbstractGrammarContext, 
+    context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
 )::Tuple{PropagatedDomain, Set{LocalConstraint}}
