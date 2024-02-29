@@ -4,7 +4,7 @@
 This [`PropagatorConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
 A pattern is a tree of [`AbstractMatchNode`](@ref)s. 
 Such a node can either be a [`MatchNode`](@ref), which contains a rule index corresponding to the 
-rule index in the [`Grammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
+rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
 It can also contain a [`MatchVar`](@ref), which contains a single identifier symbol.
 A [`MatchVar`](@ref) can match any subtree, but if there are multiple instances of the same
 variable in the pattern, the matched subtrees must be identical.
@@ -31,7 +31,7 @@ end
 
 
 """
-    propagate(c::Forbidden, g::Grammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
+    propagate(c::Forbidden, g::AbstractGrammar, context::GrammarContext, domain::Vector{Int})::Tuple{Vector{Int}, Vector{LocalConstraint}}
 
 Propagates the [`Forbidden`](@ref) constraint.
 It removes the rules from the `domain` that would complete the forbidden tree.
@@ -44,7 +44,7 @@ It removes the rules from the `domain` that would complete the forbidden tree.
 """
 function propagate(
     c::Forbidden, 
-    g::Grammar, 
+    g::AbstractGrammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
@@ -62,11 +62,11 @@ function propagate(
 end
 
 """
-    check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+    check_tree(c::Forbidden, g::AbstractGrammar, tree::RuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
-function check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+function check_tree(c::Forbidden, g::AbstractGrammar, tree::RuleNode)::Bool
     vars = Dict{Symbol, AbstractRuleNode}()
     if _pattern_match(tree, c.tree, vars) ≡ nothing
         return false
@@ -74,7 +74,7 @@ function check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
     return all(check_tree(c, g, child) for child ∈ tree.children)
 end
 
-function check_tree(c::Forbidden, ::Grammar, tree::Hole)::Bool
+function check_tree(c::Forbidden, ::AbstractGrammar, tree::Hole)::Bool
     vars = Dict{Symbol, AbstractRuleNode}()
     return _pattern_match(tree, c.tree, vars) !== nothing
 end

@@ -14,7 +14,7 @@ predecessor in the left subtree.
 """
 function propagate(
     c::RequireOnLeft, 
-    ::Grammar, 
+    ::AbstractGrammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
@@ -43,7 +43,7 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::RequireOnLeft, g::Grammar, tree::AbstractRuleNode)::Bool
+function check_tree(c::RequireOnLeft, g::AbstractGrammar, tree::AbstractRuleNode)::Bool
 	@warn "RequireOnLeft.check_tree not implemented!"
 
 	return true

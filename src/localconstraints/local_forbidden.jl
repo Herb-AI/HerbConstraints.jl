@@ -18,7 +18,7 @@ the RuleNode at the given path match the pattern defined by the MatchNode.
 """
 function propagate(
     c::LocalForbidden, 
-    ::Grammar, 
+    ::AbstractGrammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}

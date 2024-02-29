@@ -15,7 +15,7 @@ It enforces that at least one of its given constraints hold.
 """
 function propagate(
     c::OneOf, 
-    g::Grammar, 
+    g::AbstractGrammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
@@ -32,6 +32,6 @@ end
 """
 Checks if the given tree abides the constraint.
 """
-function check_tree(c::OneOf, g::Grammar, tree::AbstractRuleNode)::Bool
+function check_tree(c::OneOf, g::AbstractGrammar, tree::AbstractRuleNode)::Bool
     return any(check_tree(cons, g, tree) for cons in c.constraints)
 end

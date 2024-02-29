@@ -1,12 +1,29 @@
+"""
+    LocalCondition <: LocalConstraint
+
+Forbids any subtree that matches the pattern defined by `tree` and where the 
+[`RuleNode`](@ref) that is matched to the variable in the pattern violates the 
+predicate given by the `condition` function.
+    
+The `condition` function takes a `RuleNode` tree and should return a `Bool`.
+    
+This constraint is only enforced at the location defined by `path`.
+Use a `Condition` constraint for enforcing this throughout the entire search space.
+"""
 mutable struct LocalCondition <: LocalConstraint
     path::Vector{Int}
     tree::AbstractMatchNode
     condition::Function
 end
 
+"""
+    propagate(c::LocalCondition, ::AbstractGrammar, context::GrammarContext, domain::Vector{Int}, filled_hole::Union{HoleReference, Nothing})
+
+Propagates the [`LocalCondition`](@ref) constraint.
+"""
 function propagate(
     c::LocalCondition, 
-    ::Grammar, 
+    ::AbstractGrammar, 
     context::GrammarContext, 
     domain::Vector{Int}, 
     filled_hole::Union{HoleReference, Nothing}
