@@ -24,3 +24,7 @@ function partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::
     end
     return fixed_shaped_domains
 end
+
+function are_disjoint(domain1::BitVector, domain2::BitVector)
+    return all(.!domain1 .| .!domain2)
+end

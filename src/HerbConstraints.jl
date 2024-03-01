@@ -56,6 +56,7 @@ PropagatedDomain = Union{PropagateFailureReason, Vector{Int}}
 include("matchfail.jl")
 include("matchnode.jl")
 include("context.jl")
+include("varnode.jl")
 include("patternmatch.jl")
 include("patternmatch2.jl")
 include("rulenodematch.jl")
@@ -86,6 +87,8 @@ export
     MatchNode,
     MatchVar,
     matchnode2expr,
+
+    VarNode,
 
     GrammarContext,
     addparent!,
@@ -131,9 +134,10 @@ export
 
     is_subdomain,
     partition,
+    are_disjoint,
 
     remove!,
-    fill!,
+    fill_hole!,
     remove_all_but!,
     substitute!,
 

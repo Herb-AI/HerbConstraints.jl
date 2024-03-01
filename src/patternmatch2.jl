@@ -29,47 +29,30 @@ struct PatternMatchSoftFail <: PatternMatchResult
     hole::Hole
 end
 
-pattern_match(rn::AbstractRuleNode, mn::AbstractMatchNode) = pattern_match(rn, mn, Dict{Symbol, AbstractRuleNode}())
-
 """
-    pattern_match(rn::RuleNode, mn::MatchNode, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}  
+    pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode)::PatternMatchResult
 
-Tries to match [`RuleNode`](@ref) `rn` with [`MatchNode`](@ref) `mn`.
-Modifies the variable assignment dictionary `vars`.
+Recursively tries to match [`AbstractRuleNode`](@ref) `rn` with [`AbstractRuleNode`](@ref) `mn`.
 Returns a `PatternMatchResult` that describes if the pattern was matched.
 """
-function pattern_match(rn::RuleNode, mn::MatchNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if rn.ind ≠ mn.rule_ind
-        return PatternMatchHardFail()
-    end
-    return pattern_match(rn.children, mn.children, vars)
+function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode)::PatternMatchResult
+    pattern_match(rn, mn, Dict{Symbol, AbstractRuleNode}())
 end
 
-function pattern_match(h::VariableShapedHole, mn::MatchNode, ::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if !h.domain[mn.rule_ind]
-        return PatternMatchHardFail()
-    end
-    if isempty(mn.children)
-        return PatternMatchSuccessWhenHoleAssignedTo(h, mn.rule_ind)
-    end
-    #a large hole is involved
-    return PatternMatchSoftFail(h)
+"""
+Generic fallback function for commutativity. Swaps arguments 1 and 2, then dispatches to a more specific signature.
+If this gets stuck in an infinite loop, the implementation of an AbstractRuleNode type pair is missing.
+"""
+function pattern_match(mn::AbstractRuleNode, rn::AbstractRuleNode, vars::Dict{Symbol, AbstractRuleNode})
+    pattern_match(rn, mn, vars)
 end
 
-function pattern_match(h::FixedShapedHole, mn::MatchNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if !h.domain[mn.rule_ind]
-        return PatternMatchHardFail()
-    end
-    match_result = pattern_match(h.children, mn.children, vars)
-    @match match_result begin
-        ::PatternMatchHardFail => return match_result;
-        ::PatternMatchSoftFail => return match_result;
-        ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, mn.rule_ind);
-        ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
-    end
-end
+"""
+    pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNode}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
 
-function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractMatchNode}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+Pairwise tries to match two ordered lists of [AbstractRuleNode](@ref)s.
+"""
+function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNode}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
     if length(rns) ≠ length(mns)
         return PatternMatchHardFail()
     end
@@ -77,8 +60,8 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractMatchN
     for child_match_result ∈ map(ab -> pattern_match(ab[1], ab[2], vars), zip(rns, mns))
         @match child_match_result begin
             ::PatternMatchHardFail => return child_match_result;
-            ::PatternMatchSoftFail => return child_match_result;
-            ::PatternMatchSuccess => ();
+            ::PatternMatchSoftFail => (match_result = child_match_result); #continue searching for a hardfail
+            ::PatternMatchSuccess => (); #continue searching for a hardfail
             ::PatternMatchSuccessWhenHoleAssignedTo => begin
                 if !(match_result isa PatternMatchSuccess)
                     return PatternMatchSoftFail(child_match_result.hole)
@@ -90,30 +73,68 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractMatchN
     return match_result
 end
 
-# """
-#     _pattern_match(rn::RuleNode, mv::MatchVar, vars::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail}
+function pattern_match(rn::RuleNode, mn::RuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if rn.ind ≠ mn.ind
+        return PatternMatchHardFail()
+    end
+    return pattern_match(rn.children, mn.children, vars)
+end
 
-# Matching [`RuleNode`](@ref) `rn` with [`MatchVar`](@ref) `mv`. If the variable is already assigned, the rulenode is matched with the specific variable value. 
-# If the match is unsuccessful, it returns whether it is a softfail or hardfail (see [`MatchFail`](@ref) docstring)
-# """
-# function pattern_match(rn::RuleNode, mv::MatchVar, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-#     if mv.var_name ∈ keys(vars) 
-#         # If the assignments are unequal, the match is unsuccessful
-#         # Additionally, if the trees are equal but contain a hole, 
-#         # we cannot reason about equality because we don't know how
-#         # the hole will be expanded yet.
-#         if contains_hole(rn) || contains_hole(vars[mv.var_name]) 
-#             return softfail
-#         else
-#             return _rulenode_match(rn, vars[mv.var_name])
-#         end
-#     else
-#         vars[mv.var_name] = rn
-#     end
-#     return PatternMatchSuccess()
-# end
+function pattern_match(h::VariableShapedHole, mn::RuleNode, ::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if !h.domain[mn.ind]
+        return PatternMatchHardFail()
+    end
+    if isempty(mn.children)
+        return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind)
+    end
+    #a large hole is involved
+    return PatternMatchSoftFail(h)
+end
 
-# function pattern_match(::Hole, ::MatchVar, ::Dict{Symbol, AbstractRuleNode})::Union{Nothing, MatchFail, Vector{HoleAssignment}}
-#     throw("NotImplementedException")
-#     return PatternMatchHardFail()
-# end
+function pattern_match(h::FixedShapedHole, mn::RuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if !h.domain[mn.ind]
+        return PatternMatchHardFail()
+    end
+    match_result = pattern_match(h.children, mn.children, vars)
+    @match match_result begin
+        ::PatternMatchHardFail => return match_result;
+        ::PatternMatchSoftFail => return match_result;
+        ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind);
+        ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+    end
+end
+
+function pattern_match(h1::FixedShapedHole, h2::FixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if are_disjoint(h1.domain, h2.domain)
+        return PatternMatchHardFail()
+    end
+    match_result = pattern_match(h1.children, h2.children, vars)
+    @match match_result begin
+        ::PatternMatchHardFail => return match_result;
+        ::PatternMatchSoftFail => return match_result;
+        ::PatternMatchSuccess => return PatternMatchSoftFail(h1);
+        ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+    end
+end
+
+function pattern_match(h1::VariableShapedHole, h2::FixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if are_disjoint(h1.domain, h2.domain)
+        return PatternMatchHardFail()
+    end
+    return PatternMatchSoftFail(h1);
+end
+
+function pattern_match(h1::VariableShapedHole, h2::VariableShapedHole, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if are_disjoint(h1.domain, h2.domain)
+        return PatternMatchHardFail()
+    end
+    return PatternMatchSoftFail(h1);
+end
+
+function pattern_match(rn::AbstractRuleNode, var::VarNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if var.name ∈ keys(vars) 
+        return pattern_match(rn, vars[var.name])
+    end
+    vars[var.name] = rn
+    return PatternMatchSuccess()
+end
