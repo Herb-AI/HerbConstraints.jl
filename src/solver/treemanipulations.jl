@@ -1,6 +1,8 @@
 #TODO: tree manipulations should be callable by passing a `hole`, instead of a `path`
 # Related issue: https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=54473456
 
+#TODO: unit test all tree manipulatations
+
 """
     remove!(solver::Solver, path::Vector{Int}, rule_index::Int)
 
@@ -16,6 +18,7 @@ function remove!(solver::Solver, path::Vector{Int}, rule_index::Int)
         return
     end
     hole.domain[rule_index] = false
+    simplify_hole!(solver, path)
     schedule_all_constraints!(solver)
     fix_point!(solver)
 end
@@ -38,11 +41,27 @@ function remove_all_but!(solver::Solver, path::Vector{Int}, new_domain::BitVecto
 end
 
 """
+    fill_hole!(solver::Solver, path::Vector{Int}, rule_index::Int)
+
+Fill in the hole located at the `path` with rule `rule_index`.
+It is assumed the path points to a hole, otherwise an exception will be thrown.
+It is assumed rule_index ∈ hole.domain
+"""
+function fill_hole!(solver::Solver, path::Vector{Int}, rule_index::Int)
+    hole = get_hole_at_location(solver, path)
+    @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
+    new_node = RuleNode(rule_index, hole.children)
+    substitute!(solver, path, new_node)
+end
+
+
+"""
     substitute!(solver::Solver, path::Vector{Int}, new_node::AbstractRuleNode)
 
 Substitute the node at the `path`, with a `new_node`
 """
 function substitute!(solver::Solver, path::Vector{Int}, new_node::AbstractRuleNode)
+    #TODO: add a parameter that indicates if the children of the new_node are already known to the solver. For example, when filling in a fixed shaped hole
     #TODO: notify about the domain change of the new_node
     #TODO: notify about the children of the new_node
     #TODO: https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=54383300

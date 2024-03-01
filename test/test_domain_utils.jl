@@ -35,4 +35,13 @@ using HerbGrammar
         @test domains[3] == BitVector((0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0))
         @test domains[4] == BitVector((0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0))
     end
+
+    @testset "are_disjoint" begin
+        @test are_disjoint(BitVector((1, 1, 1, 1)), BitVector((0, 0, 0, 0))) == true
+        @test are_disjoint(BitVector((0, 1, 0, 0)), BitVector((0, 0, 1, 0))) == true
+        @test are_disjoint(BitVector((1, 0, 0, 1)), BitVector((0, 0, 1, 0))) == true
+        @test are_disjoint(BitVector((1, 1, 1, 1)), BitVector((0, 0, 1, 0))) == false
+        @test are_disjoint(BitVector((0, 1, 0, 0)), BitVector((0, 1, 0, 0))) == false
+        @test are_disjoint(BitVector((1, 0, 0, 1)), BitVector((1, 1, 0, 1))) == false
+    end
 end

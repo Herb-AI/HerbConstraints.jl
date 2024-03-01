@@ -1,4 +1,5 @@
-using HerbGrammar
+using HerbCore, HerbGrammar
+
 @testset verbose=true "Tree Manipulations" begin
 
     function create_dummy_solver()
