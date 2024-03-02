@@ -13,9 +13,9 @@ A state contains of:
 mutable struct State
     tree::AbstractRuleNode
     size::Int
-    constraints::Set{LocalConstraint}
+    on_tree_manipulation::Set{Constraint}
 end
 
 function Base.copy(state::State) 
-    State(deepcopy(state.tree), state.size, copy(state.constraints))
+    State(deepcopy(state.tree), state.size, copy(state.on_tree_manipulation))
 end

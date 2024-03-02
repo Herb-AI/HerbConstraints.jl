@@ -29,7 +29,7 @@ end
 """
     schedule(solver::Solver, constraint::Constraint)
 
-Schedules the given `constraint` for propagation
+Schedules the `constraint` for propagation
 """
 function schedule!(solver::Solver, constraint::Constraint)
     if constraint ∉ keys(solver.schedule)
@@ -45,7 +45,7 @@ Propagate constraints in the current state until no further dedecutions can be m
 function fix_point!(solver::Solver)
     while !isempty(solver.schedule)
         constraint = dequeue!(solver.schedule) 
-        #propagate(solver, constraint)
+        propagate!(solver, constraint)
     end
 end
 
@@ -56,6 +56,7 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
     #TODO: rebuild the tree node by node, to add local constraints correctly
+    notify_new_node(solver, Vector{Int}()) #notify about the root node
     solver.state = State(tree, length(tree), Set{LocalConstraint}())
     fix_point!(solver)
 end
@@ -104,9 +105,39 @@ function get_hole_at_location(solver::Solver, location::Vector{Int})::Hole
     return hole
 end
 
-#TODO: this is a temporary function for testing. only relevant constraints should be scheduled
-function schedule_all_constraints!(solver::Solver)
-    for c ∈ solver.state.constraints
+
+"""
+    propagate_on_tree_manipulation!(solver::Solver, c::Constraint)
+
+The `constraint` will be propagated on the next tree manipulation
+"""
+function propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint) #event_path::Vector{Int}
+    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or below the given event_path)
+    push!(get_state(solver).on_tree_manipulation, constraint)
+end
+
+
+"""
+    notify_tree_manipulation(solver::Solver, event_path::Vector{Int})
+
+Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
+"""
+function notify_tree_manipulation(solver::Solver, event_path::Vector{Int})
+    #TODO: keep track of the notify lists on the holes themselves
+    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or below the given event_path)
+    for c ∈ get_state(solver).on_tree_manipulation
         schedule!(solver, c)
+    end
+    get_state(solver).on_tree_manipulation = Set{Constraint}()
+end
+
+"""
+    notify_new_node(solver::Solver, event_path::Vector{Int})
+
+Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function
+"""
+function notify_new_node(solver::Solver, event_path::Vector{Int})
+    for c ∈ get_grammar(solver).constraints
+        on_new_node(solver, c, event_path)
     end
 end
