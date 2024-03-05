@@ -14,8 +14,9 @@ mutable struct State
     tree::AbstractRuleNode
     size::Int
     on_tree_manipulation::Set{Constraint}
+    isfeasible::Bool
 end
 
 function Base.copy(state::State) 
-    State(deepcopy(state.tree), state.size, copy(state.on_tree_manipulation))
+    State(deepcopy(state.tree), state.size, copy(state.on_tree_manipulation), state.isfeasible)
 end

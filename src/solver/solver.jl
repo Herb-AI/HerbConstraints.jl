@@ -44,6 +44,11 @@ Propagate constraints in the current state until no further dedecutions can be m
 """
 function fix_point!(solver::Solver)
     while !isempty(solver.schedule)
+        if !is_feasible(solver)
+            #an inconsistency was found, stop propagating constraints and return
+            empty!(solver.schedule)
+            return
+        end
         constraint = dequeue!(solver.schedule) 
         propagate!(solver, constraint)
     end
@@ -56,8 +61,8 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
     #TODO: rebuild the tree node by node, to add local constraints correctly
+    solver.state = State(tree, length(tree), Set{LocalConstraint}(), true)
     notify_new_node(solver, Vector{Int}()) #notify about the root node
-    solver.state = State(tree, length(tree), Set{LocalConstraint}())
     fix_point!(solver)
 end
 
@@ -89,6 +94,15 @@ end
 
 function get_state(solver::Solver)::State
     return solver.state
+end
+
+function mark_infeasible(solver::Solver)
+    #TODO: immediately delete the state and set the current state to nothing
+    solver.state.isfeasible = false
+end
+
+function is_feasible(solver::Solver)
+    return get_state(solver).isfeasible
 end
 
 #TODO: remove the scope of `HerbCore`?

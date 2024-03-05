@@ -7,4 +7,3 @@ using Test
     include("test_pattern_match.jl")
     #include("test_propagators.jl")
 end
-

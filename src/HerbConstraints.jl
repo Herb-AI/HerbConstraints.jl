@@ -142,6 +142,8 @@ export
     get_node_at_location,
     get_hole_at_location,
 
+    is_feasible,
+
     is_subdomain,
     partition,
     are_disjoint,

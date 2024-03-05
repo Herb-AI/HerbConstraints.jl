@@ -11,28 +11,26 @@ mutable struct LocalForbidden <: LocalConstraint
     tree::AbstractRuleNode
 end
 
-#if a constraint needs to be repropagated, it is responsible for calling `propagate_on_tree_manipulation`
-function propagate!(solver::Solver, c::LocalForbidden)::Bool
+function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
     @match pattern_match(node, c.tree) begin
         ::PatternMatchHardFail => begin 
-            # Match attempt failed due to mismatched rulenode indices. 
-            # This means that we can remove the current constraint.
-            return true #TODO: deactivate this constraint
+            # A match fail means that the constraint is already satisfied.
+            # This constraint does not have to be re-propagated.
         end;
         ::PatternMatchSoftFail => begin 
-            # Match attempt failed because we had to compare with a hole. 
-            # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
+            # The constraint will re-propagated on any tree manipulation.
+            # TODO: set a watcher, only propagate when needed.
             propagate_on_tree_manipulation!(solver, c)
-            return true
         end
         ::PatternMatchSuccess => begin 
-            #TODO: mark this state as infeasible
-            return false
+            # The forbidden tree is exactly matched. This means the state is infeasible.
+            mark_infeasible(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
-            remove!(solver, vcat(c.path, match.path), match.ind)
-            return true #TODO: deactivate this constraint
+            # Propagate the constraint by removing an impossible value from the found hole.
+            # Then, constraint is satisfied and does not have to be re-propagated.
+            remove!(solver, get_node_path(get_tree(solver), match.hole), match.ind)
         end
     end
 end

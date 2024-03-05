@@ -10,8 +10,6 @@ Remove `rule_index` from the domain of the hole located at the `path`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 """
 function remove!(solver::Solver, path::Vector{Int}, rule_index::Int)
-    #TODO: make a remove method for multiple rules
-    #TODO: try to reduce to FixedShapedHole or RuleNode
     hole = get_hole_at_location(solver, path)
     if !hole.domain[rule_index]
         # The rule is not present in the domain, ignore the tree manipulatation
