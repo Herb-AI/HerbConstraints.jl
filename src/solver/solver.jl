@@ -10,7 +10,7 @@ mutable struct Solver
     grammar::Grammar
     state::Union{State, Nothing}
     schedule::PriorityQueue{Constraint, Int}
-    #statistics?
+    statistics::Union{SolverStatistics, Nothing}
 end
 
 """
@@ -18,8 +18,9 @@ end
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function Solver(grammar::Grammar, sym::Symbol)
-    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}())
+function Solver(grammar::Grammar, sym::Symbol; with_statistics=false)
+    stats = with_statistics ? SolverStatistics() : nothing
+    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats)
     init_node = Hole(get_domain(grammar, sym))
     new_state!(solver, init_node)
     return solver
@@ -61,7 +62,7 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
     #TODO: rebuild the tree node by node, to add local constraints correctly
-    solver.state = State(tree, length(tree), Set{LocalConstraint}(), true)
+    solver.state = State(tree, length(tree), Dict{Vector{Int64}, Constraint}(), true)
     notify_new_node(solver, Vector{Int}()) #notify about the root node
     fix_point!(solver)
 end
@@ -72,6 +73,7 @@ end
 Returns a copy of the current state that can be restored by calling `load_state!(solver, state)`
 """
 function save_state!(solver::Solver)::State
+    track!(solver.statistics, "save_state!")
     return copy(get_state(solver))
 end
 
@@ -81,6 +83,7 @@ end
 Overwrites the current state with the given `state`
 """
 function load_state!(solver::Solver, state::State)
+    empty!(solver.schedule)
     solver.state = state
 end
 
@@ -125,9 +128,13 @@ end
 
 The `constraint` will be propagated on the next tree manipulation
 """
-function propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint) #event_path::Vector{Int}
+function propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint, event_path::Vector{Int})
     #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or below the given event_path)
-    push!(get_state(solver).on_tree_manipulation, constraint)
+    dict = get_state(solver).on_tree_manipulation
+    if event_path ∉ keys(dict)
+        dict[event_path] = Set{Constraint}()
+    end
+    push!(dict[event_path], constraint)
 end
 
 
@@ -138,11 +145,27 @@ Notify subscribed constraints that a tree manipulation has occured at the `event
 """
 function notify_tree_manipulation(solver::Solver, event_path::Vector{Int})
     #TODO: keep track of the notify lists on the holes themselves
-    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or below the given event_path)
-    for c ∈ get_state(solver).on_tree_manipulation
-        schedule!(solver, c)
+    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or above the given event_path)
+    # Propagate all constraints in lists at or above the event_path
+    event_path = push!(copy(event_path), 0)
+    while !isempty(event_path)
+        pop!(event_path)
+        dict = get_state(solver).on_tree_manipulation
+        if event_path ∈ keys(dict)
+            for c ∈ dict[event_path]
+                schedule!(solver, c)
+            end
+            empty!(dict[event_path])
+        end
     end
-    get_state(solver).on_tree_manipulation = Set{Constraint}()
+    # Always propagate all constraints:
+    # dict = get_state(solver).on_tree_manipulation
+    # for event_path ∈ keys(dict)
+    #     for c ∈ dict[event_path]
+    #         schedule!(solver, c)
+    #     end
+    #     empty!(dict[event_path])
+    # end
 end
 
 """

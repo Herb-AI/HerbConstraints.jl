@@ -68,6 +68,7 @@ include("patternmatch.jl")
 include("patternmatch2.jl")
 include("rulenodematch.jl")
 
+include("solver/solverstatistics.jl")
 include("solver/state.jl")
 include("solver/solver.jl")
 include("solver/treemanipulations.jl")

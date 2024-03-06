@@ -92,18 +92,18 @@ function simplify_hole!(solver::Solver, path::Vector{Int})
     if hole isa FixedShapedHole
         if sum(hole.domain) == 1
             new_node = RuleNode(findfirst(hole.domain), hole.children)
-            notify_new_children(new_node)
             substitute!(solver, path, new_node)
+            notify_new_children(new_node)
         end
     elseif hole isa VariableShapedHole
         if sum(hole.domain) == 1
             new_node = RuleNode(findfirst(hole.domain), grammar)
-            notify_new_children(new_node)
             substitute!(solver, path, new_node)
+            notify_new_children(new_node)
         elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
             new_node = FixedShapedHole(hole.domain, grammar)
-            notify_new_children(new_node)
             substitute!(solver, path, new_node)
+            notify_new_children(new_node)
         end
     else
         @assert !isnothing(hole) "No node exists at path $path in the current state"
