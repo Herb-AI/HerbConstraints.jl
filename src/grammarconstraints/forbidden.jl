@@ -30,23 +30,27 @@ struct Forbidden <: GrammarConstraint
 end
 
 function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
-    schedule!(solver, LocalForbidden(path, c.tree))
+  #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
+  if c.tree isa RuleNode
+    @match get_node_at_location(solver, path) begin
+      hole::Hole => if !hole.domain[c.tree.ind] return end
+      node::RuleNode => if node.ind != c.tree.ind return end
+    end
+  end
+  schedule!(solver, LocalForbidden(path, c.tree))
 end
 
-# """
-#     check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+"""
+    check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
 
-# Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
-# """
-# function check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
-#     vars = Dict{Symbol, AbstractRuleNode}()
-#     if _pattern_match(tree, c.tree, vars) ≡ nothing
-#         return false
-#     end
-#     return all(check_tree(c, g, child) for child ∈ tree.children)
-# end
-
-# function check_tree(c::Forbidden, ::Grammar, tree::Hole)::Bool
-#     vars = Dict{Symbol, AbstractRuleNode}()
-#     return _pattern_match(tree, c.tree, vars) !== nothing
-# end
+Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
+"""
+function check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+    @match pattern_match(tree, c.tree) begin
+      ::PatternMatchHardFail => ()
+      ::PatternMatchSoftFail => ()
+      ::PatternMatchSuccess => return false
+      ::PatternMatchSuccessWhenHoleAssignedTo => ()
+    end
+    return all(check_tree(c, g, child) for child ∈ tree.children)
+end

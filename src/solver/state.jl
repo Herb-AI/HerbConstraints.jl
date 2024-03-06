@@ -13,10 +13,11 @@ A state contains of:
 mutable struct State
     tree::AbstractRuleNode
     size::Int
-    on_tree_manipulation::Set{Constraint}
+    on_tree_manipulation::Dict{Vector{Int}, Set{Constraint}}
     isfeasible::Bool
 end
 
 function Base.copy(state::State) 
-    State(deepcopy(state.tree), state.size, copy(state.on_tree_manipulation), state.isfeasible)
+    State(deepcopy(state.tree), state.size, deepcopy(state.on_tree_manipulation), state.isfeasible)
 end
+
