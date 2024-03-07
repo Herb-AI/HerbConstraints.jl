@@ -37,8 +37,7 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
       node::RuleNode => if node.ind != c.tree.ind return end
     end
   end
-  track!(solver.statistics, "LocalForbidden created")
-  schedule!(solver, LocalForbidden(path, c.tree))
+  post!(solver, LocalForbidden(path, c.tree))
 end
 
 """

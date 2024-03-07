@@ -32,12 +32,24 @@ end
 """
     schedule(solver::Solver, constraint::Constraint)
 
-Schedules the `constraint` for propagation
+Schedules the `constraint` for propagation.
 """
 function schedule!(solver::Solver, constraint::Constraint)
     if constraint ∉ keys(solver.schedule)
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
     end
+end
+
+"""
+    post!(solver::Solver, constraint::Constraint)
+
+Imposes the `constraint` to the current state.
+By default, the constraint will be scheduled for its initial propagation.
+Constraints can overload this method to add themselves to notify lists or triggers.
+"""
+function post!(solver::Solver, constraint::Constraint)
+    track!(solver.statistics, "post! $(typeof(constraint))")
+    schedule!(solver, constraint)
 end
 
 """
