@@ -11,6 +11,8 @@ mutable struct Solver
     state::Union{State, Nothing}
     schedule::PriorityQueue{Constraint, Int}
     statistics::Union{SolverStatistics, Nothing}
+    max_size::Int
+    max_depth::Int
 end
 
 """
@@ -20,7 +22,7 @@ Constructs a new solver, with an initial state using starting symbol `sym`
 """
 function Solver(grammar::Grammar, sym::Symbol; with_statistics=false)
     stats = with_statistics ? SolverStatistics() : nothing
-    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats)
+    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, typemax(Int), typemax(Int))
     init_node = Hole(get_domain(grammar, sym))
     new_state!(solver, init_node)
     return solver
@@ -62,7 +64,7 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
     #TODO: rebuild the tree node by node, to add local constraints correctly
-    solver.state = State(tree, length(tree), Dict{Vector{Int64}, Constraint}(), true)
+    solver.state = State(tree)
     notify_new_node(solver, Vector{Int}()) #notify about the root node
     fix_point!(solver)
 end
@@ -87,6 +89,11 @@ function load_state!(solver::Solver, state::State)
     solver.state = state
 end
 
+function get_tree_size(solver::Solver)::Int
+    #TODO: potential optimization: precompute/cache the size of the tree
+    return length(get_tree(solver))
+end
+
 function get_tree(solver::Solver)::AbstractRuleNode
     return solver.state.tree
 end
@@ -97,6 +104,14 @@ end
 
 function get_state(solver::Solver)::State
     return solver.state
+end
+
+function get_max_depth(solver::Solver)
+    return solver.max_depth
+end
+
+function get_max_size(solver::Solver)
+    return solver.max_size
 end
 
 function mark_infeasible(solver::Solver)
@@ -124,12 +139,11 @@ end
 
 
 """
-    propagate_on_tree_manipulation!(solver::Solver, c::Constraint)
+    propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint, event_path::Vector{Int})
 
-The `constraint` will be propagated on the next tree manipulation
+The `constraint` will be propagated on the next tree manipulation at or above the `event_path`
 """
 function propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint, event_path::Vector{Int})
-    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or below the given event_path)
     dict = get_state(solver).on_tree_manipulation
     if event_path ∉ keys(dict)
         dict[event_path] = Set{Constraint}()

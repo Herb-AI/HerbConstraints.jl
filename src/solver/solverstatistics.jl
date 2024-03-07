@@ -15,9 +15,9 @@ end
 function Base.show(io::IO, stats::SolverStatistics)
     println("SolverStatistics")
     max_key_length = maximum(length.(keys(stats.dict)))
-    for (key, value) ∈ stats.dict
+    for key ∈ keys(stats.dict)#sort(collect(keys(stats.dict)))
         spaces = "." ^ (max_key_length - length(key))
-        println(io, "$key $spaces $value")
+        println(io, "$key $spaces $(stats.dict[key])")
     end
 end
 

@@ -73,6 +73,10 @@ function substitute!(solver::Solver, path::Vector{Int}, new_node::AbstractRuleNo
         end
         parent.children[path[end]] = new_node
     end
+    if get_tree_size(solver) > get_max_size(solver)
+        mark_infeasible(solver)
+        return
+    end
     notify_tree_manipulation(solver, path)
     fix_point!(solver)
 end
@@ -81,32 +85,29 @@ end
 Takes a [Hole](@ref) and tries to simplify it to a [FixedShapedHole](@ref) or [RuleNode](@ref)
 """
 function simplify_hole!(solver::Solver, path::Vector{Int})
-    function notify_new_children(new_node::AbstractRuleNode)
-        for i ∈ 1:length(new_node.children)
-            notify_new_node(solver, push!(copy(path), i))
-        end
-    end
-
     hole = get_hole_at_location(solver, path)
     grammar = get_grammar(solver)
+    new_node = nothing
     if hole isa FixedShapedHole
         if sum(hole.domain) == 1
             new_node = RuleNode(findfirst(hole.domain), hole.children)
-            substitute!(solver, path, new_node)
-            notify_new_children(new_node)
         end
     elseif hole isa VariableShapedHole
         if sum(hole.domain) == 1
             new_node = RuleNode(findfirst(hole.domain), grammar)
-            substitute!(solver, path, new_node)
-            notify_new_children(new_node)
         elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
             new_node = FixedShapedHole(hole.domain, grammar)
-            substitute!(solver, path, new_node)
-            notify_new_children(new_node)
         end
     else
         @assert !isnothing(hole) "No node exists at path $path in the current state"
         @warn "Attempted to simplify node type: $(typeof(hole))"
+    end
+
+    #the hole will be simplified and replaced with a `new_node`
+    if !isnothing(new_node)
+        substitute!(solver, path, new_node)
+        for i ∈ 1:length(new_node.children)
+            notify_new_node(solver, push!(copy(path), i))
+        end
     end
 end

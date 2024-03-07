@@ -142,6 +142,9 @@ export
     get_state,
     get_node_at_location,
     get_hole_at_location,
+    get_max_depth,
+    get_max_size,
+    get_tree_size,
 
     is_feasible,
 
@@ -154,6 +157,8 @@ export
     remove_all_but!,
     substitute!,
 
-    pattern_match
+    pattern_match,
+
+    track!
 
 end # module HerbConstraints
