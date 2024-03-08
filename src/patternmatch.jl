@@ -1,3 +1,12 @@
+"""
+    abstract type PatternMatchResult end
+
+A result of the `pattern_match` function. Can be one of 4 cases:
+- [`PatternMatchSuccess`](@ref)
+- [`PatternMatchSuccessWhenHoleAssignedTo`](@ref)
+- [`PatternMatchHardFail`](@ref)
+- [`PatternMatchSoftFail`](@ref)
+"""
 abstract type PatternMatchResult end
 
 """
@@ -15,7 +24,7 @@ struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
 end
 
 """
-The pattern is not matched or can never be matched by filling in holes
+The pattern is not matched and can never be matched by filling in holes
 """
 struct PatternMatchHardFail <: PatternMatchResult
 end

@@ -6,7 +6,7 @@ Forbids the a subtree that matches the MatchNode tree to be generated at the loc
 provided by the path. 
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
-mutable struct LocalForbidden <: LocalConstraint
+struct LocalForbidden <: LocalConstraint
 	path::Vector{Int}
     tree::AbstractRuleNode
 end

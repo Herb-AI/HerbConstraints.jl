@@ -39,6 +39,54 @@ function remove_all_but!(solver::Solver, path::Vector{Int}, new_domain::BitVecto
 end
 
 """
+    remove_above!(solver::Solver, path::Vector{Int}, rule_index::Int)
+
+Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
+Example:
+`rule_index` = 2. 
+`hole` with domain [1, 1, 0, 1] gets reduced to [1, 0, 0, 0] and gets simplified to a `RuleNode`
+"""
+function remove_above!(solver::Solver, path::Vector{Int}, rule_index::Int)
+    hole = get_hole_at_location(solver, path)
+    highest_ind = findlast(hole.domain)
+    if highest_ind < rule_index
+        # e.g. domain: [0, 1, 1, 0, 0, 0] rule_index: 4
+        # The tree manipulatation won't have any effect, ignore the tree manipulatation
+        return
+    end
+    for r ∈ rule_index+1:length(hole.domain)
+        hole.domain[r] = false
+    end
+    simplify_hole!(solver, path)
+    notify_tree_manipulation(solver, path)
+    fix_point!(solver)
+end
+
+"""
+    remove_below!(solver::Solver, path::Vector{Int}, rule_index::Int)
+
+Reduce the domain of the hole located at the `path` by removing all rules indices below `rule_index`
+Example:
+`rule_index` = 2. 
+`hole` with domain [1, 1, 0, 1] gets reduced to [0, 1, 0, 1]
+"""
+function remove_below!(solver::Solver, path::Vector{Int}, rule_index::Int)
+    hole = get_hole_at_location(solver, path)
+    lowest_ind = findfirst(hole.domain)
+    if lowest_ind > rule_index
+        # e.g. domain: [0, 0, 0, 1, 1, 0] rule_index: 2
+        # The tree manipulatation won't have any effect, ignore the tree manipulatation
+        return
+    end
+    for r ∈ 1:rule_index-1
+        hole.domain[r] = false
+    end
+    simplify_hole!(solver, path)
+    notify_tree_manipulation(solver, path)
+    fix_point!(solver)
+end
+
+"""
     fill_hole!(solver::Solver, path::Vector{Int}, rule_index::Int)
 
 Fill in the hole located at the `path` with rule `rule_index`.
@@ -82,18 +130,23 @@ function substitute!(solver::Solver, path::Vector{Int}, new_node::AbstractRuleNo
 end
 
 """
-Takes a [Hole](@ref) and tries to simplify it to a [FixedShapedHole](@ref) or [RuleNode](@ref)
+Takes a [Hole](@ref) and tries to simplify it to a [FixedShapedHole](@ref) or [RuleNode](@ref).
+If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::Solver, path::Vector{Int})
     hole = get_hole_at_location(solver, path)
     grammar = get_grammar(solver)
     new_node = nothing
-    if hole isa FixedShapedHole
-        if sum(hole.domain) == 1
+    domain_size = sum(hole.domain)
+    if domain_size == 0
+        mark_infeasible(solver)
+        return
+    elseif hole isa FixedShapedHole
+        if domain_size == 1
             new_node = RuleNode(findfirst(hole.domain), hole.children)
         end
     elseif hole isa VariableShapedHole
-        if sum(hole.domain) == 1
+        if domain_size == 1
             new_node = RuleNode(findfirst(hole.domain), grammar)
         elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
             new_node = FixedShapedHole(hole.domain, grammar)

@@ -40,6 +40,8 @@ include("solver/solver.jl")
 include("solver/treemanipulations.jl")
 include("solver/domainutils.jl")
 
+include("lessthanorequal.jl")
+
 include("localconstraints/local_forbidden.jl")
 
 include("grammarconstraints/forbidden.jl")
