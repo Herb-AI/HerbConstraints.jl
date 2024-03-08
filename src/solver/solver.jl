@@ -11,6 +11,7 @@ mutable struct Solver
     state::Union{State, Nothing}
     schedule::PriorityQueue{Constraint, Int}
     statistics::Union{SolverStatistics, Nothing}
+    fix_point_running::Bool
     max_size::Int
     max_depth::Int
 end
@@ -22,7 +23,7 @@ Constructs a new solver, with an initial state using starting symbol `sym`
 """
 function Solver(grammar::Grammar, sym::Symbol; with_statistics=false)
     stats = with_statistics ? SolverStatistics() : nothing
-    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, typemax(Int), typemax(Int))
+    solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, false, typemax(Int), typemax(Int))
     init_node = Hole(get_domain(grammar, sym))
     new_state!(solver, init_node)
     return solver
@@ -58,15 +59,18 @@ end
 Propagate constraints in the current state until no further dedecutions can be made
 """
 function fix_point!(solver::Solver)
+    if solver.fix_point_running return end
+    solver.fix_point_running = true
     while !isempty(solver.schedule)
         if !is_feasible(solver)
             #an inconsistency was found, stop propagating constraints and return
             empty!(solver.schedule)
-            return
+            break
         end
         constraint = dequeue!(solver.schedule) 
         propagate!(solver, constraint)
     end
+    solver.fix_point_running = false
 end
 
 """
@@ -131,6 +135,16 @@ function mark_infeasible(solver::Solver)
     solver.state.isfeasible = false
 end
 
+"""
+    is_feasible(solver::Solver)
+
+Returns true if no inconsistency has been detected. Used in several ways:
+- Iterators should check for infeasibility to discard infeasible states
+- After any tree manipulation with the possibility of an inconsistency (e.g. `remove_below!`, `remove_above!`, `remove!`)
+- `fix_point!` should check for infeasibility to clear its schedule and return
+- Some `Solver` functions assert a feasible state for debugging purposes `@assert is_feasible(solver)`
+- Some `Solver` functions have a guard that skip the function on an infeasible state: `if !is_feasible(solver) return end`
+"""
 function is_feasible(solver::Solver)
     return get_state(solver).isfeasible
 end
@@ -156,6 +170,7 @@ end
 The `constraint` will be propagated on the next tree manipulation at or above the `event_path`
 """
 function propagate_on_tree_manipulation!(solver::Solver, constraint::Constraint, event_path::Vector{Int})
+    @assert is_feasible(solver)
     dict = get_state(solver).on_tree_manipulation
     if event_path ∉ keys(dict)
         dict[event_path] = Set{Constraint}()
@@ -170,6 +185,7 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::Solver, event_path::Vector{Int})
+    if !is_feasible(solver) return end
     #TODO: keep track of the notify lists on the holes themselves
     #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or above the given event_path)
     # Propagate all constraints in lists at or above the event_path
@@ -200,6 +216,7 @@ end
 Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function
 """
 function notify_new_node(solver::Solver, event_path::Vector{Int})
+    if !is_feasible(solver) return end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
     end
