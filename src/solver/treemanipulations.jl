@@ -30,7 +30,7 @@ It is assumed new_domain ⊆ domain. For example: [1, 0, 1, 0] ⊆ [1, 0, 1, 1]
 """
 function remove_all_but!(solver::Solver, path::Vector{Int}, new_domain::BitVector)
     hole = get_hole_at_location(solver, path)
-    if hole.domain == new_domain @warn "'remove_all_but' was called with trivial arguments" end
+    if hole.domain == new_domain @warn "'remove_all_but' was called with trivial arguments" return end
     @assert is_subdomain(new_domain, hole.domain) "($new_domain) ⊈ ($(hole.domain)) The remaining rules are required to be a subdomain of the hole to remove from"
     hole.domain = new_domain
     simplify_hole!(solver, path)
@@ -49,8 +49,8 @@ Example:
 function remove_above!(solver::Solver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     highest_ind = findlast(hole.domain)
-    if highest_ind < rule_index
-        # e.g. domain: [0, 1, 1, 0, 0, 0] rule_index: 4
+    if highest_ind <= rule_index
+        # e.g. domain: [0, 1, 1, 1, 0, 0] rule_index: 4
         # The tree manipulatation won't have any effect, ignore the tree manipulatation
         return
     end
@@ -73,8 +73,8 @@ Example:
 function remove_below!(solver::Solver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     lowest_ind = findfirst(hole.domain)
-    if lowest_ind > rule_index
-        # e.g. domain: [0, 0, 0, 1, 1, 0] rule_index: 2
+    if lowest_ind >= rule_index
+        # e.g. domain: [0, 1, 0, 1, 1, 0] rule_index: 2
         # The tree manipulatation won't have any effect, ignore the tree manipulatation
         return
     end
