@@ -11,8 +11,11 @@ abstract type LessThanOrEqualResult end
 
 """
 `node1` <= `node2` is guaranteed under all possible assignments of the holes involved.
+- `isequal` is true iff `node1` == `node2`. This field is needed to handle tiebreakers in the dfs
 """
-struct LessThanOrEqualSuccess <: LessThanOrEqualResult end
+struct LessThanOrEqualSuccess <: LessThanOrEqualResult
+    isequal::Bool
+end
 
 
 """
@@ -51,12 +54,12 @@ function make_less_than_or_equal!(
     for (node1, node2) ∈ zip(nodes1, nodes2)
         result = make_less_than_or_equal!(solver, node1, node2)
         @match result begin
-            ::LessThanOrEqualSuccess => ();
+            ::LessThanOrEqualSuccess => if !result.isequal return result end;
             ::LessThanOrEqualHardFail => return result;
             ::LessThanOrEqualSoftFail => return result;
         end
     end
-    return LessThanOrEqualSuccess()
+    return LessThanOrEqualSuccess(true)
 end
 
 
@@ -66,7 +69,7 @@ function make_less_than_or_equal!(
     node2::RuleNode
 )::LessThanOrEqualResult
     if node1.ind < node2.ind
-        return LessThanOrEqualSuccess()
+        return LessThanOrEqualSuccess(false)
     elseif node1.ind > node2.ind
         return LessThanOrEqualHardFail()
     end
@@ -119,7 +122,7 @@ function make_less_than_or_equal!(
     right_lowest_ind = findfirst(hole2.domain)
     if left_highest_ind <= right_lowest_ind
         # For example: Hole[1, 0, 1, 0, 0, 0] <= Hole[0, 0, 1, 1, 0, 1]
-        return LessThanOrEqualSuccess()
+        return LessThanOrEqualSuccess(false)
     end
     left_lowest_ind = findfirst(hole1.domain)
     right_highest_ind = findlast(hole2.domain)

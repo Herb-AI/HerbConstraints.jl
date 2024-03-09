@@ -172,4 +172,26 @@ using HerbCore, HerbGrammar
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test number_of_holes(get_tree(solver)) == 4
     end
+
+    @testset "Success, large tree" begin
+        grammar = @csgrammar begin
+            Int = |(1:9)
+            Int = x
+            Int = 0
+            Int = Int + Int
+            Int = Int - Int
+            Int = Int * Int
+        end
+        domain = BitVector((1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1))
+        left = RuleNode(13, [RuleNode(5), Hole(domain)])
+        right = RuleNode(13, [RuleNode(11), RuleNode(1)])
+        tree = RuleNode(14, [left, right])
+
+        solver = Solver(grammar, :Int)
+        new_state!(solver, tree)
+
+        @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
+        @test contains_variable_shaped_hole(get_tree(solver)) == true
+        @test number_of_holes(get_tree(solver)) == 1
+    end
 end

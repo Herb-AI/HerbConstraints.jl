@@ -79,9 +79,15 @@ end
 Overwrites the current state and propagates constraints on the `tree` from the ground up
 """
 function new_state!(solver::Solver, tree::AbstractRuleNode)
-    #TODO: rebuild the tree node by node, to add local constraints correctly
+    track!(solver.statistics, "new_state!")
     solver.state = State(tree)
-    notify_new_node(solver, Vector{Int}()) #notify about the root node
+    function _dfs_notify(node::AbstractRuleNode, path::Vector{Int})
+        notify_new_node(solver, path)
+        for (i, childnode) ∈ enumerate(get_children(node))
+            _dfs_notify(childnode, push!(copy(path), i))
+        end
+    end
+    _dfs_notify(tree, Vector{Int}())
     fix_point!(solver)
 end
 
