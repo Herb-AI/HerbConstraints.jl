@@ -45,12 +45,12 @@ end
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
-function check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+function check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
     @match pattern_match(tree, c.tree) begin
       ::PatternMatchHardFail => ()
       ::PatternMatchSoftFail => ()
       ::PatternMatchSuccess => return false
       ::PatternMatchSuccessWhenHoleAssignedTo => ()
     end
-    return all(check_tree(c, g, child) for child ∈ tree.children)
+    return all(check_tree(c, child) for child ∈ tree.children)
 end

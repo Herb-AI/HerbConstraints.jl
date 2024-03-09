@@ -31,11 +31,18 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     [`LocalConstraint`](@ref)s and propagate them at the right moments.
 """
 struct Ordered <: GrammarConstraint
-    tree::AbstractMatchNode
+    tree::AbstractRuleNode
     order::Vector{Symbol}
 end
 
 function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
+    #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
+    if c.tree isa RuleNode
+        @match get_node_at_location(solver, path) begin
+            hole::Hole => if !hole.domain[c.tree.ind] return end
+            node::RuleNode => if node.ind != c.tree.ind return end
+        end
+    end
     post!(solver, LocalOrdered(path, c.tree, c.order))
 end
 
@@ -44,15 +51,16 @@ end
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Ordered`](@ref) constraint.
 """
-function check_tree(c::Ordered, g::Grammar, tree::RuleNode)::Bool
+function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
     vars = Dict{Symbol, AbstractRuleNode}()
     if pattern_match(tree, c.tree, vars) isa PatternMatchSuccess
         # Check variable ordering
         for (var₁, var₂) ∈ zip(c.order[1:end-1], c.order[2:end])
-            _rulenode_compare(vars[var₁], vars[var₂]) == 1 && return false
+            if vars[var₁] > vars[var₂]
+                return false
+            end
         end
     end
-    return all(check_tree(c, g, child) for child ∈ tree.children)
+    return all(check_tree(c, child) for child ∈ tree.children)
 end
 
-check_tree(c::Ordered, g::Grammar, tree::Hole)::Bool = true

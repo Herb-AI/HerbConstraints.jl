@@ -43,8 +43,10 @@ include("solver/domainutils.jl")
 include("lessthanorequal.jl")
 
 include("localconstraints/local_forbidden.jl")
+include("localconstraints/local_ordered.jl")
 
 include("grammarconstraints/forbidden.jl")
+include("grammarconstraints/ordered.jl")
 
 
 export
@@ -57,9 +59,11 @@ export
     
     #grammar constraints
     Forbidden,
+    Ordered,
 
     #local constraints
     LocalForbidden,
+    LocalOrdered,
 
     #public solver functions
     Solver,

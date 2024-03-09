@@ -2,7 +2,7 @@
 """
     LocalForbidden
 
-Forbids the a subtree that matches the MatchNode tree to be generated at the location 
+Forbids the a subtree that matches the `tree` to be generated at the location 
 provided by the path. 
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
@@ -25,7 +25,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
             # TODO: set a watcher, only propagate when needed.
             track!(solver.statistics, "LocalForbidden softfail")
             #path = vcat(c.path, get_node_path(node, match.hole))
-            propagate_on_tree_manipulation!(solver, c, Vector{Int}()) #c.path
+            propagate_on_tree_manipulation!(solver, c, Vector{Int}()) #TODO: should be c.path
         end
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.

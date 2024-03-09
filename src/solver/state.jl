@@ -20,7 +20,10 @@ State(tree::AbstractRuleNode) = State(tree, Dict{Vector{Int64}, Constraint}(), t
 
 function Base.copy(state::State) 
     tree = deepcopy(state.tree)
-    on_tree_manipulation = deepcopy(state.on_tree_manipulation) #TODO: constraints should be shallow copied
+    on_tree_manipulation = Dict{Vector{Int}, Set{Constraint}}()
+    for (path, set) ∈ state.on_tree_manipulation
+        on_tree_manipulation[path] = copy(set)
+    end
     State(tree, on_tree_manipulation, state.isfeasible)
 end
 

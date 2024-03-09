@@ -20,3 +20,12 @@ function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
 		print(io, separator)
 	end
 end
+
+
+"""
+	contains_varnode(rn::AbstractRuleNode, name::Symbol)
+
+Checks if an [`AbstractRuleNode`](@ref) tree contains a [`VarNode`](@ref) with the given `name`.
+"""
+contains_varnode(rn::AbstractRuleNode, name::Symbol) = any(contains_varnode(c, name)  for c ∈ rn.children)
+contains_varnode(vn::VarNode, name::Symbol) = vn.name == name
