@@ -16,15 +16,26 @@ mutable struct Solver
     max_depth::Int
 end
 
+
 """
-    Solver(grammar::Grammar)
+    Solver(grammar::Grammar, sym::Symbol)
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
 function Solver(grammar::Grammar, sym::Symbol; with_statistics=false)
+    init_node = Hole(get_domain(grammar, sym))
+    Solver(grammar, init_node, with_statistics=with_statistics)
+end
+
+
+"""
+    Solver(grammar::Grammar, init_node::AbstractRuleNode)
+
+Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
+"""
+function Solver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false)
     stats = with_statistics ? SolverStatistics() : nothing
     solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, false, typemax(Int), typemax(Int))
-    init_node = Hole(get_domain(grammar, sym))
     new_state!(solver, init_node)
     return solver
 end
@@ -36,6 +47,8 @@ end
 Schedules the `constraint` for propagation.
 """
 function schedule!(solver::Solver, constraint::Constraint)
+    track!(solver.statistics, "schedule!")
+    track!(solver.statistics, "schedule! $(typeof(constraint))")
     if constraint ∉ keys(solver.schedule)
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
     end
