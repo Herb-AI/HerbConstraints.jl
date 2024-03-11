@@ -17,14 +17,18 @@ using HerbCore, HerbGrammar
             ])
         ])
         #tree = RuleNode(4, [leftnode, rightnode]) #more trivial case
+        leftpath = get_node_path(tree, leftnode)
+        rightpath = get_node_path(tree, rightnode)
         new_state!(solver, tree)
-        return solver
+        leftnode = get_node_at_location(solver, leftpath) #leftnode might have been simplified by `new_state!`
+        rightnode = get_node_at_location(solver, rightpath) #rightnode might have been simplified by `new_state!`
+        return solver, leftnode, rightnode
     end
 
     @testset "HardFail, no holes, >" begin
         left = RuleNode(2)
         right = RuleNode(1)
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualHardFail
     end
@@ -32,7 +36,7 @@ using HerbCore, HerbGrammar
     @testset "Success, no holes, ==" begin
         left = RuleNode(1)
         right = RuleNode(1)
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
     end
@@ -40,7 +44,7 @@ using HerbCore, HerbGrammar
     @testset "Success, no holes, <" begin
         left = RuleNode(1)
         right = RuleNode(2)
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
     end
@@ -48,7 +52,7 @@ using HerbCore, HerbGrammar
     @testset "Success, 1 hole (left)" begin
         left = Hole(BitVector((1, 0, 1, 0)))
         right = RuleNode(2)
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
     end
@@ -56,7 +60,7 @@ using HerbCore, HerbGrammar
     @testset "Success, 1 hole (right), expands" begin
         left = RuleNode(2)
         right = Hole(BitVector((1, 0, 1, 0)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
     end
@@ -64,7 +68,7 @@ using HerbCore, HerbGrammar
     @testset "Success, 2 holes" begin
         left = Hole(BitVector((1, 1, 0, 0)))
         right = Hole(BitVector((0, 0, 1, 1)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
     end
@@ -72,7 +76,7 @@ using HerbCore, HerbGrammar
     @testset "HardFail, 1 hole (left)" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = RuleNode(2)
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualHardFail
     end
@@ -80,7 +84,7 @@ using HerbCore, HerbGrammar
     @testset "HardFail, 1 hole (right)" begin
         left = RuleNode(3, [RuleNode(1), RuleNode(1)])
         right = Hole(BitVector((1, 1, 0, 0)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualHardFail
     end
@@ -88,7 +92,7 @@ using HerbCore, HerbGrammar
     @testset "HardFail, 2 holes" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = Hole(BitVector((1, 1, 0, 0)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualHardFail
     end
@@ -96,7 +100,7 @@ using HerbCore, HerbGrammar
     @testset "SoftFail, 2 holes" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = Hole(BitVector((1, 0, 1, 0)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
     end
@@ -104,7 +108,7 @@ using HerbCore, HerbGrammar
     @testset "left hole softfails" begin
         left = Hole(BitVector((0, 1, 1, 0)))
         right = RuleNode(3, [RuleNode(2), RuleNode(2)])
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
     end
@@ -112,7 +116,7 @@ using HerbCore, HerbGrammar
     @testset "left hole gets filled once, then softfails" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = RuleNode(3, [RuleNode(2), RuleNode(2)])
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test number_of_holes(get_tree(solver)) == 2
@@ -121,7 +125,7 @@ using HerbCore, HerbGrammar
     @testset "left hole gets filled twice, then softfails" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = RuleNode(3, [RuleNode(1), RuleNode(2)])
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test number_of_holes(get_tree(solver)) == 1
@@ -130,7 +134,7 @@ using HerbCore, HerbGrammar
     @testset "left hole gets filled thrice, and succeeds" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = RuleNode(3, [RuleNode(1), RuleNode(1)])
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
         @test number_of_holes(get_tree(solver)) == 0
@@ -139,7 +143,7 @@ using HerbCore, HerbGrammar
     @testset "right hole softfails" begin
         left = RuleNode(3, [RuleNode(2), RuleNode(2)])
         right = Hole(BitVector((0, 0, 1, 1)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
     end
@@ -147,7 +151,7 @@ using HerbCore, HerbGrammar
     @testset "right hole gets filled once, then softfails" begin
         left = RuleNode(4, [RuleNode(2), RuleNode(2)])
         right = Hole(BitVector((0, 0, 1, 1)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test number_of_holes(get_tree(solver)) == 2
@@ -167,7 +171,7 @@ using HerbCore, HerbGrammar
             ]), 
         ])
         right = Hole(BitVector((0, 0, 1, 1)))
-        solver = create_dummy_solver(left, right)
+        solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test number_of_holes(get_tree(solver)) == 4

@@ -100,7 +100,16 @@ function new_state!(solver::Solver, tree::AbstractRuleNode)
             _dfs_notify(childnode, push!(copy(path), i))
         end
     end
-    _dfs_notify(tree, Vector{Int}())
+    function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
+        if (node isa Hole)
+            simplify_hole!(solver, path)
+        end
+        for (i, childnode) ∈ enumerate(get_children(node))
+            _dfs_simplify(childnode, push!(copy(path), i))
+        end
+    end
+    _dfs_notify(tree, Vector{Int}()) #notify the constraints about all nodes in the new state
+    _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state
     fix_point!(solver)
 end
 

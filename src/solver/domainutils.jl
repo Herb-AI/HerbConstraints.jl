@@ -1,6 +1,7 @@
 """
-Checks if `subdomain` is a subdomain of `domain`.
+     is_subdomain(subdomain::BitVector, domain::BitVector)
 
+Checks if `subdomain` is a subdomain of `domain`.
 Example: [0, 0, 1, 0] is a subdomain of [0, 1, 1, 1]
 """
 function is_subdomain(subdomain::BitVector, domain::BitVector)
@@ -8,6 +9,8 @@ function is_subdomain(subdomain::BitVector, domain::BitVector)
 end
 
 """
+    partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
+
 Partition a [VariableShapedHole](@ref) into subdomains grouped by childtypes
 """
 function partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
@@ -25,6 +28,11 @@ function partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::
     return fixed_shaped_domains
 end
 
-function are_disjoint(domain1::BitVector, domain2::BitVector)
+"""
+    are_disjoint(domain1::BitVector, domain2::BitVector)::Bool
+
+Returns true if there is no overlap in values between `domain1` and `domain2`
+"""
+function are_disjoint(domain1::BitVector, domain2::BitVector)::Bool
     return all(.!domain1 .| .!domain2)
 end

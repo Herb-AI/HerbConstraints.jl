@@ -14,7 +14,7 @@ using HerbCore, HerbGrammar
     @testset "simplify_hole! VariableShapedHole -> FixedShapedHole" begin
         solver = create_dummy_solver()
         new_state!(solver, VariableShapedHole(BitVector((0, 0, 1, 1))))
-        HerbConstraints.simplify_hole!(solver, Vector{Int}())
+        #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
         
         tree = get_tree(solver)
         @test tree isa FixedShapedHole
@@ -29,7 +29,7 @@ using HerbCore, HerbGrammar
     @testset "simplify_hole! VariableShapedHole -> RuleNode" begin
         solver = create_dummy_solver()
         new_state!(solver, VariableShapedHole(BitVector((0, 0, 0, 1))))
-        HerbConstraints.simplify_hole!(solver, Vector{Int}())
+        #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
         
         tree = get_tree(solver)
         @test tree isa RuleNode
@@ -44,7 +44,7 @@ using HerbCore, HerbGrammar
     @testset "simplify_hole! FixedShapedHole -> RuleNode" begin
         solver = create_dummy_solver()
         new_state!(solver, FixedShapedHole(BitVector((0, 0, 0, 1)), [RuleNode(1), RuleNode(1)]))
-        HerbConstraints.simplify_hole!(solver, Vector{Int}())
+        #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
         
         tree = get_tree(solver)
         @test tree isa RuleNode

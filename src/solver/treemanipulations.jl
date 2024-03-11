@@ -130,6 +130,8 @@ function substitute!(solver::Solver, path::Vector{Int}, new_node::AbstractRuleNo
 end
 
 """
+    simplify_hole!(solver::Solver, path::Vector{Int})
+
 Takes a [Hole](@ref) and tries to simplify it to a [FixedShapedHole](@ref) or [RuleNode](@ref).
 If the domain of the hole is empty, the state will be marked as infeasible
 """
@@ -160,7 +162,11 @@ function simplify_hole!(solver::Solver, path::Vector{Int})
     if !isnothing(new_node)
         substitute!(solver, path, new_node)
         for i ∈ 1:length(new_node.children)
-            notify_new_node(solver, push!(copy(path), i))
+            child_path = push!(copy(path), i)
+            notify_new_node(solver, child_path)
+            if (new_node.children[i] isa Hole)
+                simplify_hole!(solver, child_path)
+            end
         end
     end
 end

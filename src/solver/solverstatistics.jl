@@ -1,3 +1,6 @@
+"""
+Temporary struct to `track!` the number of several function calls centered around the [`Solver`](@ref)
+"""
 struct SolverStatistics
     dict::Dict{String, Int}
 end
