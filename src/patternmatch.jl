@@ -147,3 +147,78 @@ function pattern_match(rn::AbstractRuleNode, var::VarNode, vars::Dict{Symbol, Ab
     vars[var.name] = rn
     return PatternMatchSuccess()
 end
+
+
+#TODO: all `pattern_match` functions for `StateFixedShapedHole`s are untested and copied from similar cases
+#TODO: refactor the entire family of `pattern_match` functions to be more type resilient
+#TODO: write unit tests for pattern matches with `StateFixedShapedHole`
+
+function pattern_match(h1::StateFixedShapedHole, h2::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
+    a1 = isassigned(h1)
+    a2 = isassigned(h2)
+    @match (a1, a2) begin
+        (true, true) => begin
+            #pattern match like rulenodes
+            if get_rule(h1) ≠ get_rule(h2)
+                return PatternMatchHardFail()
+            end
+            return pattern_match(h1.children, h2.children, vars)
+        end
+        (true, false) => begin
+            if !h2.domain[get_rule(h1)]
+                return PatternMatchHardFail()
+            end
+            match_result = pattern_match(h1.children, h2.children, vars)
+            @match match_result begin
+                ::PatternMatchHardFail => return match_result;
+                ::PatternMatchSoftFail => return match_result;
+                ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h2, get_rule(h1));
+                ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+            end
+        end
+        (false, true) => begin
+            if !h1.domain[get_rule(h2)]
+                return PatternMatchHardFail()
+            end
+            match_result = pattern_match(h1.children, h2.children, vars)
+            @match match_result begin
+                ::PatternMatchHardFail => return match_result;
+                ::PatternMatchSoftFail => return match_result;
+                ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h1, get_rule(h2));
+                ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+            end
+        end
+        (false, false) => begin
+            if are_disjoint(h1.domain, h2.domain)
+                return PatternMatchHardFail()
+            end
+            match_result = pattern_match(h1.children, h2.children, vars)
+            @match match_result begin
+                ::PatternMatchHardFail => return match_result;
+                ::PatternMatchSoftFail => return match_result;
+                ::PatternMatchSuccess => return PatternMatchSoftFail(h1);
+                ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+            end
+        end
+    end
+end
+
+function pattern_match(mn::RuleNode, h::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
+    if isassigned(h)
+        if get_rule(h) ≠ mn.ind
+            return PatternMatchHardFail()
+        end
+        return pattern_match(mn.children, h.children, vars)
+    else
+        if !h.domain[mn.ind]
+            return PatternMatchHardFail()
+        end
+        match_result = pattern_match(mn.children, h.children, vars)
+        @match match_result begin
+            ::PatternMatchHardFail => return match_result;
+            ::PatternMatchSoftFail => return match_result;
+            ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind);
+            ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
+        end
+    end
+end

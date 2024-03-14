@@ -23,8 +23,7 @@ end
 Converts a BitVector domain representation to a StateSparseSet
 Example:
 ```
-set = StateSparseSet(sm, BitVector((1, 1, 0, 0, 1, 0, 0)))
-println(set) #{1, 2, 5}
+set = StateSparseSet(sm, BitVector((1, 1, 0, 0, 1, 0, 0))) #{1, 2, 5}
 ```
 """
 function StateSparseSet(sm::StateManager, domain::BitVector)
@@ -87,6 +86,15 @@ Returns the number of values in the `StateSparseSet`.
 """
 function Base.sum(set::StateSparseSet)
     return get_value(set.size)
+end
+
+"""
+Checks if value `val` is in StateSparseSet `s`.
+!!! warning:
+    This allows a `StateSparseSet` to be used as if it were a `BitVector` representation of a set
+"""
+function Base.getindex(set::StateSparseSet, val::Int)
+    return val ∈ set
 end
 
 
@@ -255,4 +263,19 @@ function _update_min_val_removed!(set::StateSparseSet, val::Int)
             end
         end
     end
+end
+
+
+"""
+    are_disjoint(set1::StateSparseSet, set2::StateSparseSet)
+
+Returns true if there is no overlap in values between `set1` and `set2`
+"""
+function are_disjoint(set1::StateSparseSet, set2::StateSparseSet)
+    for v ∈ set1
+        if v ∈ set2
+            return false
+        end
+    end
+    return true
 end

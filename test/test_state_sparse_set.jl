@@ -172,4 +172,16 @@
         @test length(set) == 1
         @test 2 ∈ set
     end
+
+    @testset "are_disjoint" begin
+        set1 = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 5)
+        set2 = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 5)
+        @test are_disjoint(set1, set2) == false
+        remove_all_but!(set1, 1)
+        @test are_disjoint(set1, set2) == false
+        remove_all_but!(set2, 2)
+        @test are_disjoint(set1, set2) == true
+        remove!(set1, 1)
+        @test are_disjoint(set1, set2) == true
+    end
 end

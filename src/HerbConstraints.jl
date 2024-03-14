@@ -32,19 +32,22 @@ abstract type LocalConstraint <: Constraint end
 include("csg_annotated/csg_annotated.jl")
 
 include("varnode.jl")
-include("patternmatch.jl")
 
+include("solver/solver.jl")
 include("solver/solverstatistics.jl")
 include("solver/generic_solver/state.jl")
-include("solver/generic_solver/solver.jl")
+include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
 include("solver/domainutils.jl")
 
 include("solver/fixed_shaped_solver/state_manager.jl")
 include("solver/fixed_shaped_solver/state_sparse_set.jl")
 include("solver/fixed_shaped_solver/state_fixed_shaped_hole.jl")
+include("solver/fixed_shaped_solver/state_constraint.jl")
 include("solver/fixed_shaped_solver/fixed_shaped_solver.jl")
+include("solver/fixed_shaped_solver/fixed_shaped_solver_treemanipulations.jl")
 
+include("patternmatch.jl")
 include("lessthanorequal.jl")
 
 include("localconstraints/local_forbidden.jl")
@@ -71,6 +74,7 @@ export
     LocalOrdered,
 
     #public solver functions
+    GenericSolver,
     Solver,
     State,
     new_state!,
