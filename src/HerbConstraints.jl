@@ -35,10 +35,15 @@ include("varnode.jl")
 include("patternmatch.jl")
 
 include("solver/solverstatistics.jl")
-include("solver/state.jl")
-include("solver/solver.jl")
-include("solver/treemanipulations.jl")
+include("solver/generic_solver/state.jl")
+include("solver/generic_solver/solver.jl")
+include("solver/generic_solver/treemanipulations.jl")
 include("solver/domainutils.jl")
+
+include("solver/fixed_shaped_solver/state_manager.jl")
+include("solver/fixed_shaped_solver/state_sparse_set.jl")
+include("solver/fixed_shaped_solver/state_fixed_shaped_hole.jl")
+include("solver/fixed_shaped_solver/fixed_shaped_solver.jl")
 
 include("lessthanorequal.jl")
 
@@ -94,6 +99,18 @@ export
     are_disjoint,
 
     #solverstatistics
-    track!
+    track!,
+
+    #functions related to stateful objects
+    restore!,
+    make_state_int,
+    get_value,
+    set_value!,
+    increment!,
+    decrement!,
+
+    #fixed shaped solver
+    next_solution!,
+    FixedShapedSolver
 
 end # module HerbConstraints
