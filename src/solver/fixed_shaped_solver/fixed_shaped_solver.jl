@@ -41,7 +41,7 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     isfeasible = true
     schedule = PriorityQueue{Constraint, Int}()
     fix_point_running = false
-    statistics = with_statistics ? SolverStatistics() : nothing
+    statistics = with_statistics ? SolverStatistics("FixedShapedSolver") : nothing
     solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, constraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     save_state!(solver)
@@ -150,6 +150,7 @@ end
 Save the current state of the solver, can restored using `restore!`
 """
 function save_state!(solver::FixedShapedSolver)
+    track!(solver.statistics, "save_state!")
     save_state!(solver.sm)
 end
 
@@ -158,6 +159,7 @@ end
 Restore state of the solver until the last `save_state!`
 """
 function restore!(solver::FixedShapedSolver)
+    track!(solver.statistics, "restore!")
     restore!(solver.sm)
 end
 
@@ -223,13 +225,16 @@ function next_solution!(solver::FixedShapedSolver)::Union{AbstractRuleNode, Noth
                 if length(branches) == 0
                     # search node is a solution leaf node, return the solution
                     solver.nsolutions += 1
+                    track!(solver.statistics, "#CompleteTrees")
                     return solver.tree
                 else
-                    # search node is an internal node, store the branches to visit
+                    # search node is an (non-root) internal node, store the branches to visit
+                    track!(solver.statistics, "#InternalSearchNodes")
                     push!(solver.unvisited_branches, branches)
                 end
             else
                 # search node is an infeasible leaf node, backtrack
+                track!(solver.statistics, "#InfeasibleTrees")
                 restore!(solver)
             end
         else

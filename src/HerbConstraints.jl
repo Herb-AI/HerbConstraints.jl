@@ -115,6 +115,11 @@ export
 
     #fixed shaped solver
     next_solution!,
-    FixedShapedSolver
+    FixedShapedSolver,
+
+    #state fixed shaped hole
+    StateFixedShapedHole,
+    isfilled,
+    get_rule
 
 end # module HerbConstraints

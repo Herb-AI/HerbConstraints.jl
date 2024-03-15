@@ -10,6 +10,7 @@ mutable struct StateFixedShapedHole <: Hole
 	children::Vector{AbstractRuleNode}
 end
 
+
 """
 Converts a [`FixedShapedHole`](@ref) to a [`StateFixedShapedHole`](@ref)
 """
@@ -18,6 +19,7 @@ function StateFixedShapedHole(sm::StateManager, hole::FixedShapedHole)
 	children = [StateFixedShapedHole(sm, child) for child ∈ hole.children]
 	return StateFixedShapedHole(sss_domain, children)
 end
+
 
 """
 Converts a [`RuleNode`](@ref) to a [`StateFixedShapedHole`](@ref)
@@ -31,21 +33,38 @@ end
 """
 	get_rule(hole::StateFixedShapedHole)::Int
 
-Return the rule this hole is currently assigned to.
+Assuming the hole has domain size 1, get the rule it is currently assigned to.
 """
 function get_rule(hole::StateFixedShapedHole)::Int
-	@assert isassigned(hole) "$(hole) has not been assigned yet, unable to get the rule"
+	#TODO: get_rule(n::RuleNode) = n.ind
+	@assert isfilled(hole) "$(hole) has not been filled yet, unable to get the rule"
 	return findfirst(hole.domain)
 end
 
 
 """
-	isassigned(hole::StateFixedShapedHole)::Bool
+	isfilled(hole::StateFixedShapedHole)::Bool
 
-Assuming the hole has domain size 1, get the rule it is currently assigned to.
+Holes with domain size 1 are fixed to a rule.
+Returns whether the hole has domain size 1.
 """
-function isassigned(hole::StateFixedShapedHole)::Bool
+function isfilled(hole::StateFixedShapedHole)::Bool
+	#TODO: isfilled(::Hole) = false
+	#TODO: isfilled(::RuleNode) = true
 	return size(hole.domain) == 1
+end
+
+
+"""
+	contains_hole(hole::StateFixedShapedHole)::Bool
+
+Returns true if the `hole` or any of its (grand)children are not filled.
+"""
+function HerbCore.contains_hole(hole::StateFixedShapedHole)::Bool
+	if !isfilled(hole)
+		return true
+	end
+	return any(contains_hole(c) for c ∈ hole.children)
 end
 
 

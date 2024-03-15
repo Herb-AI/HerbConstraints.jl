@@ -154,9 +154,7 @@ end
 #TODO: write unit tests for pattern matches with `StateFixedShapedHole`
 
 function pattern_match(h1::StateFixedShapedHole, h2::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
-    a1 = isassigned(h1)
-    a2 = isassigned(h2)
-    @match (a1, a2) begin
+    @match (isfilled(h1), isfilled(h2)) begin
         (true, true) => begin
             #pattern match like rulenodes
             if get_rule(h1) ≠ get_rule(h2)
@@ -204,7 +202,7 @@ function pattern_match(h1::StateFixedShapedHole, h2::StateFixedShapedHole, vars:
 end
 
 function pattern_match(mn::RuleNode, h::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
-    if isassigned(h)
+    if isfilled(h)
         if get_rule(h) ≠ mn.ind
             return PatternMatchHardFail()
         end

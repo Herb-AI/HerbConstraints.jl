@@ -15,4 +15,5 @@ using Test
     include("test_state_manager.jl")
 
     include("test_fixed_shaped_solver.jl")
+    include("test_state_fixed_shaped_hole.jl")
 end
