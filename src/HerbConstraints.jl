@@ -119,6 +119,7 @@ export
 
     #state fixed shaped hole
     StateFixedShapedHole,
+    statefixedshapedhole2rulenode,
     isfilled,
     get_rule
 

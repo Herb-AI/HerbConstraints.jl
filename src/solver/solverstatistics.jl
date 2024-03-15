@@ -20,7 +20,7 @@ function Base.show(io::IO, stats::SolverStatistics)
     print(io, "SolverStatistics ($(stats.name))\n")
     if length(keys(stats.dict)) > 0
         max_key_length = maximum(length.(keys(stats.dict)))
-        for key ∈ keys(stats.dict)#sort(collect(keys(stats.dict)))
+        for key ∈ sort(collect(keys(stats.dict))) #keys(stats.dict)
             spaces = "." ^ (max_key_length - length(key))
             print(io, "$key $spaces $(stats.dict[key])\n")
         end

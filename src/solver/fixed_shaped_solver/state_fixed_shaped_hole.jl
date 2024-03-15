@@ -82,3 +82,21 @@ function Base.show(io::IO, node::StateFixedShapedHole; separator=",", last_child
 end
 
 HerbCore.get_children(hole::StateFixedShapedHole) = hole.children
+
+
+"""
+	statefixedshapedhole2rulenode(hole::StateFixedShapedHole)::RuleNode
+
+Converts a `StateFixedShapedHole` to a `RuleNode`.
+The hole and its children are assumed to be filled.
+"""
+function statefixedshapedhole2rulenode(hole::StateFixedShapedHole)::RuleNode
+	return RuleNode(get_rule(hole), [statefixedshapedhole2rulenode(c) for c in hole.children])
+end
+
+function statefixedshapedhole2rulenode(node::RuleNode)::RuleNode
+	return RuleNode(node.ind, [statefixedshapedhole2rulenode(c) for c in node.children])
+end
+
+#TODO: remove this function. never convert a StateFixedShapedHole to a RuleNode.
+#TODO: implement `rulenode2expr` for `StateFixedShapedHole`

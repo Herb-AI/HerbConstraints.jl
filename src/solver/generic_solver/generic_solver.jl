@@ -11,6 +11,7 @@ mutable struct GenericSolver <: Solver
     state::Union{State, Nothing}
     schedule::PriorityQueue{Constraint, Int}
     statistics::Union{SolverStatistics, Nothing}
+    use_fixedshapedsolver::Bool
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
@@ -22,9 +23,9 @@ end
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::Grammar, sym::Symbol; with_statistics=false)
+function GenericSolver(grammar::Grammar, sym::Symbol; with_statistics=false, use_fixedshapedsolver=true)
     init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics)
+    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_fixedshapedsolver=use_fixedshapedsolver)
 end
 
 
@@ -33,9 +34,9 @@ end
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false)
+function GenericSolver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false, use_fixedshapedsolver=true)
     stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, false, typemax(Int), typemax(Int))
+    solver = GenericSolver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, use_fixedshapedsolver, false, typemax(Int), typemax(Int))
     new_state!(solver, init_node)
     return solver
 end

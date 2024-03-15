@@ -43,7 +43,7 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     isfeasible = true
     schedule = PriorityQueue{Constraint, Int}()
     fix_point_running = false
-    statistics = with_statistics ? SolverStatistics("FixedShapedSolver") : nothing
+    statistics = with_statistics ? SolverStatistics("FixedShapedSolver: $(fixed_shaped_tree)") : nothing
     solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, stateconstraints, canceledconstraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
@@ -61,13 +61,13 @@ end
 Notify all grammar constraints about the `node` and its (grand)children
 """
 function notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, path::Vector{Int})
+    for (i, childnode) ∈ enumerate(get_children(node))
+        notify_new_nodes(solver, childnode, push!(copy(path), i))
+    end
     solver.path_to_node[path] = node
     solver.node_to_path[node] = path
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, path)
-    end
-    for (i, childnode) ∈ enumerate(get_children(node))
-        notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
 end
 
@@ -192,6 +192,7 @@ Restore state of the solver until the last `save_state!`
 function restore!(solver::FixedShapedSolver)
     track!(solver.statistics, "restore!")
     restore!(solver.sm)
+    solver.isfeasible = true
 end
 
 #TODO: implement more branching schemes
@@ -230,12 +231,12 @@ end
 
 
 """
-    next_solution!(solver::FixedShapedSolver)
+    next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
 
 Built-in iterator. Search for the next unvisited solution.
 Returns nothing if all solutions have been found already.
 """
-function next_solution!(solver::FixedShapedSolver)::Union{AbstractRuleNode, Nothing}
+function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
     if solver.nsolutions == 1000000 @warn "FixedShapedSolver is iterating over more than 1000000 solutions..." end
     if solver.nsolutions > 0
         # backtrack from the previous solution
@@ -274,6 +275,12 @@ function next_solution!(solver::FixedShapedSolver)::Union{AbstractRuleNode, Noth
             restore!(solver)
             pop!(solver.unvisited_branches)
         end
+    end
+    if solver.nsolutions == 0 && is_feasible(solver)
+        # search node is the root and the only solution, return the solution (edgecase)
+        solver.nsolutions += 1
+        track!(solver.statistics, "#CompleteTrees")
+        return solver.tree
     end
     return nothing
 end
