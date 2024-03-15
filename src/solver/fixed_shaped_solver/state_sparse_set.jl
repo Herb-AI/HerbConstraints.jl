@@ -47,11 +47,13 @@ Pretty print the `StateSparseSet`.
 function Base.show(io::IO, set::StateSparseSet)
     print(io, "{")
     size = get_value(set.size)
-    for i ∈ 1:size-1
-        print(io, set.values[i])
-        print(io, ", ")
+    if size > 0
+        for i ∈ 1:size-1
+            print(io, set.values[i])
+            print(io, ", ")
+        end
+        print(io, set.values[size])
     end
-    print(io, set.values[size])
     print(io, "}")
 end
 
@@ -159,12 +161,15 @@ end
 
 
 """
-remove_all_but!(set::StateSparseSet, val::Int)
+    remove_all_but!(set::StateSparseSet, val::Int)::Bool
 
 Removes all values from StateSparseSet `set`, except `val`
 """
-function remove_all_but!(set::StateSparseSet, val::Int)
+function remove_all_but!(set::StateSparseSet, val::Int)::Bool
     @assert val ∈ set
+    if get_value(set.size) <= 1
+        return false
+    end
     _val = set.values[1]
     _i = set.indices[val]
     set.indices[val] = 1
@@ -174,6 +179,7 @@ function remove_all_but!(set::StateSparseSet, val::Int)
     set_value!(set.min, val)
     set_value!(set.max, val)
     set_value!(set.size, 1)
+    return true
 end
 
 

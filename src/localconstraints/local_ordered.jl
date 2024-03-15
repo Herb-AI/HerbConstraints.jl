@@ -10,6 +10,7 @@ mutable struct LocalOrdered <: LocalConstraint
 end
 
 function propagate!(solver::Solver, c::LocalOrdered)
+    @assert is_feasible(solver)
     node = get_node_at_location(solver, c.path)
     track!(solver.statistics, "LocalOrdered propagation")
     vars = Dict{Symbol, AbstractRuleNode}()
@@ -17,6 +18,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
+            deactivate!(solver, c)
             track!(solver.statistics, "LocalOrdered match hardfail")
         end;
         ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
@@ -44,6 +46,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
                     ::LessThanOrEqualSuccess => begin
                         # vars[name1] <= vars[name2]. the constaint is satisfied
                         # No repropagation needed
+                        deactivate!(solver, c)
                     end
                 end
             end

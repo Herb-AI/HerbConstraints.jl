@@ -132,3 +132,131 @@ function make_less_than_or_equal!(
     end
     return LessThanOrEqualSoftFail(hole1, hole2)
 end
+
+
+#TODO: all `make_less_than_or_equal!` functions for `StateFixedShapedHole`s are untested and copied from similar cases
+#TODO: refactor the entire family of `make_less_than_or_equal!` functions to be more type resilient
+#TODO: write unit tests for `make_less_than_or_equal!` with `StateFixedShapedHole`
+
+
+function make_less_than_or_equal!(
+    solver::Solver,
+    hole::StateFixedShapedHole,
+    node::RuleNode
+)
+    @assert size(hole.domain) > 0
+    path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
+    remove_above!(solver, path, node.ind)
+    if !is_feasible(solver)
+        return LessThanOrEqualHardFail()
+    end
+    if isfilled(hole)
+        #(node, node)-case
+        if get_rule(hole) < node.ind
+            return LessThanOrEqualSuccess(false)
+        elseif get_rule(hole) > node.ind
+            return LessThanOrEqualHardFail()
+        end
+        return make_less_than_or_equal!(solver, hole.children, node.children)
+    else
+        #(hole, node)-case
+        return LessThanOrEqualSoftFail(hole)
+    end
+end
+
+
+function make_less_than_or_equal!(
+    solver::Solver,
+    node::RuleNode,
+    hole::StateFixedShapedHole
+)
+    @assert size(hole.domain) > 0
+    path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
+    remove_below!(solver, path, node.ind)
+    if !is_feasible(solver)
+        return LessThanOrEqualHardFail()
+    end
+    if isfilled(hole)
+        #(node, node)-case
+        if node.ind < get_rule(hole)
+            return LessThanOrEqualSuccess(false)
+        elseif node.ind > get_rule(hole)
+            return LessThanOrEqualHardFail()
+        end
+        return make_less_than_or_equal!(solver, node.children, hole.children)
+    else
+        #(node, hole)-case
+        return LessThanOrEqualSoftFail(hole)
+    end
+end
+
+function make_less_than_or_equal!(
+    solver::Solver,
+    hole1::StateFixedShapedHole,
+    hole2::StateFixedShapedHole
+)
+    @assert (size(hole1.domain) > 0) && (size(hole2.domain) > 0)
+    @match (isfilled(hole1), isfilled(hole2)) begin
+        (true, true) => begin
+            if get_rule(hole1) < get_rule(hole2)
+                return LessThanOrEqualSuccess(false)
+            elseif get_rule(hole1) > get_rule(hole2)
+                return LessThanOrEqualHardFail()
+            end
+            return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+        end
+        (true, false) => begin
+            path = get_node_path(get_tree(solver), hole2) #TODO: optimize. very inefficient to go from hole->path->hole
+            remove_below!(solver, path, get_rule(hole1))
+            if !is_feasible(solver)
+                return LessThanOrEqualHardFail()
+            end
+            if isfilled(hole2)
+                #(node, node)-case
+                if get_rule(hole1) < get_rule(hole2)
+                    return LessThanOrEqualSuccess(false)
+                elseif get_rule(hole1) > get_rule(hole2)
+                    return LessThanOrEqualHardFail()
+                end
+                return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+            else
+                #(node, hole)-case
+                return LessThanOrEqualSoftFail(hole2)
+            end
+        end
+        (false, true) => begin
+            path = get_node_path(get_tree(solver), hole1) #TODO: optimize. very inefficient to go from hole->path->hole
+            remove_above!(solver, path, get_rule(hole2))
+            if !is_feasible(solver)
+                return LessThanOrEqualHardFail()
+            end
+            if isfilled(hole1)
+                #(node, node)-case
+                if get_rule(hole1) < get_rule(hole2)
+                    return LessThanOrEqualSuccess(false)
+                elseif get_rule(hole1) > get_rule(hole2)
+                    return LessThanOrEqualHardFail()
+                end
+                return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+            else
+                #(hole, node)-case
+                return LessThanOrEqualSoftFail(hole1)
+            end
+        end
+        (false, false) => begin
+            left_highest_ind = findlast(hole1.domain)
+            right_lowest_ind = findfirst(hole2.domain)
+            if left_highest_ind <= right_lowest_ind
+                # For example: Hole[1, 0, 1, 0, 0, 0] <= Hole[0, 0, 1, 1, 0, 1]
+                return LessThanOrEqualSuccess(false)
+            end
+            left_lowest_ind = findfirst(hole1.domain)
+            right_highest_ind = findlast(hole2.domain)
+            if left_lowest_ind > right_highest_ind
+                #For example: Hole[0, 0, 0, 1, 1, 1] > Hole[1, 1, 0, 0, 0, 0]
+                return LessThanOrEqualHardFail()
+            end
+            return LessThanOrEqualSoftFail(hole1, hole2)
+        end
+    end
+end

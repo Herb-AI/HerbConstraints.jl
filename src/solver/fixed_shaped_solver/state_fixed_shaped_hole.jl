@@ -46,7 +46,7 @@ end
 	isfilled(hole::StateFixedShapedHole)::Bool
 
 Holes with domain size 1 are fixed to a rule.
-Returns whether the hole has domain size 1.
+Returns whether the hole has domain size 1. (holes with an empty domain are not considered to be fixed)
 """
 function isfilled(hole::StateFixedShapedHole)::Bool
 	#TODO: isfilled(::Hole) = false

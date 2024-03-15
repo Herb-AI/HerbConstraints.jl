@@ -61,4 +61,9 @@
         @test contains_hole(root.children[1]) == false
         @test contains_hole(root.children[2]) == true
     end
+
+    @testset "is_filled (empty domain)" begin
+        hole = HerbConstraints.StateFixedShapedHole(HerbConstraints.StateManager(), FixedShapedHole(BitVector((0, 0, 0)), []))
+        @test isfilled(hole) == false
+    end
 end
