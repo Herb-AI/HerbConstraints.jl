@@ -17,7 +17,8 @@ mutable struct FixedShapedSolver <: Solver
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    constraints::Vector{Constraint}
+    stateconstraints::Vector{StateConstraint}
+    canceledconstraints::Set{Constraint}
     nsolutions::Int
     isfeasible::Bool
     schedule::PriorityQueue{Constraint, Int}
@@ -36,16 +37,20 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    constraints = Vector{Constraint}()
+    stateconstraints = Vector{StateConstraint}()
+    canceledconstraints = Set{Constraint}()
     nsolutions = 0
     isfeasible = true
     schedule = PriorityQueue{Constraint, Int}()
     fix_point_running = false
     statistics = with_statistics ? SolverStatistics("FixedShapedSolver") : nothing
-    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, constraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
+    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, stateconstraints, canceledconstraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
-    save_state!(solver)
-    push!(unvisited_branches, generate_branches(solver)) #generate initial branches for the root search node
+    fix_point!(solver)
+    if is_feasible(solver)
+        save_state!(solver)
+        push!(unvisited_branches, generate_branches(solver)) #generate initial branches for the root search node
+    end
     return solver
 end
 
@@ -90,16 +95,38 @@ end
 
 
 """
+    deactivate!(solver::FixedShapedSolver, constraint::Constraint)
+
+Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
+"""
+function deactivate!(solver::FixedShapedSolver, constraint::Constraint)
+    for stateconstraint in solver.stateconstraints
+        if stateconstraint.constraint == constraint
+            set_value!(stateconstraint.isactive, 0)
+            return
+        end
+    end
+    push!(solver.canceledconstraints, constraint)
+end
+
+
+"""
     post!(solver::FixedShapedSolver, constraint::Constraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
 function post!(solver::FixedShapedSolver, constraint::Constraint)
-    #sc = StateConstraint(constraint, make_state_int(solver.sm, 1))
-    sc = constraint
-    push!(solver.constraints, sc)
-    schedule!(solver, sc)
+    if !is_feasible(solver) return end
+    # initial propagation of the new constraint
+    propagate!(solver, constraint)
+    if constraint ∈ solver.canceledconstraints
+        # the constraint was deactivated during the initial propagation, cancel posting the constraint
+        delete!(solver.canceledconstraints, constraint)
+        return
+    end
+    #if the was not deactivated after initial propagation, it can be added to the list of constraints
+    push!(solver.stateconstraints, StateConstraint(solver.sm, constraint))
 end
 
 
@@ -120,8 +147,11 @@ function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{
     if !is_feasible(solver) return end
     #TODO: event_path is ignored.
     #initial version: schedule all constraints
-    for c ∈ solver.constraints
-        schedule!(solver, c)
+    for c ∈ solver.stateconstraints
+        if get_value(c.isactive) == 1
+            #sc.isactive = false # by default, constraints are disabled after propagation
+            schedule!(solver, c.constraint)
+        end
     end
 end
 
@@ -150,6 +180,7 @@ end
 Save the current state of the solver, can restored using `restore!`
 """
 function save_state!(solver::FixedShapedSolver)
+    @assert is_feasible(solver)
     track!(solver.statistics, "save_state!")
     save_state!(solver.sm)
 end
@@ -181,6 +212,7 @@ A possible branching scheme could be to be split up in three `Branch`ing constra
 """
 function generate_branches(solver::FixedShapedSolver)::Vector{Branch}
     #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
+    @assert is_feasible(solver)
     function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
         if node isa StateFixedShapedHole && size(node.domain) > 1
             return [Branch(node, rule) for rule ∈ node.domain]

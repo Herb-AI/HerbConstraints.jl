@@ -42,6 +42,18 @@ end
 
 
 """
+    deactivate!(solver::GenericSolver, constraint::Constraint)
+
+Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
+"""
+function deactivate!(solver::GenericSolver, constraint::Constraint)
+    #TODO: refactor constraint deactivation for the GenericSolver. 
+    # Currently, constraints are deleted by default, so `deactivate!` can be ignored
+    ()
+end
+
+
+"""
     post!(solver::GenericSolver, constraint::Constraint)
 
 Imposes the `constraint` to the current state.

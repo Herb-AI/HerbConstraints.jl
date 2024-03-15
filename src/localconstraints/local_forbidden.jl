@@ -18,6 +18,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
+            deactivate!(solver, c)
             track!(solver.statistics, "LocalForbidden hardfail")
         end;
         match::PatternMatchSoftFail => begin 
@@ -39,6 +40,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
             #path = get_node_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_node_path(node, match.hole))
             remove!(solver, path, match.ind)
+            deactivate!(solver, c)
         end
     end
 end

@@ -3,7 +3,7 @@
 
 Abstract constraint solver. 
 Each solver should have at least the following fields:
-- 
+- `statistics::SolverStatistics`
 - `fix_point_running::Bool`
 - `schedule::PriorityQueue{Constraint, Int}`
 
@@ -17,6 +17,7 @@ Each solver should implement at least:
 - `get_hole_at_location`
 - `propagate_on_tree_manipulation!`
 - `notify_tree_manipulation`
+- `deactivate!`
 """
 abstract type Solver end
 
