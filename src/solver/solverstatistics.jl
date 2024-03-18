@@ -1,7 +1,7 @@
 """
 Temporary struct to `track!` the number of several function calls centered around the [`Solver`](@ref)
 """
-struct SolverStatistics
+mutable struct SolverStatistics
     name::String
     dict::Dict{String, Int}
 end
@@ -9,6 +9,7 @@ end
 SolverStatistics(name::String) = SolverStatistics(name, Dict{String, Int}())
 
 function track!(stats::SolverStatistics, key::String)
+    key = "[$(stats.name)] $(key)"
     if key ∈ keys(stats.dict)
         stats.dict[key] += 1
     else
@@ -17,7 +18,7 @@ function track!(stats::SolverStatistics, key::String)
 end
 
 function Base.show(io::IO, stats::SolverStatistics)
-    print(io, "SolverStatistics ($(stats.name))\n")
+    print(io, "SolverStatistics: \n")
     if length(keys(stats.dict)) > 0
         max_key_length = maximum(length.(keys(stats.dict)))
         for key ∈ sort(collect(keys(stats.dict))) #keys(stats.dict)

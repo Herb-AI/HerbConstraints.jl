@@ -17,7 +17,7 @@ mutable struct FixedShapedSolver <: Solver
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    stateconstraints::Vector{StateConstraint}
+    isactive::Dict{Constraint, StateInt}
     canceledconstraints::Set{Constraint}
     nsolutions::Int
     isfeasible::Bool
@@ -37,14 +37,19 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    stateconstraints = Vector{StateConstraint}()
+    isactive = Dict{Constraint, StateInt}()
     canceledconstraints = Set{Constraint}()
     nsolutions = 0
     isfeasible = true
     schedule = PriorityQueue{Constraint, Int}()
     fix_point_running = false
-    statistics = with_statistics ? SolverStatistics("FixedShapedSolver: $(fixed_shaped_tree)") : nothing
-    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, stateconstraints, canceledconstraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
+    statistics = @match with_statistics begin
+        ::SolverStatistics => with_statistics
+        ::Bool => with_statistics ? SolverStatistics("FixedShapedSolver") : nothing
+        ::Nothing => nothing
+    end
+    if !isnothing(statistics) statistics.name = "FixedShapedSolver" end
+    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     if is_feasible(solver)
@@ -100,12 +105,14 @@ end
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
 function deactivate!(solver::FixedShapedSolver, constraint::Constraint)
-    for stateconstraint in solver.stateconstraints
-        if stateconstraint.constraint == constraint
-            set_value!(stateconstraint.isactive, 0)
-            return
-        end
+    if constraint ∈ keys(solver.isactive)
+        # the constraint was posted earlier and should be deactivated
+        set_value!(solver.isactive[constraint], 0)
+        return
     end
+    # the constraint is satisfied during its initial propagation
+    # the constraint was not posted yet, the post should be canceled
+    track!(solver.statistics, "cancel post (1/2)")
     push!(solver.canceledconstraints, constraint)
 end
 
@@ -122,11 +129,13 @@ function post!(solver::FixedShapedSolver, constraint::Constraint)
     propagate!(solver, constraint)
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
+        track!(solver.statistics, "cancel post (2/2)")
         delete!(solver.canceledconstraints, constraint)
         return
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
-    push!(solver.stateconstraints, StateConstraint(solver.sm, constraint))
+    @assert constraint ∉ keys(solver.isactive) "Attempted to post a constraint that was already posted before"
+    solver.isactive[constraint] = make_state_int(solver.sm, 1)
 end
 
 
@@ -146,11 +155,10 @@ Notify subscribed constraints that a tree manipulation has occured at the `event
 function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
     if !is_feasible(solver) return end
     #TODO: event_path is ignored.
-    #initial version: schedule all constraints
-    for c ∈ solver.stateconstraints
-        if get_value(c.isactive) == 1
-            #sc.isactive = false # by default, constraints are disabled after propagation
-            schedule!(solver, c.constraint)
+    #initial version: schedule all active constraints
+    for (constraint, isactive) ∈ solver.isactive
+        if get_value(isactive) == 1
+            schedule!(solver, constraint)
         end
     end
 end
