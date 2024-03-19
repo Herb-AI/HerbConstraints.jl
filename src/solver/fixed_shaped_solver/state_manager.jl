@@ -24,7 +24,7 @@ mutable struct StateInt
 end
 
 function StateInt(sm, val)
-    return StateInt(sm, val, sm.state_id-1)
+    return StateInt(sm, val, sm.current_state_id-1)
 end
 
 
@@ -89,7 +89,7 @@ restore!(sm) #restores a to value 10
 ```
 """
 function backup!(int::StateInt)
-    state_id = int.sm.state_id
+    state_id = int.sm.current_state_id
     if int.last_state_id != state_id
         int.last_state_id = state_id
         push!(int.sm.current_backups, StateIntBackup(int, int.val))
@@ -118,14 +118,14 @@ Manages all changes made to StateInts using StateIntBackups
 mutable struct StateManager <: AbstractStateManager
     prior_backups::Vector{Vector{StateIntBackup}}
     current_backups::Vector{StateIntBackup}
-    state_id::Int
+    current_state_id::Int
 end
 
 function StateManager()
     prior_backups = Vector{Vector{StateIntBackup}}()
     current_backups = Vector{StateIntBackup}()
-    state_id = 1
-    return StateManager(prior_backups, current_backups, state_id)
+    current_state_id = 1
+    return StateManager(prior_backups, current_backups, current_state_id)
 end
 
 
@@ -143,7 +143,7 @@ Make a backup of the current state. Return to this state by calling `restore!`.
 function save_state!(sm::StateManager)
     push!(sm.prior_backups, sm.current_backups)
     sm.current_backups = Vector{StateIntBackup}()
-    sm.state_id += 1
+    sm.current_state_id += 1
 end
 
 
@@ -158,5 +158,5 @@ function restore!(sm::StateManager)
     if !isempty(sm.prior_backups)
         sm.current_backups = pop!(sm.prior_backups)
     end
-    sm.state_id += 1
+    sm.current_state_id += 1
 end

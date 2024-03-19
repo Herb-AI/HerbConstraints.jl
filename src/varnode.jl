@@ -15,15 +15,15 @@ struct VarNode <: AbstractRuleNode
 end
 
 function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
-	print(io, node.name)
-	if !last_child
-		print(io, separator)
-	end
+    print(io, node.name)
+    if !last_child
+        print(io, separator)
+    end
 end
 
 
 """
-	contains_varnode(rn::AbstractRuleNode, name::Symbol)
+    contains_varnode(rn::AbstractRuleNode, name::Symbol)
 
 Checks if an [`AbstractRuleNode`](@ref) tree contains a [`VarNode`](@ref) with the given `name`.
 """

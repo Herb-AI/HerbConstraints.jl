@@ -50,7 +50,6 @@ Schedules the `constraint` for propagation.
 """
 function schedule!(solver::Solver, constraint::Constraint)
     track!(solver.statistics, "schedule!")
-    track!(solver.statistics, "schedule! $(typeof(constraint))")
     if constraint ∉ keys(solver.schedule)
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
     end
