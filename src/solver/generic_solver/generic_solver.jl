@@ -186,11 +186,7 @@ The `constraint` will be propagated on the next tree manipulation at or above th
 """
 function propagate_on_tree_manipulation!(solver::GenericSolver, constraint::Constraint, event_path::Vector{Int})
     @assert is_feasible(solver)
-    dict = get_state(solver).on_tree_manipulation
-    if event_path ∉ keys(dict)
-        dict[event_path] = Set{Constraint}()
-    end
-    push!(dict[event_path], constraint)
+    push!(get_state(solver).activeconstraints, constraint)
 end
 
 
@@ -201,28 +197,13 @@ Notify subscribed constraints that a tree manipulation has occured at the `event
 """
 function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
     if !is_feasible(solver) return end
-    #TODO: keep track of the notify lists on the holes themselves
-    #TODO: propagate only on specific tree manipulation. (e.g. at exactly the given event_path, or above the given event_path)
-    # Propagate all constraints in lists at or above the event_path
-    event_path = push!(copy(event_path), 0)
-    while !isempty(event_path)
-        pop!(event_path)
-        dict = get_state(solver).on_tree_manipulation
-        if event_path ∈ keys(dict)
-            for c ∈ dict[event_path]
-                schedule!(solver, c)
-            end
-            empty!(dict[event_path])
+    activeconstraints = get_state(solver).activeconstraints
+    for c ∈ activeconstraints
+        if shouldschedule(solver, c, event_path)
+            schedule!(solver, c)
+            delete!(activeconstraints, c)  #by default, scheduled constraints are deleted
         end
     end
-    # Always propagate all constraints:
-    # dict = get_state(solver).on_tree_manipulation
-    # for event_path ∈ keys(dict)
-    #     for c ∈ dict[event_path]
-    #         schedule!(solver, c)
-    #     end
-    #     empty!(dict[event_path])
-    # end
 end
 
 """

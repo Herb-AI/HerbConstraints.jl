@@ -54,3 +54,17 @@ function schedule!(solver::Solver, constraint::Constraint)
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
     end
 end
+
+
+"""
+    shouldschedule(solver::Solver, constraint::Constraint, path::Vector{Int})::Bool
+
+Function that is called when a tree manipulation occured at the `path`.
+Returns true if the `constraint` should be scheduled for propagation.
+
+Default behavior: return true iff the manipulation happened at or below the constraint path.
+"""
+function shouldschedule(::Solver, constraint::Constraint, path::Vector{Int})::Bool
+    return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
+end
+
