@@ -35,7 +35,7 @@ end
 
 Assuming the hole has domain size 1, get the rule it is currently assigned to.
 """
-function get_rule(hole::StateFixedShapedHole)::Int
+function HerbCore.get_rule(hole::StateFixedShapedHole)::Int
 	#TODO: get_rule(n::RuleNode) = n.ind
 	@assert isfilled(hole) "$(hole) has not been filled yet, unable to get the rule"
 	return findfirst(hole.domain)
@@ -48,7 +48,7 @@ end
 Holes with domain size 1 are fixed to a rule.
 Returns whether the hole has domain size 1. (holes with an empty domain are not considered to be fixed)
 """
-function isfilled(hole::StateFixedShapedHole)::Bool
+function HerbCore.isfilled(hole::StateFixedShapedHole)::Bool
 	#TODO: isfilled(::Hole) = false
 	#TODO: isfilled(::RuleNode) = true
 	return size(hole.domain) == 1
