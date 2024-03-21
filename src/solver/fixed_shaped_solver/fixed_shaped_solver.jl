@@ -105,6 +105,11 @@ end
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
 function deactivate!(solver::FixedShapedSolver, constraint::Constraint)
+    if constraint ∈ keys(solver.schedule)
+        # remove the constraint from the schedule
+        track!(solver.statistics, "deactivate! removed from schedule")
+        delete!(solver.schedule, constraint)
+    end
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
         set_value!(solver.isactive[constraint], 0)
@@ -140,25 +145,17 @@ end
 
 
 """
-    propagate_on_tree_manipulation!(solver::FixedShapedSolver, constraint::Constraint)
-"""
-function propagate_on_tree_manipulation!(solver::FixedShapedSolver, constraint::Constraint, path::Vector{Int})
-    #TODO: find related state constraint and set isactive=true
-    ()
-end
-
-"""
     notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
     if !is_feasible(solver) return end
-    #TODO: event_path is ignored.
-    #initial version: schedule all active constraints
     for (constraint, isactive) ∈ solver.isactive
         if get_value(isactive) == 1
-            schedule!(solver, constraint)
+            if shouldschedule(solver, constraint, event_path)
+                schedule!(solver, constraint)
+            end
         end
     end
 end
@@ -175,11 +172,11 @@ end
 
 
 """
-    mark_infeasible(solver::Solver)
+    mark_infeasible!(solver::Solver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible(solver::FixedShapedSolver)
+function mark_infeasible!(solver::FixedShapedSolver)
     solver.isfeasible = false
 end
 
@@ -256,10 +253,7 @@ function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedSh
             # current depth has unvisted branches, pick a branch to explore
             branch = pop!(branches)
             save_state!(solver)
-            remove_all_but!(branch.hole.domain, branch.rule)
-            #TODO: fix point and schedule inside the remove_all_but!
-            notify_tree_manipulation(solver, Vector{Int}())
-            fix_point!(solver)
+            remove_all_but!(solver, solver.node_to_path[branch.hole], branch.rule)
             if is_feasible(solver)
                 # generate new branches for the new search node
                 branches = generate_branches(solver)

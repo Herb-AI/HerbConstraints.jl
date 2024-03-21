@@ -48,9 +48,13 @@ end
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
 function deactivate!(solver::GenericSolver, constraint::Constraint)
-    #TODO: refactor constraint deactivation for the GenericSolver. 
-    # Currently, constraints are deleted by default, so `deactivate!` can be ignored
-    ()
+    if constraint ∈ keys(solver.schedule)
+        # remove the constraint from the schedule
+        track!(solver.statistics, "deactivate! removed from schedule")
+        delete!(solver.schedule, constraint)
+    end
+    @assert constraint ∈ get_state(solver).activeconstraints "Attempted to deactivate a deactivated constraint $(constraint)"
+    delete!(get_state(solver).activeconstraints, constraint)
 end
 
 
@@ -62,8 +66,12 @@ By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
 function post!(solver::GenericSolver, constraint::Constraint)
+    if !is_feasible(solver) return end
     track!(solver.statistics, "post! $(typeof(constraint))")
-    schedule!(solver, constraint)
+    # add to the list of active constraints
+    push!(get_state(solver).activeconstraints, constraint)
+    # initial propagation of the new constraint
+    propagate!(solver, constraint)
 end
 
 
@@ -141,11 +149,11 @@ end
 
 
 """
-    mark_infeasible(solver::GenericSolver)
+    mark_infeasible!(solver::GenericSolver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible(solver::GenericSolver)
+function mark_infeasible!(solver::GenericSolver)
     #TODO: immediately delete the state and set the current state to nothing
     solver.state.isfeasible = false
 end
@@ -180,17 +188,6 @@ end
 
 
 """
-    propagate_on_tree_manipulation!(solver::GenericSolver, constraint::Constraint, event_path::Vector{Int})
-
-The `constraint` will be propagated on the next tree manipulation at or above the `event_path`
-"""
-function propagate_on_tree_manipulation!(solver::GenericSolver, constraint::Constraint, event_path::Vector{Int})
-    @assert is_feasible(solver)
-    push!(get_state(solver).activeconstraints, constraint)
-end
-
-
-"""
     notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
@@ -201,7 +198,6 @@ function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int}
     for c ∈ activeconstraints
         if shouldschedule(solver, c, event_path)
             schedule!(solver, c)
-            delete!(activeconstraints, c)  #by default, scheduled constraints are deleted
         end
     end
 end

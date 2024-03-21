@@ -11,11 +11,10 @@ Each solver should implement at least:
 - `post!`
 - `get_tree`
 - `get_grammar`
-- `mark_infeasible`
+- `mark_infeasible!`
 - `is_feasible`
 - `HerbCore.get_node_at_location`
 - `get_hole_at_location`
-- `propagate_on_tree_manipulation!`
 - `notify_tree_manipulation`
 - `deactivate!`
 """
@@ -49,8 +48,9 @@ end
 Schedules the `constraint` for propagation.
 """
 function schedule!(solver::Solver, constraint::Constraint)
-    track!(solver.statistics, "schedule!")
+    @assert is_feasible(solver)
     if constraint ∉ keys(solver.schedule)
+        track!(solver.statistics, "schedule!")
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
     end
 end

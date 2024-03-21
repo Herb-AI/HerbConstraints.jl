@@ -23,15 +23,13 @@ function propagate!(solver::Solver, c::LocalForbidden)
         end;
         match::PatternMatchSoftFail => begin 
             # The constraint will re-propagated on any tree manipulation.
-            # TODO: set a watcher, only propagate when needed.
+            # TODO: watcher. only propagate when needed.
             track!(solver.statistics, "LocalForbidden softfail")
-            #path = vcat(c.path, get_node_path(node, match.hole))
-            propagate_on_tree_manipulation!(solver, c, Vector{Int}()) #TODO: should be c.path
         end
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.
             track!(solver.statistics, "LocalForbidden inconsistency")
-            mark_infeasible(solver) #throw(InconsistencyException())
+            mark_infeasible!(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
             # Propagate the constraint by removing an impossible value from the found hole.
@@ -39,8 +37,8 @@ function propagate!(solver::Solver, c::LocalForbidden)
             track!(solver.statistics, "LocalForbidden deduction")
             #path = get_node_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_node_path(node, match.hole))
-            remove!(solver, path, match.ind)
             deactivate!(solver, c)
+            remove!(solver, path, match.ind)
         end
     end
 end

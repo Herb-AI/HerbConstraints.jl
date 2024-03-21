@@ -1,7 +1,7 @@
 #TODO: tree manipulations should be callable by passing a `hole`, instead of a `path`
 # Related issue: https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=54473456
 
-#TODO: unit test all tree manipulatations
+#TODO: unit test all tree manipulations
 
 """
     remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
@@ -12,7 +12,7 @@ It is assumed the path points to a hole, otherwise an exception will be thrown.
 function remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     if !hole.domain[rule_index]
-        # The rule is not present in the domain, ignore the tree manipulatation
+        # The rule is not present in the domain, ignore the tree manipulation
         return
     end
     hole.domain[rule_index] = false
@@ -51,7 +51,7 @@ function remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
     highest_ind = findlast(hole.domain)
     if highest_ind <= rule_index
         # e.g. domain: [0, 1, 1, 1, 0, 0] rule_index: 4
-        # The tree manipulatation won't have any effect, ignore the tree manipulatation
+        # The tree manipulation won't have any effect, ignore the tree manipulation
         return
     end
     for r ∈ rule_index+1:length(hole.domain)
@@ -75,7 +75,7 @@ function remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
     lowest_ind = findfirst(hole.domain)
     if lowest_ind >= rule_index
         # e.g. domain: [0, 1, 0, 1, 1, 0] rule_index: 2
-        # The tree manipulatation won't have any effect, ignore the tree manipulatation
+        # The tree manipulation won't have any effect, ignore the tree manipulation
         return
     end
     for r ∈ 1:rule_index-1
@@ -122,7 +122,7 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
         parent.children[path[end]] = new_node
     end
     if get_tree_size(solver) > get_max_size(solver)
-        mark_infeasible(solver)
+        mark_infeasible!(solver)
         return
     end
     notify_tree_manipulation(solver, path)
@@ -141,7 +141,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
     new_node = nothing
     domain_size = sum(hole.domain)
     if domain_size == 0
-        mark_infeasible(solver)
+        mark_infeasible!(solver)
         return
     elseif hole isa FixedShapedHole
         if domain_size == 1

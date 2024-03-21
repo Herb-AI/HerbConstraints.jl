@@ -73,7 +73,7 @@ function Base.show(io::IO, node::StateFixedShapedHole; separator=",", last_child
 	if !isempty(node.children)
 	    print(io, "{")
 	    for (i,c) in enumerate(node.children)
-		show(io, c, separator=separator, last_child=(i == length(node.children)))
+			show(io, c, separator=separator, last_child=(i == length(node.children)))
 	    end
 	    print(io, "}")
 	elseif !last_child

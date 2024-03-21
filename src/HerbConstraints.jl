@@ -20,12 +20,13 @@ abstract type GrammarConstraint <: Constraint end
 Abstract type representing all local constraints.
 Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
 Each local constraint contains a `path` to a specific location in the tree.  
-Each local constraint should implement a [`propagate!`](@ref)-function.
 
-!!! warning
-    By default, [`LocalConstraint`](@ref)s are only propagated once.
-    Constraints that have to be propagated more frequently should subscribe to an event. This part of the solver is still WIP.
-    Currently, the solver supports only one type of subscription: `propagate_on_tree_manipulation!`
+Each local constraint should implement a [`propagate!`](@ref)-function.
+Inside the [`propagate!`](@ref) function, the constraint can use the following solver functions:
+- `remove!`: Elementary tree manipulation. Removes a value from a domain. (other tree manipulations are: `remove_above!`, `remove_below!`, `remove_all_but!`)
+- `deactivate!`: Prevent repropagation. Call this as soon as the constraint is satisfied.
+- `mark_infeasible!`: Report a non-trivial inconsistency. Call this if the constraint can never be satisfied. An empty domain is considered a trivial inconsistency, such inconsistencies are already handled by tree manipulations.
+- `is_feasible`: Check if the current tree is still feasible. Return from the propagate function, as soon as infeasibility is detected.
 """
 abstract type LocalConstraint <: Constraint end
 
