@@ -83,32 +83,32 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNo
 end
 
 function pattern_match(rn::RuleNode, mn::RuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if rn.ind ≠ mn.ind
+    if get_rule(rn) ≠ get_rule(mn)
         return PatternMatchHardFail()
     end
     return pattern_match(rn.children, mn.children, vars)
 end
 
 function pattern_match(h::VariableShapedHole, mn::RuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if !h.domain[mn.ind]
+    if !h.domain[get_rule(mn)]
         return PatternMatchHardFail()
     end
     if isempty(mn.children)
-        return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind)
+        return PatternMatchSuccessWhenHoleAssignedTo(h, get_rule(mn))
     end
     #a large hole is involved
     return PatternMatchSoftFail(h)
 end
 
 function pattern_match(h::FixedShapedHole, mn::RuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if !h.domain[mn.ind]
+    if !h.domain[get_rule(mn)]
         return PatternMatchHardFail()
     end
     match_result = pattern_match(h.children, mn.children, vars)
     @match match_result begin
         ::PatternMatchHardFail => return match_result;
         ::PatternMatchSoftFail => return match_result;
-        ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind);
+        ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, get_rule(mn));
         ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
     end
 end
@@ -203,19 +203,19 @@ end
 
 function pattern_match(mn::RuleNode, h::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
     if isfilled(h)
-        if get_rule(h) ≠ mn.ind
+        if get_rule(h) ≠ get_rule(mn)
             return PatternMatchHardFail()
         end
         return pattern_match(mn.children, h.children, vars)
     else
-        if !h.domain[mn.ind]
+        if !h.domain[get_rule(mn)]
             return PatternMatchHardFail()
         end
         match_result = pattern_match(mn.children, h.children, vars)
         @match match_result begin
             ::PatternMatchHardFail => return match_result;
             ::PatternMatchSoftFail => return match_result;
-            ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, mn.ind);
+            ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, get_rule(mn));
             ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
         end
     end

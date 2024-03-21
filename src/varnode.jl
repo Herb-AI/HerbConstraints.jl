@@ -2,7 +2,7 @@
     struct VarNode <: AbstractRuleNode
 
 Matches any subtree and assigns it to a variable name.
-The `ForbiddenTree` constraint will not match if identical variable symbols match to different trees.
+The `LocalForbidden` constraint will not match if identical variable symbols match to different trees.
 Example usage:
 
     RuleNode(3, [VarNode(:x), VarNode(:x)])
