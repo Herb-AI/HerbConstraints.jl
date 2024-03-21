@@ -153,7 +153,7 @@ end
 #TODO: refactor the entire family of `pattern_match` functions to be more type resilient
 #TODO: write unit tests for pattern matches with `StateFixedShapedHole`
 
-function pattern_match(h1::StateFixedShapedHole, h2::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
+function pattern_match(h1::Union{StateFixedShapedHole, RuleNode}, h2::Union{StateFixedShapedHole, RuleNode}, vars::Dict{Symbol, AbstractRuleNode})
     @match (isfilled(h1), isfilled(h2)) begin
         (true, true) => begin
             #pattern match like rulenodes
@@ -197,26 +197,6 @@ function pattern_match(h1::StateFixedShapedHole, h2::StateFixedShapedHole, vars:
                 ::PatternMatchSuccess => return PatternMatchSoftFail(h1);
                 ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
             end
-        end
-    end
-end
-
-function pattern_match(mn::RuleNode, h::StateFixedShapedHole, vars::Dict{Symbol, AbstractRuleNode})
-    if isfilled(h)
-        if get_rule(h) ≠ get_rule(mn)
-            return PatternMatchHardFail()
-        end
-        return pattern_match(mn.children, h.children, vars)
-    else
-        if !h.domain[get_rule(mn)]
-            return PatternMatchHardFail()
-        end
-        match_result = pattern_match(mn.children, h.children, vars)
-        @match match_result begin
-            ::PatternMatchHardFail => return match_result;
-            ::PatternMatchSoftFail => return match_result;
-            ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h, get_rule(mn));
-            ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(match_result.hole);
         end
     end
 end
