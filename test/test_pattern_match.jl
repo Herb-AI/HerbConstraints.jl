@@ -71,7 +71,11 @@ using HerbGrammar
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
         @test pattern_match(rn_variable_shaped_hole, mn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
         @test pattern_match(rn_fixed_shaped_hole, mn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
-        @test pattern_match(rn_single_value_hole, mn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
+        
+        # the convention for this test changed. holes of domain size 1 are considered to be filled.
+        # `rn_single_value_hole` and `mn` match successfully, as `rn_single_value_hole` is considered to be filled.
+        @test pattern_match(rn_single_value_hole, mn) isa HerbConstraints.PatternMatchSuccess
+        
         @test pattern_match(rn_fixed_shaped_hole, mn).ind == 1
     end
 
@@ -227,6 +231,12 @@ using HerbGrammar
         rn = RuleNode(4, [RuleNode(1), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         mn = RuleNode(4, [RuleNode(1), RuleNode(4, [RuleNode(1), RuleNode(1)])])
         @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchSoftFail
+    end
+
+    @testset "PatternMatchSoftFail, FixedShapedHole vs VariableShapedHole" begin
+        h1 = FixedShapedHole(BitVector((1, 1, 0)), [RuleNode(3)])
+        h2 = VariableShapedHole(BitVector((1, 1, 1)))
+        @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSoftFail
     end
 
     @testset "VariableShapedHole vs FixedShapedHoleShapedHole" begin

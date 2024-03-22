@@ -22,6 +22,28 @@ function remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 end
 
 """
+    remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
+
+Remove all `rules` from the domain of the hole located at the `path`.
+It is assumed the path points to a hole, otherwise an exception will be thrown.
+"""
+function remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
+    hole = get_hole_at_location(solver, path)
+    domain_updated = false
+    for rule_index ∈ rules
+        if hole.domain[rule_index]
+            domain_updated = true
+            hole.domain[rule_index] = false
+        end
+    end
+    if domain_updated
+        simplify_hole!(solver, path)
+        notify_tree_manipulation(solver, path)
+        fix_point!(solver)
+    end
+end
+
+"""
     remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::BitVector)
 
 Reduce the domain of the hole located at the `path`, to the `new_domain`.

@@ -30,6 +30,9 @@ function StateFixedShapedHole(sm::StateManager, rulenode::RuleNode)
 end
 
 
+HerbCore.isfixedshaped(::StateFixedShapedHole) = true
+
+
 """
 	get_rule(hole::StateFixedShapedHole)::Int
 

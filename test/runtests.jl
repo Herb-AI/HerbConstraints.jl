@@ -6,6 +6,7 @@ using Test
     include("test_treemanipulations.jl")
     include("test_varnode.jl")
     include("test_pattern_match.jl")
+    include("test_pattern_match_domainrulenode.jl")
     #include("test_pattern_match_edgecases.jl")
     include("test_lessthanorequal.jl")
     include("test_forbidden.jl")
