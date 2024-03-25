@@ -19,7 +19,8 @@ abstract type GrammarConstraint <: Constraint end
 
 Abstract type representing all local constraints.
 Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
-Each local constraint contains a `path` to a specific location in the tree.  
+Each local constraint contains a `path` that points to a specific location in the tree.
+The constraint is propagated on any tree manipulation at or below that `path`.
 
 Each local constraint should implement a [`propagate!`](@ref)-function.
 Inside the [`propagate!`](@ref) function, the constraint can use the following solver functions:

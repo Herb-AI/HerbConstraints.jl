@@ -5,7 +5,7 @@ Abstract constraint solver.
 Each solver should have at least the following fields:
 - `statistics::SolverStatistics`
 - `fix_point_running::Bool`
-- `schedule::PriorityQueue{Constraint, Int}`
+- `schedule::PriorityQueue{LocalConstraint, Int}`
 
 Each solver should implement at least:
 - `post!`
@@ -43,11 +43,11 @@ end
 
 
 """
-    schedule(solver::GenericSolver, constraint::Constraint)
+    schedule(solver::GenericSolver, constraint::LocalConstraint)
 
 Schedules the `constraint` for propagation.
 """
-function schedule!(solver::Solver, constraint::Constraint)
+function schedule!(solver::Solver, constraint::LocalConstraint)
     @assert is_feasible(solver)
     if constraint ∉ keys(solver.schedule)
         track!(solver.statistics, "schedule!")
@@ -57,14 +57,14 @@ end
 
 
 """
-    shouldschedule(solver::Solver, constraint::Constraint, path::Vector{Int})::Bool
+    shouldschedule(solver::Solver, constraint::LocalConstraint, path::Vector{Int})::Bool
 
 Function that is called when a tree manipulation occured at the `path`.
 Returns true if the `constraint` should be scheduled for propagation.
 
 Default behavior: return true iff the manipulation happened at or below the constraint path.
 """
-function shouldschedule(::Solver, constraint::Constraint, path::Vector{Int})::Bool
+function shouldschedule(::Solver, constraint::LocalConstraint, path::Vector{Int})::Bool
     return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
 end
 

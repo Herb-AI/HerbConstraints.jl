@@ -9,7 +9,7 @@ Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`]
 mutable struct GenericSolver <: Solver
     grammar::Grammar
     state::Union{State, Nothing}
-    schedule::PriorityQueue{Constraint, Int}
+    schedule::PriorityQueue{LocalConstraint, Int}
     statistics::Union{SolverStatistics, Nothing}
     use_fixedshapedsolver::Bool
     fix_point_running::Bool
@@ -36,18 +36,18 @@ Constructs a new solver, with an initial state of the provided [`AbstractRuleNod
 """
 function GenericSolver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false, use_fixedshapedsolver=true)
     stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, use_fixedshapedsolver, false, typemax(Int), typemax(Int))
+    solver = GenericSolver(grammar, nothing, PriorityQueue{LocalConstraint, Int}(), stats, use_fixedshapedsolver, false, typemax(Int), typemax(Int))
     new_state!(solver, init_node)
     return solver
 end
 
 
 """
-    deactivate!(solver::GenericSolver, constraint::Constraint)
+    deactivate!(solver::GenericSolver, constraint::LocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::GenericSolver, constraint::Constraint)
+function deactivate!(solver::GenericSolver, constraint::LocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -59,13 +59,13 @@ end
 
 
 """
-    post!(solver::GenericSolver, constraint::Constraint)
+    post!(solver::GenericSolver, constraint::LocalConstraint)
 
 Imposes the `constraint` to the current state.
 By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
-function post!(solver::GenericSolver, constraint::Constraint)
+function post!(solver::GenericSolver, constraint::LocalConstraint)
     if !is_feasible(solver) return end
     track!(solver.statistics, "post! $(typeof(constraint))")
     # add to the list of active constraints

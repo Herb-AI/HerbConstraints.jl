@@ -13,11 +13,11 @@ A state contains of:
 """
 mutable struct State
     tree::AbstractRuleNode
-    activeconstraints::Set{Constraint}
+    activeconstraints::Set{LocalConstraint}
     isfeasible::Bool
 end
 
-State(tree::AbstractRuleNode) = State(tree, Set{Constraint}(), true)
+State(tree::AbstractRuleNode) = State(tree, Set{LocalConstraint}(), true)
 
 function Base.copy(state::State) 
     tree = deepcopy(state.tree)

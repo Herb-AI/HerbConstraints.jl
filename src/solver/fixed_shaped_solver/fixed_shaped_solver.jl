@@ -19,11 +19,11 @@ mutable struct FixedShapedSolver <: Solver
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    isactive::Dict{Constraint, StateInt}
-    canceledconstraints::Set{Constraint}
+    isactive::Dict{LocalConstraint, StateInt}
+    canceledconstraints::Set{LocalConstraint}
     nsolutions::Int
     isfeasible::Bool
-    schedule::PriorityQueue{Constraint, Int}
+    schedule::PriorityQueue{LocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
 end
@@ -39,11 +39,11 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    isactive = Dict{Constraint, StateInt}()
-    canceledconstraints = Set{Constraint}()
+    isactive = Dict{LocalConstraint, StateInt}()
+    canceledconstraints = Set{LocalConstraint}()
     nsolutions = 0
     isfeasible = true
-    schedule = PriorityQueue{Constraint, Int}()
+    schedule = PriorityQueue{LocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
@@ -102,11 +102,11 @@ end
 
 
 """
-    deactivate!(solver::FixedShapedSolver, constraint::Constraint)
+    deactivate!(solver::FixedShapedSolver, constraint::LocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::FixedShapedSolver, constraint::Constraint)
+function deactivate!(solver::FixedShapedSolver, constraint::LocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -125,12 +125,12 @@ end
 
 
 """
-    post!(solver::FixedShapedSolver, constraint::Constraint)
+    post!(solver::FixedShapedSolver, constraint::LocalConstraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
-function post!(solver::FixedShapedSolver, constraint::Constraint)
+function post!(solver::FixedShapedSolver, constraint::LocalConstraint)
     if !is_feasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
