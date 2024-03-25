@@ -111,7 +111,7 @@ export
 
     #functions related to stateful objects
     restore!,
-    make_state_int,
+    StateInt,
     get_value,
     set_value!,
     increment!,

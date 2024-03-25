@@ -1,7 +1,7 @@
 """
 Manages all changes made to StateInts using StateIntBackups.
 Support the following functions:
-- `make_state_int` Creates a new stateful integer
+- `StateInt` Creates a new stateful integer
 - `save_state!` Creates a checkpoint for all stateful integers
 - `restore!` Restores the values to the latest checkpoint
 """
@@ -80,7 +80,7 @@ Creates a `StateIntBackup` for the given `StateInt`.
 Only backup the value if this integer has not been stored during this state before
 Example usecase:
 ```
-a = make_state_int(sm, 10)
+a = StateInt(sm, 10)
 save_state!(sm)
 set_value!(a, 9) #backup value 10
 set_value!(a, 8) #no need to backup again
@@ -126,14 +126,6 @@ function StateManager()
     current_backups = Vector{StateIntBackup}()
     current_state_id = 1
     return StateManager(prior_backups, current_backups, current_state_id)
-end
-
-
-"""
-Create a new stateful integer holding value `val`
-"""
-function make_state_int(sm::StateManager, val::Int)
-    return StateInt(sm, val)
 end
 
 

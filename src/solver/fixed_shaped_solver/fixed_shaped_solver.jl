@@ -144,7 +144,7 @@ function post!(solver::FixedShapedSolver, constraint::LocalConstraint)
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
     @assert constraint ∉ keys(solver.isactive) "Attempted to post a constraint that was already posted before"
-    solver.isactive[constraint] = make_state_int(solver.sm, 1)
+    solver.isactive[constraint] = StateInt(solver.sm, 1)
 end
 
 

@@ -1,7 +1,7 @@
 @testset verbose=true "StateManager" begin
     @testset "1 int, 1 update, 1 backup" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
+        a = StateInt(sm, 10)
         @test get_value(a) == 10
         save_state!(sm)
         set_value!(a, 9)
@@ -13,7 +13,7 @@
 
     @testset "1 int, 3 updates, 1 backup" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
+        a = StateInt(sm, 10)
         save_state!(sm)
         @test get_value(a) == 10
         set_value!(a, 9)
@@ -27,8 +27,8 @@
 
     @testset "2 ints, 1 update, 1 backup" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
-        b = make_state_int(sm, 100)
+        a = StateInt(sm, 10)
+        b = StateInt(sm, 100)
         save_state!(sm)
         set_value!(a, 9)
         @test get_value(a) == 9
@@ -41,8 +41,8 @@
 
     @testset "2 ints, 6 updates, 2 backups" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
-        b = make_state_int(sm, 100)
+        a = StateInt(sm, 10)
+        b = StateInt(sm, 100)
         save_state!(sm)
         set_value!(a, 9)
         set_value!(b, 90)
@@ -60,8 +60,8 @@
 
     @testset "multiple backup layers" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
-        b = make_state_int(sm, 100)
+        a = StateInt(sm, 10)
+        b = StateInt(sm, 100)
 
         save_state!(sm)
         set_value!(a, 9)
@@ -88,8 +88,8 @@
 
     @testset "restore without backup" begin
         sm = HerbConstraints.StateManager()
-        a = make_state_int(sm, 10)
-        b = make_state_int(sm, 100)
+        a = StateInt(sm, 10)
+        b = StateInt(sm, 100)
         restore!(sm)
         restore!(sm)
         restore!(sm)

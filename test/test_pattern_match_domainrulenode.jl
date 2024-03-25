@@ -52,6 +52,7 @@ using HerbGrammar
     @testset "PatternMatchSuccess, with VarNode" begin
         node = RuleNode(4, [RuleNode(1), RuleNode(1)])
         drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [VarNode(:a), VarNode(:a)])
+        @test pattern_match(node, drn) isa HerbConstraints.PatternMatchSuccess
     end
 
     @testset "PatternMatchSuccessWhenHoleAssignedTo, VariableShapedHole" begin
