@@ -283,10 +283,13 @@ function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedSh
         end
     end
     if solver.nsolutions == 0 && is_feasible(solver)
-        # search node is the root and the only solution, return the solution (edgecase)
-        solver.nsolutions += 1
-        track!(solver.statistics, "#CompleteTrees")
-        return solver.tree
+        _isfilledrecursive(node) = isfilled(node) && all(_isfilledrecursive(c) for c ∈ node.children)
+        if _isfilledrecursive(solver.tree)
+            # search node is the root and the only solution, return the solution (edgecase)
+            solver.nsolutions += 1
+            track!(solver.statistics, "#CompleteTrees")
+            return solver.tree
+        end
     end
     return nothing
 end
