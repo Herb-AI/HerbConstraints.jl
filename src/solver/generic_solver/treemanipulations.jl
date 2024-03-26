@@ -109,17 +109,32 @@ function remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
 end
 
 """
-    fill_hole!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+    remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 
 Fill in the hole located at the `path` with rule `rule_index`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 It is assumed rule_index ∈ hole.domain
 """
-function fill_hole!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
-    @assert hole isa FixedShapedHole "fill_hole! is only supported for filling in FixedShapedHoles. (reason: filling a VariableShapedHole would create new holes and currently 'simplify_hole!' is the only place where new holes can appear)"
-    new_node = RuleNode(rule_index, hole.children)
+    if isfixedshaped(hole)
+        # no new children appear underneath
+        new_node = RuleNode(rule_index, get_children(hole))
+    else
+        # reduce the domain of the variable shaped hole and let `simplify_hole!` take care of instantiating the children correctly
+        throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
+        # If you encountered this error, it means you are trying to fill a variable shaped hole, this can cause new holes to appear underneath.
+        # Usually, constraints should behave differently on fixed shaped holes and variable shaped holes.
+        # If this is also the case for a newly added constraint, make sure to add an `if isfixedshaped(hole) end` check to your propagator.
+        # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
+        # If you are sure that filling in a variable shaped hole is fine, this error can safely be deleted."
+        for r ∈ 1:length(hole.domain)
+            hole.domain[r] = false
+        end
+        hole.domain[rule_index] = true
+        simplify_hole!(solver, path)
+    end
     substitute!(solver, path, new_node)
 end
 

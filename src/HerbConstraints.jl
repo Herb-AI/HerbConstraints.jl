@@ -54,9 +54,11 @@ include("lessthanorequal.jl")
 
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
+include("localconstraints/local_contains.jl")
 
 include("grammarconstraints/forbidden.jl")
 include("grammarconstraints/ordered.jl")
+include("grammarconstraints/contains.jl")
 
 
 export
@@ -71,10 +73,12 @@ export
     #grammar constraints
     Forbidden,
     Ordered,
+    Contains,
 
     #local constraints
     LocalForbidden,
     LocalOrdered,
+    LocalContains,
 
     #public solver functions
     GenericSolver,
@@ -96,7 +100,6 @@ export
 
     #tree manipulations
     remove!,
-    fill_hole!,
     remove_all_but!,
     substitute!,
 

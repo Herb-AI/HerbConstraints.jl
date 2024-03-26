@@ -1,10 +1,12 @@
 """
     GenericSolver
 
-Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`](@ref) may manipulate the partial tree with the following functions:
-- `remove!`
+Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`](@ref) may manipulate the partial tree with the following tree manipulations:
 - `substitute!`
-- `fill!`
+- `remove!`
+- `remove_below!`
+- `remove_above!`
+- `remove_all_but!`
 """
 mutable struct GenericSolver <: Solver
     grammar::Grammar
