@@ -55,8 +55,8 @@ function deactivate!(solver::GenericSolver, constraint::LocalConstraint)
         track!(solver.statistics, "deactivate! removed from schedule")
         delete!(solver.schedule, constraint)
     end
-    @assert constraint ∈ get_state(solver).activeconstraints "Attempted to deactivate a deactivated constraint $(constraint)"
-    delete!(get_state(solver).activeconstraints, constraint)
+    @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
+    delete!(get_state(solver).active_constraints, constraint)
 end
 
 
@@ -68,10 +68,10 @@ By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
 function post!(solver::GenericSolver, constraint::LocalConstraint)
-    if !is_feasible(solver) return end
+    if !isfeasible(solver) return end
     track!(solver.statistics, "post! $(typeof(constraint))")
     # add to the list of active constraints
-    push!(get_state(solver).activeconstraints, constraint)
+    push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
     propagate!(solver, constraint)
 end
@@ -161,16 +161,16 @@ function mark_infeasible!(solver::GenericSolver)
 end
 
 """
-    is_feasible(solver::GenericSolver)
+    isfeasible(solver::GenericSolver)
 
 Returns true if no inconsistency has been detected. Used in several ways:
 - Iterators should check for infeasibility to discard infeasible states
 - After any tree manipulation with the possibility of an inconsistency (e.g. `remove_below!`, `remove_above!`, `remove!`)
 - `fix_point!` should check for infeasibility to clear its schedule and return
-- Some `GenericSolver` functions assert a feasible state for debugging purposes `@assert is_feasible(solver)`
-- Some `GenericSolver` functions have a guard that skip the function on an infeasible state: `if !is_feasible(solver) return end`
+- Some `GenericSolver` functions assert a feasible state for debugging purposes `@assert isfeasible(solver)`
+- Some `GenericSolver` functions have a guard that skip the function on an infeasible state: `if !isfeasible(solver) return end`
 """
-function is_feasible(solver::GenericSolver)
+function isfeasible(solver::GenericSolver)
     return get_state(solver).isfeasible
 end
 
@@ -195,9 +195,9 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
-    if !is_feasible(solver) return end
-    activeconstraints = get_state(solver).activeconstraints
-    for c ∈ activeconstraints
+    if !isfeasible(solver) return end
+    active_constraints = get_state(solver).active_constraints
+    for c ∈ active_constraints
         if shouldschedule(solver, c, event_path)
             schedule!(solver, c)
         end
@@ -210,7 +210,7 @@ end
 Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function
 """
 function notify_new_node(solver::GenericSolver, event_path::Vector{Int})
-    if !is_feasible(solver) return end
+    if !isfeasible(solver) return end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
     end

@@ -10,7 +10,7 @@ mutable struct LocalOrdered <: LocalConstraint
 end
 
 function propagate!(solver::Solver, c::LocalOrdered)
-    @assert is_feasible(solver)
+    @assert isfeasible(solver)
     node = get_node_at_location(solver, c.path)
     track!(solver.statistics, "LocalOrdered propagation")
     vars = Dict{Symbol, AbstractRuleNode}()

@@ -12,7 +12,7 @@ Each solver should implement at least:
 - `get_tree`
 - `get_grammar`
 - `mark_infeasible!`
-- `is_feasible`
+- `isfeasible`
 - `HerbCore.get_node_at_location`
 - `get_hole_at_location`
 - `notify_tree_manipulation`
@@ -30,7 +30,7 @@ function fix_point!(solver::Solver)
     if solver.fix_point_running return end
     solver.fix_point_running = true
     while !isempty(solver.schedule)
-        if !is_feasible(solver)
+        if !isfeasible(solver)
             #an inconsistency was found, stop propagating constraints and return
             empty!(solver.schedule)
             break
@@ -48,7 +48,7 @@ end
 Schedules the `constraint` for propagation.
 """
 function schedule!(solver::Solver, constraint::LocalConstraint)
-    @assert is_feasible(solver)
+    @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
         track!(solver.statistics, "schedule!")
         enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`

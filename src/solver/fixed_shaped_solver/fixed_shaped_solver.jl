@@ -42,7 +42,6 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
     isactive = Dict{LocalConstraint, StateInt}()
     canceledconstraints = Set{LocalConstraint}()
     nsolutions = 0
-    isfeasible = true
     schedule = PriorityQueue{LocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
@@ -51,10 +50,10 @@ function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode
         ::Nothing => nothing
     end
     if !isnothing(statistics) statistics.name = "FixedShapedSolver" end
-    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, isfeasible, schedule, fix_point_running, statistics)
+    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
-    if is_feasible(solver)
+    if isfeasible(solver)
         save_state!(solver)
         push!(unvisited_branches, generate_branches(solver)) #generate initial branches for the root search node
     end
@@ -78,14 +77,32 @@ function notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, pat
     end
 end
 
+
+"""
+    get_node_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+
+Get the path at which the `node` is located.
+"""
 function HerbCore.get_node_path(solver::FixedShapedSolver, node::AbstractRuleNode)
     return solver.node_to_path[node]
 end
 
+
+"""
+    get_node_at_location(solver::FixedShapedSolver, path::Vector{Int})
+
+Get the node that is located at the provided `path`.
+"""
 function HerbCore.get_node_at_location(solver::FixedShapedSolver, path::Vector{Int})
     return solver.path_to_node[path]
 end
 
+
+"""
+    get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
+
+Get the hole that is located at the provided `path`.
+"""
 function get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
     hole = solver.path_to_node[path]
     @assert hole isa Hole
@@ -131,7 +148,7 @@ Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
 function post!(solver::FixedShapedSolver, constraint::LocalConstraint)
-    if !is_feasible(solver) return end
+    if !isfeasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
     if constraint ∈ solver.canceledconstraints
@@ -154,7 +171,7 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
-    if !is_feasible(solver) return end
+    if !isfeasible(solver) return end
     for (constraint, isactive) ∈ solver.isactive
         if get_value(isactive) == 1
             if shouldschedule(solver, constraint, event_path)
@@ -166,11 +183,11 @@ end
 
 
 :"""
-    is_feasible(solver::FixedShapedSolver)
+    isfeasible(solver::FixedShapedSolver)
 
 Returns true if no inconsistency has been detected.
 """
-function is_feasible(solver::FixedShapedSolver)
+function isfeasible(solver::FixedShapedSolver)
     return solver.isfeasible
 end
 
@@ -189,7 +206,7 @@ end
 Save the current state of the solver, can restored using `restore!`
 """
 function save_state!(solver::FixedShapedSolver)
-    @assert is_feasible(solver)
+    @assert isfeasible(solver)
     track!(solver.statistics, "save_state!")
     save_state!(solver.sm)
 end
@@ -222,7 +239,7 @@ A possible branching scheme could be to be split up in three `Branch`ing constra
 """
 function generate_branches(solver::FixedShapedSolver)::Vector{Branch}
     #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
-    @assert is_feasible(solver)
+    @assert isfeasible(solver)
     function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
         if node isa StateFixedShapedHole && size(node.domain) > 1
             return [Branch(node, rule) for rule ∈ node.domain]
@@ -258,7 +275,7 @@ function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedSh
             branch = pop!(branches)
             save_state!(solver)
             remove_all_but!(solver, solver.node_to_path[branch.hole], branch.rule)
-            if is_feasible(solver)
+            if isfeasible(solver)
                 # generate new branches for the new search node
                 branches = generate_branches(solver)
                 if length(branches) == 0
@@ -282,7 +299,7 @@ function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedSh
             pop!(solver.unvisited_branches)
         end
     end
-    if solver.nsolutions == 0 && is_feasible(solver)
+    if solver.nsolutions == 0 && isfeasible(solver)
         _isfilledrecursive(node) = isfilled(node) && all(_isfilledrecursive(c) for c ∈ node.children)
         if _isfilledrecursive(solver.tree)
             # search node is the root and the only solution, return the solution (edgecase)

@@ -84,7 +84,7 @@ function make_less_than_or_equal!(
 )
     path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
     remove_above!(solver, path, get_rule(node))
-    if !is_feasible(solver)
+    if !isfeasible(solver)
         return LessThanOrEqualHardFail()
     end
     #the hole might be replaced with a node, so we need to get whatever is at that location now
@@ -102,7 +102,7 @@ function make_less_than_or_equal!(
 )
     path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
     remove_below!(solver, path, get_rule(node))
-    if !is_feasible(solver)
+    if !isfeasible(solver)
         return LessThanOrEqualHardFail()
     end
     #the hole might be replaced with a node, so we need to get whatever is at that location now
@@ -147,7 +147,7 @@ function make_less_than_or_equal!(
     @assert size(hole.domain) > 0
     path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
     remove_above!(solver, path, get_rule(node))
-    if !is_feasible(solver)
+    if !isfeasible(solver)
         return LessThanOrEqualHardFail()
     end
     if isfilled(hole)
@@ -173,7 +173,7 @@ function make_less_than_or_equal!(
     @assert size(hole.domain) > 0
     path = get_node_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
     remove_below!(solver, path, get_rule(node))
-    if !is_feasible(solver)
+    if !isfeasible(solver)
         return LessThanOrEqualHardFail()
     end
     if isfilled(hole)
@@ -208,7 +208,7 @@ function make_less_than_or_equal!(
         (true, false) => begin
             path = get_node_path(get_tree(solver), hole2) #TODO: optimize. very inefficient to go from hole->path->hole
             remove_below!(solver, path, get_rule(hole1))
-            if !is_feasible(solver)
+            if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
             end
             if isfilled(hole2)
@@ -227,7 +227,7 @@ function make_less_than_or_equal!(
         (false, true) => begin
             path = get_node_path(get_tree(solver), hole1) #TODO: optimize. very inefficient to go from hole->path->hole
             remove_above!(solver, path, get_rule(hole2))
-            if !is_feasible(solver)
+            if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
             end
             if isfilled(hole1)
