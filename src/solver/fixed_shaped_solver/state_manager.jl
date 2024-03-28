@@ -116,8 +116,8 @@ end
 Manages all changes made to StateInts using StateIntBackups
 """
 mutable struct StateManager <: AbstractStateManager
-    prior_backups::Vector{Vector{StateIntBackup}}
-    current_backups::Vector{StateIntBackup}
+    prior_backups::Vector{Vector{StateIntBackup}}       # backups of previous save points
+    current_backups::Vector{StateIntBackup}             # backups of changes made since the last save point
     current_state_id::Int
 end
 

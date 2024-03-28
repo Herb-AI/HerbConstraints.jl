@@ -40,6 +40,14 @@ function remove!(solver::FixedShapedSolver, path::Vector{Int}, rules::Vector{Int
     end
 end
 
+"""
+    remove_above!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
+
+Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
+Example:
+`rule_index` = 2. 
+`hole` with domain {1, 2, 4} gets reduced to {1}
+"""
 function remove_above!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     if remove_above!(hole.domain, rule_index)
@@ -51,6 +59,14 @@ function remove_above!(solver::FixedShapedSolver, path::Vector{Int}, rule_index:
     end
 end
 
+"""
+    remove_below!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
+
+Reduce the domain of the hole located at the `path` by removing all rules indices below `rule_index`
+Example:
+`rule_index` = 2. 
+`hole` with domain {1, 2, 4} gets reduced to {2, 4}
+"""
 function remove_below!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     if remove_below!(hole.domain, rule_index)
@@ -62,6 +78,11 @@ function remove_below!(solver::FixedShapedSolver, path::Vector{Int}, rule_index:
     end
 end
 
+"""
+    remove_all_but!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
+
+Fill in the hole located at the `path` with rule `rule_index`.
+"""
 function remove_all_but!(solver::FixedShapedSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     if remove_all_but!(hole.domain, rule_index)

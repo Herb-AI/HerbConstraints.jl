@@ -7,6 +7,11 @@ Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`]
 - `remove_below!`
 - `remove_above!`
 - `remove_all_but!`
+
+Each [`State`](@ref) holds an independent propagation program. Program iterators can freely move back and forth between states using:
+- `new_state!`
+- `save_state!`
+- `load_state!`
 """
 mutable struct GenericSolver <: Solver
     grammar::Grammar
@@ -199,7 +204,12 @@ function isfeasible(solver::GenericSolver)
     return get_state(solver).isfeasible
 end
 
-#TODO: remove the scope of `HerbCore`?
+
+"""
+    HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
+
+Get the node at path `location`.
+"""
 function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
     # dispatches the function on type `AbstractRuleNode` (defined in rulenode_operator.jl in HerbGrammar.jl)
     node = get_node_at_location(get_tree(solver), location)
@@ -207,6 +217,11 @@ function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{I
     return node
 end
 
+"""
+    get_hole_at_location(solver::GenericSolver, location::Vector{Int})::Hole
+
+Get the node at path `location` and assert it is a [`Hole`](@ref).
+"""
 function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::Hole
     hole = get_node_at_location(get_tree(solver), location)
     @assert hole isa Hole "Hole $hole is of non-Hole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
@@ -233,7 +248,7 @@ end
 """
     notify_new_node(solver::GenericSolver, event_path::Vector{Int})
 
-Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function.
+Notify all constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function.
 !!! warning
     This does not notify the solver about nodes below the `event_path`. In that case, call [`notify_new_nodes`](@ref) instead.
 """
