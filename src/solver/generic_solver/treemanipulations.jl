@@ -135,35 +135,60 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         hole.domain[rule_index] = true
         simplify_hole!(solver, path)
     end
-    substitute!(solver, path, new_node)
+    substitute!(solver, path, new_node, is_domain_increasing=false)
 end
 
 
 """
-    substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode)
+    substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
 
-Substitute the node at the `path`, with a `new_node`
+Substitute the node at the `path`, with a `new_node`.
+* `is_domain_increasing`: indicates if all grammar constraints should be repropagated from the ground up.
+Domain increasing substitutions are substitutions that cannot be achieved by repeatedly removing values from domains.
+Example of an domain increasing event: `hole[{3, 4, 5}] -> hole[{1, 2}]`.
+Example of an domain decreasing event: `hole[{3, 4, 5}] -> rulenode(4, [hole[{1, 2}], rulenode(1)])`.
 """
-function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode)
-    #TODO: add a parameter that indicates if the children of the new_node are already known to the solver. For example, when filling in a fixed shaped hole
-    #TODO: notify about the domain change of the new_node
-    #TODO: notify about the children of the new_node
-    #TODO: https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=54383300
+function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
     if isempty(path)
+        #replace the root
+        old_node = solver.state.tree
         solver.state.tree = new_node
     else
+        #replace a node in the middle of the tree
         parent = get_tree(solver)
         for i ∈ path[1:end-1]
             parent = parent.children[i]
         end
+        old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
     if get_tree_size(solver) > get_max_size(solver)
+        #if the tree is too large, mark it as infeasible
         mark_infeasible!(solver)
         return
     end
-    notify_tree_manipulation(solver, path)
-    fix_point!(solver)
+    
+    if isnothing(is_domain_increasing)
+        #automatically decide if the event is domain increasing
+        track!(solver.statistics, "substitute! checks is_domain_increasing")
+        is_domain_increasing = !is_subdomain(new_node, old_node)
+    end
+    if is_domain_increasing
+        #propagate all constraints from the ground up
+        track!(solver.statistics, "substitute! (domain increasing)")
+        new_state!(solver, get_tree(solver))
+    else
+        if !have_same_shape(new_node, old_node)
+            #unknown locations have been added to the tree
+            #let the grammar constraint post new local constraints at these new paths
+            track!(solver.statistics, "substitute! (domain decreasing, different shape)")
+            notify_new_nodes(solver, new_node, path)
+        else
+            track!(solver.statistics, "substitute! (domain decreasing, same shape)")
+        end
+        notify_tree_manipulation(solver, path)
+        fix_point!(solver)
+    end
 end
 
 """
@@ -197,10 +222,10 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
     #the hole will be simplified and replaced with a `new_node`
     if !isnothing(new_node)
-        substitute!(solver, path, new_node)
+        substitute!(solver, path, new_node, is_domain_increasing=false)
         for i ∈ 1:length(new_node.children)
+            # try to simplify the new children
             child_path = push!(copy(path), i)
-            notify_new_node(solver, child_path)
             if (new_node.children[i] isa Hole)
                 simplify_hole!(solver, child_path)
             end

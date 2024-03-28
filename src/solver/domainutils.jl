@@ -17,6 +17,56 @@ function is_subdomain(subdomain::StateSparseSet, domain::BitVector)
 end
 
 """
+    is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRuleNode)
+
+Checks if the `specific_tree` can be obtained by repeatedly removing values from the `general_tree`
+"""
+function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRuleNode)
+    @match (isfilled(specific_tree), isfilled(general_tree)) begin
+        #(RuleNode, RuleNode), the rules must be equal
+        (true, true) => begin
+            if get_rule(specific_tree) != get_rule(specific_tree)
+                return false
+            end
+        end
+        
+        #(RuleNode, Hole), the rule must be inside the domain of the general_tree
+        (true, false) => begin 
+            if !general_tree.domain[get_rule(specific_tree)]
+                return false
+            end
+        end
+
+        #(Hole, RuleNode), the specific_tree holds more rules than the general_tree, this cannot be a subdomain
+        (false, true) => return false
+
+        #(Hole, Hole), dispatch to the is_subdomain for domains
+        (false, false) => begin 
+            if !is_subdomain(specific_tree.domain, general_tree.domain)
+                return false
+            end
+        end
+    end
+
+    #the general_tree is a variable shaped hole, the specific_tree must be more specific
+    #Example: general_tree = VariableShapedHole({3, 4, 5}). specific_tree = RuleNode(3, [RuleNode(1), RuleNode(1)]).
+    if !isfixedshaped(general_tree)
+        return true
+    end
+
+    #continue checking the children
+    @assert isfixedshaped(general_tree)
+    @assert isfixedshaped(specific_tree) "The specific_tree cannot be a VariableShapedHole at this point."
+    @assert length(get_children(specific_tree)) == length(get_children(general_tree))
+    for (specific_child, general_child) ∈ zip(get_children(specific_tree), get_children(general_tree))
+        if !is_subdomain(specific_child, general_child)
+            return false
+        end
+    end
+    return true
+end
+
+"""
     partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
 
 Partition a [VariableShapedHole](@ref) into subdomains grouped by childtypes

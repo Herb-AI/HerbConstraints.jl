@@ -62,9 +62,9 @@ end
 
 
 """
-    notify_new_nodes(node::AbstractRuleNode, path::Vector{Int})
+    notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, path::Vector{Int})
 
-Notify all grammar constraints about the `node` and its (grand)children
+Notify all grammar constraints about the new `node` and its (grand)children
 """
 function notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, path::Vector{Int})
     for (i, childnode) ∈ enumerate(get_children(node))

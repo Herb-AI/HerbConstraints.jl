@@ -55,7 +55,37 @@ function deactivate!(solver::GenericSolver, constraint::LocalConstraint)
         track!(solver.statistics, "deactivate! removed from schedule")
         delete!(solver.schedule, constraint)
     end
-    @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
+    if constraint ∉ get_state(solver).active_constraints
+        #TODO: make sure this code branch is never reached
+        # a deactivated constraint was propagated again and deactivated again...
+        track!(solver.statistics, "deactivate! (unnecessary)")
+        # @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
+        # This assertion error can occur if a `propagate!` function is called outside `fix_point!`
+        # For example, assume that `propagate!` function is called from `post!`
+        # Consider the following call stack:
+        # -----------------------------------------
+        #   | post!                                 # a new constraint is posted
+        #       | propagate!                        # the new constraint is propagated
+        #           | remove!                       # the new constraint caused the removal of rule
+        #               | notify_tree_manipulation  # the new constraint is scheduled for propagation
+        #               | fix_point!                # scheduled constraints are propagated
+        #                   | propagate!            # the new constraint is propagated
+        #                       | deactivate!       # the new constraint is satisfied and deactivated itself
+        #           | deactivate!                   # the new constraint is satisfied and deactivated itself (again)
+        # -----------------------------------------
+        # To prevent this scenario, initial propagations are scheduled, not propagated.
+        # The expected behavior is as follows:
+        # -----------------------------------------
+        #   | post!                                 # a new constraint is posted
+        #       | schedule!                         # the new constraint is scheduled for propagation
+        #   | fix_point!                            # scheduled constraints are propagated
+        #       | propagate!                        # the new constraint is propagated
+        #           | remove!                       # the new constraint caused the removal of rule
+        #               | notify_tree_manipulation  # the new constraint is scheduled for propagation
+        #               | fix_point!                # nested fix point calls are ignored (see: `fix_point_running`)
+        #           | deactivate!                   # the new constraint is satisfied, deactivated itself and removed itself from the schedule
+        # -----------------------------------------
+    end
     delete!(get_state(solver).active_constraints, constraint)
 end
 
@@ -84,13 +114,8 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 """
 function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     track!(solver.statistics, "new_state!")
+    empty!(solver.schedule)
     solver.state = State(tree)
-    function _dfs_notify(node::AbstractRuleNode, path::Vector{Int})
-        notify_new_node(solver, path)
-        for (i, childnode) ∈ enumerate(get_children(node))
-            _dfs_notify(childnode, push!(copy(path), i))
-        end
-    end
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
         if (node isa Hole)
             simplify_hole!(solver, path)
@@ -99,7 +124,7 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
             _dfs_simplify(childnode, push!(copy(path), i))
         end
     end
-    _dfs_notify(tree, Vector{Int}()) #notify the constraints about all nodes in the new state
+    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
     _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state
     fix_point!(solver)
 end
@@ -204,14 +229,30 @@ function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int}
     end
 end
 
+
 """
     notify_new_node(solver::GenericSolver, event_path::Vector{Int})
 
-Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function
+Notify subscribed constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function.
+!!! warning
+    This does not notify the solver about nodes below the `event_path`. In that case, call [`notify_new_nodes`](@ref) instead.
 """
 function notify_new_node(solver::GenericSolver, event_path::Vector{Int})
     if !isfeasible(solver) return end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
+    end
+end
+
+
+"""
+    notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
+
+Notify all grammar constraints about the new `node` and its (grand)children
+"""
+function notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
+    notify_new_node(solver, path)
+    for (i, childnode) ∈ enumerate(get_children(node))
+        notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
 end
