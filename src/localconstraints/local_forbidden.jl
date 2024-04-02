@@ -2,69 +2,43 @@
 """
     LocalForbidden
 
-Forbids the a subtree that matches the MatchNode tree to be generated at the location 
+Forbids the a subtree that matches the `tree` to be generated at the location 
 provided by the path. 
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
-mutable struct LocalForbidden <: LocalConstraint
-	path::Vector{Int}
-    tree::AbstractMatchNode
+struct LocalForbidden <: LocalConstraint
+    path::Vector{Int}
+    tree::AbstractRuleNode
 end
 
-"""
-Propagates the LocalForbidden constraint.
-It removes rules from the domain that would make
-the RuleNode at the given path match the pattern defined by the MatchNode.
-"""
-function propagate(
-    c::LocalForbidden, 
-    ::AbstractGrammar, 
-    context::GrammarContext, 
-    domain::Vector{Int}, 
-    filled_hole::Union{HoleReference, Nothing}
-)::Tuple{PropagatedDomain, Set{LocalConstraint}}
-    # Skip the propagator if a node is being propagated that it isn't targeting 
-    if length(c.path) > length(context.nodeLocation) || c.path ≠ context.nodeLocation[1:length(c.path)]
-        return domain, Set([c])
+function propagate!(solver::Solver, c::LocalForbidden)
+    node = get_node_at_location(solver, c.path)
+    track!(solver.statistics, "LocalForbidden propagation")
+    @match pattern_match(node, c.tree) begin
+        ::PatternMatchHardFail => begin 
+            # A match fail means that the constraint is already satisfied.
+            # This constraint does not have to be re-propagated.
+            track!(solver.statistics, "LocalForbidden hardfail")
+        end;
+        match::PatternMatchSoftFail => begin 
+            # The constraint will re-propagated on any tree manipulation.
+            # TODO: set a watcher, only propagate when needed.
+            track!(solver.statistics, "LocalForbidden softfail")
+            #path = vcat(c.path, get_node_path(node, match.hole))
+            propagate_on_tree_manipulation!(solver, c, Vector{Int}()) #TODO: should be c.path
+        end
+        ::PatternMatchSuccess => begin 
+            # The forbidden tree is exactly matched. This means the state is infeasible.
+            track!(solver.statistics, "LocalForbidden inconsistency")
+            mark_infeasible(solver) #throw(InconsistencyException())
+        end
+        match::PatternMatchSuccessWhenHoleAssignedTo => begin
+            # Propagate the constraint by removing an impossible value from the found hole.
+            # Then, constraint is satisfied and does not have to be re-propagated.
+            track!(solver.statistics, "LocalForbidden deduction")
+            #path = get_node_path(get_tree(solver), match.hole)
+            path = vcat(c.path, get_node_path(node, match.hole))
+            remove!(solver, path, match.ind)
+        end
     end
-
-    # Skip the propagator if the filled hole wasn't part of the path
-	if !isnothing(filled_hole) && (length(c.path) > length(filled_hole.path) || c.path ≠ filled_hole.path[1:length(c.path)])
-		return domain, Set([c])
-	end
-
-    n = get_node_at_location(context.originalExpr, c.path)
-
-    hole_location = context.nodeLocation[length(c.path)+1:end]
-
-    vars = Dict{Symbol, AbstractRuleNode}()
-    match = _pattern_match_with_hole(n, c.tree, hole_location, vars)
-    
-    if match ≡ hardfail
-        # Match attempt failed due to mismatched rulenode indices. 
-        # This means that we can remove the current constraint.
-        return domain, Set()
-    elseif match ≡ softfail
-        # Match attempt failed because we had to compare with a hole. 
-        # If the hole would've been filled it might have succeeded, so we cannot yet remove the constraint.
-        return domain, Set([c])
-    end
-
-    remove_from_domain::Int = 0
-    if match isa Int
-        # The domain matched with a rulenode in the match pattern tree
-        remove_from_domain = match
-    elseif match isa Tuple{Symbol, Vector{Int}}
-        # The hole is matched with an otherwise unassigned variable (wildcard).
-        return Vector{Int}(), Set()
-    end
-
-    # Remove the rule that would complete the forbidden tree from the domain
-    loc = findfirst(isequal(remove_from_domain), domain)
-    if loc !== nothing
-        deleteat!(domain, loc)
-    end
-    # If the domain is pruned, we do not need this constraint anymore after expansion,
-    # since no equality is possible with the new domain.
-    return domain, Set()
 end
