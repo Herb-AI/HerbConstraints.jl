@@ -4,7 +4,7 @@
 This [`GrammarConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
 A pattern is a tree of [`AbstractRuleNode`](@ref)s. 
 Such a node can either be a [`RuleNode`](@ref), which contains a rule index corresponding to the 
-rule index in the [`Grammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
+rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
 It can also contain a [`VarNode`](@ref), which contains a single identifier symbol.
 A [`VarNode`](@ref) can match any subtree, but if there are multiple instances of the same
 variable in the pattern, the matched subtrees must be identical.
@@ -14,10 +14,10 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
 
 - `Forbidden(RuleNode(3, [RuleNode(5), RuleNode(4)]))` forbids `c` to be filled with `5`.
 - `Forbidden(RuleNode(3, [VarNode(:v), RuleNode(4)]))` forbids `c` to be filled, since a [`VarNode`] can 
-  match any rule, thus making the match attempt successful for the entire domain of `c`. 
-  Therefore, this tree invalid.
+    match any rule, thus making the match attempt successful for the entire domain of `c`. 
+    Therefore, this tree invalid.
 - `Forbidden(RuleNode(3, [VarNode(:v), VarNode(:v)]))` forbids `c` to be filled with `4`, since that would 
-  make both assignments to `v` equal, which causes a successful match.
+    make both assignments to `v` equal, which causes a successful match.
 
 !!! warning
     The [`Forbidden`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
@@ -26,22 +26,22 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     [`LocalConstraint`](@ref)s and propagate them at the right moments.
 """
 struct Forbidden <: GrammarConstraint
-	tree::AbstractRuleNode
+    tree::AbstractRuleNode
 end
 
 function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
-  #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
-  if c.tree isa RuleNode
-    @match get_node_at_location(solver, path) begin
-      hole::Hole => if !hole.domain[c.tree.ind] return end
-      node::RuleNode => if node.ind != c.tree.ind return end
+    #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
+    if c.tree isa RuleNode
+        @match get_node_at_location(solver, path) begin
+            hole::Hole => if !hole.domain[c.tree.ind] return end
+            node::RuleNode => if node.ind != c.tree.ind return end
+        end
     end
-  end
-  post!(solver, LocalForbidden(path, c.tree))
+    post!(solver, LocalForbidden(path, c.tree))
 end
 
 """
-    check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+    check_tree(c::Forbidden, g::AbstractGrammar, tree::RuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """

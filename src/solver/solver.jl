@@ -7,7 +7,7 @@ Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`]
 - `fill!`
 """
 mutable struct Solver
-    grammar::Grammar
+    grammar::AbstractGrammar
     state::Union{State, Nothing}
     schedule::PriorityQueue{Constraint, Int}
     statistics::Union{SolverStatistics, Nothing}
@@ -18,22 +18,22 @@ end
 
 
 """
-    Solver(grammar::Grammar, sym::Symbol)
+    Solver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false)
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function Solver(grammar::Grammar, sym::Symbol; with_statistics=false)
+function Solver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false)
     init_node = Hole(get_domain(grammar, sym))
     Solver(grammar, init_node, with_statistics=with_statistics)
 end
 
 
 """
-    Solver(grammar::Grammar, init_node::AbstractRuleNode)
+    Solver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false)
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function Solver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false)
+function Solver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false)
     stats = with_statistics ? SolverStatistics() : nothing
     solver = Solver(grammar, nothing, PriorityQueue{Constraint, Int}(), stats, false, typemax(Int), typemax(Int))
     new_state!(solver, init_node)
@@ -142,7 +142,7 @@ function get_tree(solver::Solver)::AbstractRuleNode
     return solver.state.tree
 end
 
-function get_grammar(solver::Solver)::Grammar
+function get_grammar(solver::Solver)::AbstractGrammar
     return solver.grammar
 end
 
@@ -228,14 +228,6 @@ function notify_tree_manipulation(solver::Solver, event_path::Vector{Int})
             empty!(dict[event_path])
         end
     end
-    # Always propagate all constraints:
-    # dict = get_state(solver).on_tree_manipulation
-    # for event_path ∈ keys(dict)
-    #     for c ∈ dict[event_path]
-    #         schedule!(solver, c)
-    #     end
-    #     empty!(dict[event_path])
-    # end
 end
 
 """

@@ -10,6 +10,8 @@ abstract type LessThanOrEqualResult end
 
 
 """
+    struct LessThanOrEqualSuccess <: LessThanOrEqualResult
+
 `node1` <= `node2` is guaranteed under all possible assignments of the holes involved.
 - `isequal` is true iff `node1` == `node2`. This field is needed to handle tiebreakers in the dfs
 """
@@ -19,12 +21,16 @@ end
 
 
 """
+    struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
+
 `node1` > `node2` is guaranteed under all possible assignments of the holes involved.
 """
 struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
 
 
 """
+    struct LessThanOrEqualSoftFail <: LessThanOrEqualResult
+
 `node1` <= `node2` and `node1` > `node2` are both possible depending on the assignment of `hole1` and `hole2`.
 Includes two cases:
 - hole2::Hole: A failed `Hole`-`Hole` comparison. (e.g. Hole(BitVector((1, 0, 1))) vs Hole(BitVector((0, 1, 1))))
