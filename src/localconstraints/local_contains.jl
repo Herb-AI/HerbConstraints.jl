@@ -9,6 +9,13 @@ struct LocalContains <: LocalConstraint
     rule::Int
 end
 
+"""
+    function propagate!(solver::Solver, c::LocalContains)
+
+Enforce that the `rule` appears at or below the `path` at least once.
+Uses a helper function to retrieve a list of holes that can potentially hold the target rule.
+If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
+"""
 function propagate!(solver::Solver, c::LocalContains)
     node = get_node_at_location(solver, c.path)
     track!(solver.statistics, "LocalContains propagation")

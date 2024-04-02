@@ -11,6 +11,13 @@ struct LocalForbidden <: LocalConstraint
     tree::AbstractRuleNode
 end
 
+"""
+    function propagate!(solver::Solver, c::LocalForbidden)
+
+Enforce that the forbidden `tree` does not occur at the `path`.
+The forbidden tree is matched against the [`AbstractRuleNode`](@ref) located at the path.
+Deductions are based on the type of the [`PatternMatchResult`](@ref) returned by the [`pattern_match`](@ref) function.
+"""
 function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
     track!(solver.statistics, "LocalForbidden propagation")

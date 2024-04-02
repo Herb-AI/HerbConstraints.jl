@@ -109,10 +109,22 @@ function get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
     return hole
 end
 
+
+"""
+    function get_grammar(solver::FixedShapedSolver)::Grammar
+
+Get the grammar.
+"""
 function get_grammar(solver::FixedShapedSolver)::Grammar
     return solver.grammar
 end
 
+
+"""
+    function get_tree(solver::FixedShapedSolver)::AbstractRuleNode
+
+Get the root of the tree. This remains the same instance throughout the entire search.
+"""
 function get_tree(solver::FixedShapedSolver)::AbstractRuleNode
     return solver.tree
 end
@@ -182,7 +194,7 @@ function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{
 end
 
 
-:"""
+"""
     isfeasible(solver::FixedShapedSolver)
 
 Returns true if no inconsistency has been detected.

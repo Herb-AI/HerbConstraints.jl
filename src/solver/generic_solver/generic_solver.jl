@@ -134,6 +134,7 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     fix_point!(solver)
 end
 
+
 """
     save_state!(solver::GenericSolver)
 
@@ -143,6 +144,7 @@ function save_state!(solver::GenericSolver)::State
     track!(solver.statistics, "save_state!")
     return copy(get_state(solver))
 end
+
 
 """
     load_state!(solver::GenericSolver, state::State)
@@ -154,27 +156,63 @@ function load_state!(solver::GenericSolver, state::State)
     solver.state = state
 end
 
+
+"""
+    function get_tree_size(solver::GenericSolver)::Int
+
+Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
+"""
 function get_tree_size(solver::GenericSolver)::Int
     #TODO: potential optimization: precompute/cache the size of the tree
     return length(get_tree(solver))
 end
 
+
+"""
+    function get_tree(solver::GenericSolver)::AbstractRuleNode
+
+Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
+"""
 function get_tree(solver::GenericSolver)::AbstractRuleNode
     return solver.state.tree
 end
 
+
+"""
+    function get_grammar(solver::GenericSolver)::Grammar
+
+Get the grammar.
+"""
 function get_grammar(solver::GenericSolver)::Grammar
     return solver.grammar
 end
 
+
+"""
+    function get_state(solver::GenericSolver)::State
+
+Get the current [`State`]@(ref) of the solver.
+"""
 function get_state(solver::GenericSolver)::State
     return solver.state
 end
 
+
+"""
+    function get_max_depth(solver::GenericSolver)::State
+
+Get the maximum depth of the tree.
+"""
 function get_max_depth(solver::GenericSolver)
     return solver.max_depth
 end
 
+
+"""
+    function get_max_depth(solver::GenericSolver)::State
+
+Get the maximum number of [`AbstractRuleNode`](@ref)s allowed inside the tree.
+"""
 function get_max_size(solver::GenericSolver)
     return solver.max_size
 end

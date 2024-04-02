@@ -9,6 +9,14 @@ mutable struct LocalOrdered <: LocalConstraint
     order::Vector{Symbol}
 end
 
+"""
+    function propagate!(solver::Solver, c::LocalOrdered)
+
+Enforce that the [`VarNode`](@ref)s in the `tree` are in the specified `order`.
+First the node located at the `path` is matched to see if the ordered constraint applies here.
+The nodes matching the variables are stored in the `vars` dictionary.
+Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.
+"""
 function propagate!(solver::Solver, c::LocalOrdered)
     @assert isfeasible(solver)
     node = get_node_at_location(solver, c.path)
