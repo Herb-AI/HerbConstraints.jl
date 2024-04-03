@@ -2,7 +2,7 @@
     struct VarNode <: AbstractRuleNode
 
 Matches any subtree and assigns it to a variable name.
-The `ForbiddenTree` constraint will not match if identical variable symbols match to different trees.
+The `LocalForbidden` constraint will not match if identical variable symbols match to different trees.
 Example usage:
 
 ```julia
@@ -23,6 +23,7 @@ function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
     end
 end
 
+HerbCore.isfixedshaped(::VarNode) = false
 
 """
     contains_varnode(rn::AbstractRuleNode, name::Symbol)

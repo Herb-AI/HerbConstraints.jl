@@ -8,7 +8,7 @@ using HerbCore, HerbGrammar
             Number = Number + Number
             Number = Number - Number
         end
-        return Solver(grammar, :Number)
+        return GenericSolver(grammar, :Number)
     end
 
     @testset "simplify_hole! VariableShapedHole -> FixedShapedHole" begin

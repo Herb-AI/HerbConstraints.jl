@@ -8,7 +8,7 @@ using HerbCore, HerbGrammar
             Number = Number + Number
             Number = Number - Number
         end
-        solver = Solver(grammar, :Number)
+        solver = GenericSolver(grammar, :Number)
         tree = RuleNode(4, [
             leftnode,
             RuleNode(3, [
@@ -191,7 +191,7 @@ using HerbCore, HerbGrammar
         right = RuleNode(13, [RuleNode(11), RuleNode(1)])
         tree = RuleNode(14, [left, right])
 
-        solver = Solver(grammar, :Int)
+        solver = GenericSolver(grammar, :Int)
         new_state!(solver, tree)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess

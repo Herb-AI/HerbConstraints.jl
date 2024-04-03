@@ -11,6 +11,13 @@ struct LocalForbidden <: LocalConstraint
     tree::AbstractRuleNode
 end
 
+"""
+    function propagate!(solver::Solver, c::LocalForbidden)
+
+Enforce that the forbidden `tree` does not occur at the `path`.
+The forbidden tree is matched against the [`AbstractRuleNode`](@ref) located at the path.
+Deductions are based on the type of the [`PatternMatchResult`](@ref) returned by the [`pattern_match`](@ref) function.
+"""
 function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
     track!(solver.statistics, "LocalForbidden propagation")
@@ -18,19 +25,18 @@ function propagate!(solver::Solver, c::LocalForbidden)
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
+            deactivate!(solver, c)
             track!(solver.statistics, "LocalForbidden hardfail")
         end;
         match::PatternMatchSoftFail => begin 
             # The constraint will re-propagated on any tree manipulation.
-            # TODO: set a watcher, only propagate when needed.
+            # TODO: watcher. only propagate when needed.
             track!(solver.statistics, "LocalForbidden softfail")
-            #path = vcat(c.path, get_node_path(node, match.hole))
-            propagate_on_tree_manipulation!(solver, c, Vector{Int}()) #TODO: should be c.path
         end
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.
             track!(solver.statistics, "LocalForbidden inconsistency")
-            mark_infeasible(solver) #throw(InconsistencyException())
+            mark_infeasible!(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
             # Propagate the constraint by removing an impossible value from the found hole.
@@ -38,6 +44,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
             track!(solver.statistics, "LocalForbidden deduction")
             #path = get_node_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_node_path(node, match.hole))
+            deactivate!(solver, c)
             remove!(solver, path, match.ind)
         end
     end
