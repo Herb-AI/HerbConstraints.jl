@@ -6,11 +6,11 @@ using DataStructures
 using MLStyle
 
 """
-    Abstract type GrammarConstraint <: Constraint end
+    abstract type GrammarConstraint <: Constraint
 
 Abstract type representing all user-defined constraints.
 Each grammar constraint has a related [LocalConstraint](@ref) that is responsible for propagating the constraint at a specific location in the tree.
-Grammar constraints should implement `on_new_node` to post a [LocalConstraint](@ref) at that new node
+Grammar constraints should implement `on_new_node` to post a [`LocalConstraint`](@ref) at that new node
 """
 abstract type GrammarConstraint <: Constraint end
 
@@ -28,6 +28,11 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 - `deactivate!`: Prevent repropagation. Call this as soon as the constraint is satisfied.
 - `mark_infeasible!`: Report a non-trivial inconsistency. Call this if the constraint can never be satisfied. An empty domain is considered a trivial inconsistency, such inconsistencies are already handled by tree manipulations.
 - `isfeasible`: Check if the current tree is still feasible. Return from the propagate function, as soon as infeasibility is detected.
+
+!!! warning
+    By default, [`LocalConstraint`](@ref)s are only propagated once.
+    Constraints that have to be propagated more frequently should subscribe to an event. This part of the solver is still WIP.
+    Currently, the solver supports only one type of subscription: `propagate_on_tree_manipulation!`.
 """
 abstract type LocalConstraint <: Constraint end
 

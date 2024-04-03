@@ -13,7 +13,7 @@ NOBRANCHES = Vector{Branch}()
 A DFS solver that uses `StateFixedShapedHole`s.
 """
 mutable struct FixedShapedSolver <: Solver
-    grammar::Grammar
+    grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateFixedShapedHole}
     unvisited_branches::Stack{Vector{Branch}}
@@ -30,9 +30,9 @@ end
 
 
 """
-    FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode)
+    FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function FixedShapedSolver(grammar::Grammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
+function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
     @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
     sm = StateManager()
     tree = StateFixedShapedHole(sm, fixed_shaped_tree)
@@ -111,11 +111,11 @@ end
 
 
 """
-    function get_grammar(solver::FixedShapedSolver)::Grammar
+    function get_grammar(solver::FixedShapedSolver)::AbstractGrammar
 
 Get the grammar.
 """
-function get_grammar(solver::FixedShapedSolver)::Grammar
+function get_grammar(solver::FixedShapedSolver)::AbstractGrammar
     return solver.grammar
 end
 

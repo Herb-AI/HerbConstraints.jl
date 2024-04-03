@@ -38,7 +38,7 @@ end
 ```
 """
 macro csgrammar_annotated(expression)
-	# collect and remove labels
+    # collect and remove labels
     labels = _get_labels!(expression)
 
     # parse rules, get constraints from annotations
@@ -92,11 +92,11 @@ macro csgrammar_annotated(expression)
 
     # determine parameters
     alltypes = collect(keys(bytype))
-	is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
-	is_eval = [iseval(rule) for rule ∈ rules]
-	childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
+    is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
+    is_eval = [iseval(rule) for rule ∈ rules]
+    childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
     bychildtypes = [BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for i1 ∈ 1:length(rules)]
-	domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
+    domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
 
     return ContextSensitiveGrammar(
         rules,
@@ -104,7 +104,7 @@ macro csgrammar_annotated(expression)
         is_terminal,
         is_eval,
         bytype,
-		domains,
+        domains,
         childtypes,
         bychildtypes,
         nothing,

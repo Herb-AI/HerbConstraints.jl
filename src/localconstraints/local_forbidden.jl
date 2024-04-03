@@ -7,7 +7,7 @@ provided by the path.
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
 struct LocalForbidden <: LocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     tree::AbstractRuleNode
 end
 

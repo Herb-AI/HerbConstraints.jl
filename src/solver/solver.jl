@@ -1,5 +1,5 @@
 """
-    Solver
+    abstract type Solver
 
 Abstract constraint solver. 
 Each solver should have at least the following fields:

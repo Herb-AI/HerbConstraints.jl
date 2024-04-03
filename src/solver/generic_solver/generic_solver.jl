@@ -14,7 +14,7 @@ Each [`State`](@ref) holds an independent propagation program. Program iterators
 - `load_state!`
 """
 mutable struct GenericSolver <: Solver
-    grammar::Grammar
+    grammar::AbstractGrammar
     state::Union{State, Nothing}
     schedule::PriorityQueue{LocalConstraint, Int}
     statistics::Union{SolverStatistics, Nothing}
@@ -26,22 +26,22 @@ end
 
 
 """
-    GenericSolver(grammar::Grammar, sym::Symbol)
+    GenericSolver(grammar::AbstractGrammar, sym::Symbol)
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::Grammar, sym::Symbol; with_statistics=false, use_fixedshapedsolver=true)
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_fixedshapedsolver=true)
     init_node = Hole(get_domain(grammar, sym))
     GenericSolver(grammar, init_node, with_statistics=with_statistics, use_fixedshapedsolver=use_fixedshapedsolver)
 end
 
 
 """
-    GenericSolver(grammar::Grammar, init_node::AbstractRuleNode)
+    GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode)
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::Grammar, init_node::AbstractRuleNode; with_statistics=false, use_fixedshapedsolver=true)
+function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_fixedshapedsolver=true)
     stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
     solver = GenericSolver(grammar, nothing, PriorityQueue{LocalConstraint, Int}(), stats, use_fixedshapedsolver, false, typemax(Int), typemax(Int))
     new_state!(solver, init_node)
@@ -179,11 +179,11 @@ end
 
 
 """
-    function get_grammar(solver::GenericSolver)::Grammar
+    function get_grammar(solver::GenericSolver)::AbstractGrammar
 
 Get the grammar.
 """
-function get_grammar(solver::GenericSolver)::Grammar
+function get_grammar(solver::GenericSolver)::AbstractGrammar
     return solver.grammar
 end
 

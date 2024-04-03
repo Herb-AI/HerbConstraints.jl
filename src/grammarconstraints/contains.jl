@@ -14,7 +14,7 @@ function on_new_node(solver::Solver, contraint::Contains, path::Vector{Int})
 end
 
 """
-    check_tree(c::Forbidden, g::Grammar, tree::RuleNode)::Bool
+    check_tree(c::Forbidden, g::AbstractGrammar, tree::RuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
