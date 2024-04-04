@@ -191,6 +191,22 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     end
 end
 
+
+"""
+    function remove_node!(solver::GenericSolver, path::Vector{Int})
+
+Remove the node at the given `path` by substituting it with a hole of the same symbol.
+"""
+function remove_node!(solver::GenericSolver, path::Vector{Int})
+    track!(solver.statistics, "remove_node!")
+    node = get_node_at_location(solver, path)
+    @assert !(node isa Hole)
+    grammar = get_grammar(solver)
+    domain = grammar.bychildtypes[get_rule(node)]
+    substitute!(solver, path, FixedShapedHole(domain, grammar), is_domain_increasing=true)
+end
+
+
 """
     simplify_hole!(solver::GenericSolver, path::Vector{Int})
 

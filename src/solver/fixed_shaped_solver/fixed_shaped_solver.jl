@@ -83,7 +83,7 @@ end
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)
+function HerbCore.get_node_path(solver::FixedShapedSolver, node::AbstractRuleNode)::Vector{Int}
     return solver.node_to_path[node]
 end
 

@@ -107,6 +107,7 @@ export
     remove!,
     remove_all_but!,
     substitute!,
+    remove_node!,
 
     #domainutils
     is_subdomain,
