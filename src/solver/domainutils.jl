@@ -25,7 +25,7 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
     @match (isfilled(specific_tree), isfilled(general_tree)) begin
         #(RuleNode, RuleNode), the rules must be equal
         (true, true) => begin
-            if get_rule(specific_tree) != get_rule(specific_tree)
+            if get_rule(specific_tree) != get_rule(general_tree)
                 return false
             end
         end
