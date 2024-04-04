@@ -1,6 +1,7 @@
 
 """
-@csgrammar_annotated
+    @csgrammar_annotated
+
 Define an annotated grammar and return it as a ContextSensitiveGrammar.
 Allows for adding optional annotations per rule.
 As well as that, allows for adding optional labels per rule, which can be referenced in annotations. 

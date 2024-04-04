@@ -1,7 +1,8 @@
 """
     struct DomainRuleNode <: AbstractRuleNode
 
-Matches any 1 rule in its domain.
+An abstraction of a rule node, designed to match any rule in its domain. Primarily used to summarize matching nodes of uniform shape. 
+
 Example usage:
 
     DomainRuleNode(Bitvector((0, 0, 1, 1)), [RuleNode(1), RuleNode(1)])
