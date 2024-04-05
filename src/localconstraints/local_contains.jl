@@ -4,7 +4,7 @@ LocalContains
 
 Enforces that a given `rule` appears at or below the given `path` at least once.
 """
-struct LocalContains <: LocalConstraint
+struct LocalContains <: AbstractLocalConstraint
 	path::Vector{Int}
     rule::Int
 end

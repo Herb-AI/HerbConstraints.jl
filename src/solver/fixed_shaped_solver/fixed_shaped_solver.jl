@@ -19,11 +19,11 @@ mutable struct UniformSolver <: Solver
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    isactive::Dict{LocalConstraint, StateInt}
-    canceledconstraints::Set{LocalConstraint}
+    isactive::Dict{AbstractLocalConstraint, StateInt}
+    canceledconstraints::Set{AbstractLocalConstraint}
     nsolutions::Int
     isfeasible::Bool
-    schedule::PriorityQueue{LocalConstraint, Int}
+    schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
 end
@@ -39,10 +39,10 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    isactive = Dict{LocalConstraint, StateInt}()
-    canceledconstraints = Set{LocalConstraint}()
+    isactive = Dict{AbstractLocalConstraint, StateInt}()
+    canceledconstraints = Set{AbstractLocalConstraint}()
     nsolutions = 0
-    schedule = PriorityQueue{LocalConstraint, Int}()
+    schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
@@ -131,11 +131,11 @@ end
 
 
 """
-    deactivate!(solver::UniformSolver, constraint::LocalConstraint)
+    deactivate!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::UniformSolver, constraint::LocalConstraint)
+function deactivate!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -154,12 +154,12 @@ end
 
 
 """
-    post!(solver::UniformSolver, constraint::LocalConstraint)
+    post!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
-function post!(solver::UniformSolver, constraint::LocalConstraint)
+function post!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
@@ -281,7 +281,7 @@ function next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShaped
         restore!(solver)
     end
     while length(solver.unvisited_branches) > 0
-        branches = top(solver.unvisited_branches)
+        branches = first(solver.unvisited_branches)
         if length(branches) > 0
             # current depth has unvisted branches, pick a branch to explore
             branch = pop!(branches)

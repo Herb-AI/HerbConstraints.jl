@@ -1,7 +1,7 @@
 """
-    Forbidden <: GrammarConstraint
+    Forbidden <: AbstractGrammarConstraint
 
-This [`GrammarConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
+This [`AbstractGrammarConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
 A pattern is a tree of [`AbstractRuleNode`](@ref)s. 
 Such a node can either be a [`RuleNode`](@ref), which contains a rule index corresponding to the 
 rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
@@ -20,12 +20,12 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     make both assignments to `v` equal, which causes a successful match.
 
 !!! warning
-    The [`Forbidden`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
-    are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
+    The [`Forbidden`](@ref) constraint makes use of [`AbstractLocalConstraint`](@ref)s to make sure that constraints 
+    are also enforced in the future when the context of a [`Hole`](@ref) changes. 
     Therefore, [`Forbidden`](@ref) can only be used in implementations that keep track of the 
-    [`LocalConstraint`](@ref)s and propagate them at the right moments.
+    [`AbstractLocalConstraint`](@ref)s and propagate them at the right moments.
 """
-struct Forbidden <: GrammarConstraint
+struct Forbidden <: AbstractGrammarConstraint
     tree::AbstractRuleNode
 end
 

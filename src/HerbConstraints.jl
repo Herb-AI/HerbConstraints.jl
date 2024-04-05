@@ -6,16 +6,16 @@ using DataStructures
 using MLStyle
 
 """
-    abstract type GrammarConstraint <: AbstractConstraint
+    abstract type AbstractGrammarConstraint <: AbstractConstraint
 
 Abstract type representing all user-defined constraints.
-Each grammar constraint has a related [LocalConstraint](@ref) that is responsible for propagating the constraint at a specific location in the tree.
-Grammar constraints should implement `on_new_node` to post a [`LocalConstraint`](@ref) at that new node
+Each grammar constraint has a related [AbstractLocalConstraint](@ref) that is responsible for propagating the constraint at a specific location in the tree.
+Grammar constraints should implement `on_new_node` to post a [`AbstractLocalConstraint`](@ref) at that new node
 """
-abstract type GrammarConstraint <: AbstractConstraint end
+abstract type AbstractGrammarConstraint <: AbstractConstraint end
 
 """
-    abstract type LocalConstraint <: AbstractConstraint
+    abstract type AbstractLocalConstraint <: AbstractConstraint
 
 Abstract type representing all local constraints.
 Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
@@ -30,11 +30,11 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 - `isfeasible`: Check if the current tree is still feasible. Return from the propagate function, as soon as infeasibility is detected.
 
 !!! warning
-    By default, [`LocalConstraint`](@ref)s are only propagated once.
+    By default, [`AbstractLocalConstraint`](@ref)s are only propagated once.
     Constraints that have to be propagated more frequently should subscribe to an event. This part of the solver is still WIP.
     Currently, the solver supports only one type of subscription: `propagate_on_tree_manipulation!`.
 """
-abstract type LocalConstraint <: AbstractConstraint end
+abstract type AbstractLocalConstraint <: AbstractConstraint end
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -67,8 +67,8 @@ include("grammarconstraints/contains.jl")
 
 
 export
-    GrammarConstraint,
-    LocalConstraint,
+    AbstractGrammarConstraint,
+    AbstractLocalConstraint,
 
     DomainRuleNode,
     VarNode,
@@ -88,7 +88,7 @@ export
     #public solver functions
     GenericSolver,
     Solver,
-    State,
+    SolverState,
     new_state!,
     save_state!,
     load_state!,

@@ -1,5 +1,5 @@
 """
-    mutable struct State 
+    mutable struct SolverState 
 
 A state to be solved by the [`GenericSolver`](@ref).
 A state contains of:
@@ -11,17 +11,17 @@ A state contains of:
    When a propagator spots an inconsistency, this field will be set to false.
    Tree manipulations and further propagations are not allowed on infeasible states
 """
-mutable struct State
+mutable struct SolverState
     tree::AbstractRuleNode
-    active_constraints::Set{LocalConstraint}
+    active_constraints::Set{AbstractLocalConstraint}
     isfeasible::Bool
 end
 
-State(tree::AbstractRuleNode) = State(tree, Set{LocalConstraint}(), true)
+SolverState(tree::AbstractRuleNode) = SolverState(tree, Set{AbstractLocalConstraint}(), true)
 
-function Base.copy(state::State) 
+function Base.copy(state::SolverState) 
     tree = deepcopy(state.tree)
     active_constraints = copy(state.active_constraints) # constraints are stateless, so the constraints can be shallow copied
-    State(tree, active_constraints, state.isfeasible)
+    SolverState(tree, active_constraints, state.isfeasible)
 end
 
