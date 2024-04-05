@@ -65,14 +65,14 @@ using HerbGrammar
 
     @testset "is_subdomain false (AbstractRuleNode, no holes)" begin
         #the specific_tree is larger than the general_tree
-        node1 = RuleNode(8, [
+        specific_tree = RuleNode(8, [
             RuleNode(5)
             RuleNode(7, [
                 RuleNode(4),
                 RuleNode(5)
             ])
         ])
-        node2 = RuleNode(9)
+        general_tree = RuleNode(9)
         @test is_subdomain(specific_tree, general_tree) == false
     end
 

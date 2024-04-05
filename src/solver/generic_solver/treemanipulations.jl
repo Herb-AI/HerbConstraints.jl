@@ -113,12 +113,17 @@ end
 
 Fill in the hole located at the `path` with rule `rule_index`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
-It is assumed rule_index ∈ hole.domain
+It is assumed rule_index ∈ hole.domain.
+
+!!! warning: If the `hole` is known to be in the current tree, the hole can be passed directly.
+    The caller has to make sure that the hole instance is actually present at the provided `path`.
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
-    hole = get_hole_at_location(solver, path)
-    @assert hole.domain[rule_index] "AbstractHole $hole cannot be filled with rule $rule_index"
-    if isuniform(hole)
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole, Nothing}=nothing)
+    if isnothing(hole)
+        hole = get_hole_at_location(solver, path)
+    end
+    @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
+    if isfixedshaped(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
     else
@@ -162,7 +167,7 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
         old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
-    if get_tree_size(solver) > get_max_size(solver)
+    if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
         mark_infeasible!(solver)
         return
