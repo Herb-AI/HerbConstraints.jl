@@ -63,4 +63,3 @@ function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
     end
     return all(check_tree(c, child) for child ∈ tree.children)
 end
-

@@ -100,6 +100,3 @@ end
 function statefixedshapedhole2rulenode(node::RuleNode)::RuleNode
 	return RuleNode(node.ind, [statefixedshapedhole2rulenode(c) for c in node.children])
 end
-
-#TODO: remove this function. never convert a StateFixedShapedHole to a RuleNode.
-#TODO: implement `rulenode2expr` for `StateFixedShapedHole`
