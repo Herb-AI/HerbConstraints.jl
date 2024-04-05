@@ -126,9 +126,10 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
     if isfixedshaped(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
+        substitute!(solver, path, new_node, is_domain_increasing=false)
     else
         # reduce the domain of the variable shaped hole and let `simplify_hole!` take care of instantiating the children correctly
-        throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
+        # throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
         # If you encountered this error, it means you are trying to fill a variable shaped hole, this can cause new holes to appear underneath.
         # Usually, constraints should behave differently on fixed shaped holes and variable shaped holes.
         # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
@@ -140,7 +141,6 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         hole.domain[rule_index] = true
         simplify_hole!(solver, path)
     end
-    substitute!(solver, path, new_node, is_domain_increasing=false)
 end
 
 
@@ -207,9 +207,8 @@ function remove_node!(solver::GenericSolver, path::Vector{Int})
     node = get_node_at_location(solver, path)
     @assert !(node isa Hole)
     grammar = get_grammar(solver)
-    domain = grammar.bychildtypes[get_rule(node)]
-    substitute!(solver, path, FixedShapedHole(domain, grammar), is_domain_increasing=true)
-end
+    type = grammar.types[get_rule(node)]
+giend
 
 
 """
@@ -220,6 +219,7 @@ If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
     hole = get_hole_at_location(solver, path)
+    println("Simplify ", hole)
     grammar = get_grammar(solver)
     new_node = nothing
     domain_size = sum(hole.domain)
@@ -240,6 +240,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         @assert !isnothing(hole) "No node exists at path $path in the current state"
         @warn "Attempted to simplify node type: $(typeof(hole))"
     end
+    println("Simplified to ", new_node)
 
     #the hole will be simplified and replaced with a `new_node`
     if !isnothing(new_node)
