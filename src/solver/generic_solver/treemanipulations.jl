@@ -167,6 +167,7 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
         old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
+    
     if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
         mark_infeasible!(solver)
@@ -208,7 +209,9 @@ function remove_node!(solver::GenericSolver, path::Vector{Int})
     @assert !(node isa Hole)
     grammar = get_grammar(solver)
     type = grammar.types[get_rule(node)]
-giend
+    domain = copy(grammar.domains[type]) #must be copied, otherwise we are mutating the grammar
+    substitute!(solver, path, Hole(domain), is_domain_increasing=true)
+end
 
 
 """
@@ -218,8 +221,8 @@ Takes a [AbstractHole](@ref) and tries to simplify it to a [UniformHole](@ref) o
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
+    if !isfeasible(solver) return end
     hole = get_hole_at_location(solver, path)
-    println("Simplify ", hole)
     grammar = get_grammar(solver)
     new_node = nothing
     domain_size = sum(hole.domain)
@@ -240,7 +243,6 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         @assert !isnothing(hole) "No node exists at path $path in the current state"
         @warn "Attempted to simplify node type: $(typeof(hole))"
     end
-    println("Simplified to ", new_node)
 
     #the hole will be simplified and replaced with a `new_node`
     if !isnothing(new_node)

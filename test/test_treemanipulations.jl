@@ -1,6 +1,6 @@
 using HerbCore, HerbGrammar
 
-@testset verbose=true "Tree Manipulations" begin
+@testset verbose=true "Tree Manipulations (GenericSolver)" begin
 
     function create_dummy_solver()
         grammar = @csgrammar begin
@@ -54,6 +54,25 @@ using HerbCore, HerbGrammar
             @test child isa RuleNode
             @test child.ind == 1
         end
+    end
+
+    @testset "remove_node!" begin
+        solver = create_dummy_solver()
+        new_state!(solver, RuleNode(1, [
+            RuleNode(1, [     #  | This node will be 'removed'. It will be replaced with a hole
+                RuleNode(3),  #  |
+                RuleNode(3)   #  |
+            ]),               # _|
+            RuleNode(2)
+        ]))
+        remove_node!(solver, [1])
+        tree = get_tree(solver)
+        @test tree.children[1] isa VariableShapedHole
+        @test tree.children[1].domain[1] == true
+        @test tree.children[1].domain[2] == true
+        @test tree.children[1].domain[3] == true
+        @test tree.children[1].domain[4] == true
+        @test tree.children[2] == RuleNode(2)
     end
 
 end
