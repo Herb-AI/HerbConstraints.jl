@@ -26,14 +26,15 @@ mutable struct UniformSolver <: Solver
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
+    derivation_heuristic
 end
 
 
 """
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
-    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
+function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
+    @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
     sm = StateManager()
     tree = StateFixedShapedHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
@@ -49,8 +50,8 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
         ::Nothing => nothing
     end
-    if !isnothing(statistics) statistics.name = "UniformSolver" end
-    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics)
+    if !isnothing(statistics) statistics.name = "FixedShapedSolver" end
+    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics, derivation_heuristic)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     if isfeasible(solver)
@@ -254,7 +255,11 @@ function generate_branches(solver::UniformSolver)::Vector{Branch}
     @assert isfeasible(solver)
     function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
         if node isa StateFixedShapedHole && size(node.domain) > 1
-            return [Branch(node, rule) for rule ∈ node.domain]
+            #use the derivation_heuristic if the parent_iterator is set up 
+            if isnothing(solver.derivation_heuristic)
+                return [Branch(node, rule) for rule ∈ node.domain]
+            end
+            return [Branch(node, rule) for rule ∈ solver.derivation_heuristic(findall(node.domain))]
         end
         for child ∈ node.children
             branches = _dfs(child)
