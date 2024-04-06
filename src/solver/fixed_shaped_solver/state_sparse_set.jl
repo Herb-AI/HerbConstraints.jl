@@ -79,6 +79,12 @@ function Base.findfirst(set::StateSparseSet)
     return get_value(set.min)
 end
 
+"""
+Returns all elements in the set.
+"""
+function Base.findall(set::StateSparseSet)
+    return collect(set)
+end
 
 """
 Returns the number of values in the `StateSparseSet`.

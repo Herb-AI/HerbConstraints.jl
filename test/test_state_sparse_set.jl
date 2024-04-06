@@ -184,4 +184,9 @@
         remove!(set1, 1)
         @test are_disjoint(set1, set2) == true
     end
+
+    @testset "findall" begin
+        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        @test findall(set) == [1, 3]
+    end
 end
