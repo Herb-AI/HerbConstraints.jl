@@ -2,7 +2,7 @@
 Representation of a branching constraint in the search tree.
 """
 struct Branch
-    hole::StateFixedShapedHole
+    hole::StateHole
     rule::Int
 end
 
@@ -10,12 +10,12 @@ end
 NOBRANCHES = Vector{Branch}()
 
 """
-A DFS solver that uses `StateFixedShapedHole`s.
+A DFS solver that uses `StateHole`s.
 """
 mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
-    tree::Union{RuleNode, StateFixedShapedHole}
+    tree::Union{RuleNode, StateHole}
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
@@ -36,7 +36,7 @@ end
 function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
     @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
     sm = StateManager()
-    tree = StateFixedShapedHole(sm, fixed_shaped_tree)
+    tree = StateHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
@@ -253,8 +253,8 @@ A possible branching scheme could be to be split up in three `Branch`ing constra
 function generate_branches(solver::UniformSolver)::Vector{Branch}
     #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
     @assert isfeasible(solver)
-    function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
-        if node isa StateFixedShapedHole && size(node.domain) > 1
+    function _dfs(node::Union{StateHole, RuleNode}) #::Vector{Branch}
+        if node isa StateHole && size(node.domain) > 1
             #use the derivation_heuristic if the parent_iterator is set up 
             if isnothing(solver.derivation_heuristic)
                 return [Branch(node, rule) for rule ∈ node.domain]
@@ -274,13 +274,13 @@ end
 
 
 """
-    next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
+    next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateHole, Nothing}
 
 Built-in iterator. Search for the next unvisited solution.
 Returns nothing if all solutions have been found already.
 """
-function next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
-    if solver.nsolutions == 1000000 @warn "UniformSolver is iterating over more than 1000000 solutions..." end
+function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateHole, Nothing}
+    if solver.nsolutions == 1000000 @warn "FixedShapedSolver is iterating over more than 1000000 solutions..." end
     if solver.nsolutions > 0
         # backtrack from the previous solution
         restore!(solver)

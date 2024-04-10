@@ -1,4 +1,4 @@
-@testset verbose=true "StateFixedShapedHole" begin
+@testset verbose=true "StateHole" begin
     @testset "convert, isfilled and get_rule" begin
         root_stateless = UniformHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
             UniformHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)
@@ -10,7 +10,7 @@
             ])
         ])
         sm = HerbConstraints.StateManager()
-        root = HerbConstraints.StateFixedShapedHole(sm, root_stateless)
+        root = HerbConstraints.StateHole(sm, root_stateless)
         
         @test size(root.domain) == 2
         @test 1 ∈ root.domain
@@ -55,7 +55,7 @@
             ])
         ])
         sm = HerbConstraints.StateManager()
-        root = HerbConstraints.StateFixedShapedHole(sm, root_stateless)
+        root = HerbConstraints.StateHole(sm, root_stateless)
 
         @test contains_hole(root) == true
         @test contains_hole(root.children[1]) == false
@@ -63,7 +63,7 @@
     end
 
     @testset "is_filled (empty domain)" begin
-        hole = HerbConstraints.StateFixedShapedHole(HerbConstraints.StateManager(), UniformHole(BitVector((0, 0, 0)), []))
+        hole = HerbConstraints.StateHole(HerbConstraints.StateManager(), FixedShapedHole(BitVector((0, 0, 0)), []))
         @test isfilled(hole) == false
     end
 end

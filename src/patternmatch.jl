@@ -153,7 +153,7 @@ function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, v
     end
 end
 
-#TODO: write unit tests for pattern matches with `StateFixedShapedHole`
+#TODO: write unit tests for pattern matches with `StateHole`
 
 """
     pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult

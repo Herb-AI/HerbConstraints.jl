@@ -131,7 +131,7 @@ export
     UniformSolver,
 
     #state fixed shaped hole
-    StateFixedShapedHole,
-    statefixedshapedhole2rulenode
+    StateHole,
+    freeze_state
 
 end # module HerbConstraints
