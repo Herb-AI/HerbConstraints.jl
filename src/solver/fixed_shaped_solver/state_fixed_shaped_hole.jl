@@ -1,21 +1,21 @@
-#TODO: StateHole should be a extending from an abstract FixedShapedHole
+#TODO: StateHole should be a extending from an abstract UniformHole
 """
-	StateHole <: Hole
+	StateHole <: AbstractHole
 
 `StateHole`s are uniform holes used by the `FixedShapedSolver`. Domain manipulations are tracked for backpropagation.
 - `domain`: A `StateSparseSet` representing the rule nodes this hole can take. If size(domain) == 1, this hole should act like a `RuleNode`
 - `children`: The children of this hole in the expression tree.
 """
-mutable struct StateHole <: Hole
+mutable struct StateHole <: AbstractHole
 	domain::StateSparseSet
 	children::Vector{AbstractRuleNode}
 end
 
 
 """
-Converts a [`FixedShapedHole`](@ref) to a [`StateHole`](@ref)
+Converts a [`UniformHole`](@ref) to a [`StateHole`](@ref)
 """
-function StateHole(sm::StateManager, hole::FixedShapedHole)
+function StateHole(sm::StateManager, hole::UniformHole)
 	sss_domain = StateSparseSet(sm, hole.domain)
 	children = [StateHole(sm, child) for child ∈ hole.children]
 	return StateHole(sss_domain, children)
@@ -53,7 +53,7 @@ Holes with domain size 1 are fixed to a rule.
 Returns whether the hole has domain size 1. (holes with an empty domain are not considered to be fixed)
 """
 function HerbCore.isfilled(hole::StateHole)::Bool
-	#TODO: isfilled(::Hole) = false
+	#TODO: isfilled(::AbstractHole) = false
 	#TODO: isfilled(::RuleNode) = true
 	return size(hole.domain) == 1
 end

@@ -128,13 +128,13 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         new_node = RuleNode(rule_index, get_children(hole))
         substitute!(solver, path, new_node, is_domain_increasing=false)
     else
-        # reduce the domain of the variable shaped hole and let `simplify_hole!` take care of instantiating the children correctly
-        # throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
-        # If you encountered this error, it means you are trying to fill a variable shaped hole, this can cause new holes to appear underneath.
-        # Usually, constraints should behave differently on fixed shaped holes and variable shaped holes.
-        # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
+        # reduce the domain of the non-uniform hole and let `simplify_hole!` take care of instantiating the children correctly
+        # throw("WARNING: attempted to fill a non-uniform hole (untested behavior).")
+        # If you encountered this error, it means you are trying to fill a non-uniform hole, this can cause new holes to appear underneath.
+        # Usually, constraints should behave differently on uniform holes and non-uniform holes.
+        # If this is also the case for a newly added constraint, make sure to add an `if isfixedshaped(hole) end` check to your propagator.
         # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
-        # If you are sure that filling in a variable shaped hole is fine, this error can safely be deleted."
+        # If you are sure that filling in a non-uniform hole is fine, this error can safely be deleted."
         for r ∈ 1:length(hole.domain)
             hole.domain[r] = false
         end
@@ -217,7 +217,7 @@ end
 """
     simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
-Takes a [AbstractHole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
+Takes a [Hole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})

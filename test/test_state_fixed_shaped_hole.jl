@@ -63,7 +63,7 @@
     end
 
     @testset "is_filled (empty domain)" begin
-        hole = HerbConstraints.StateHole(HerbConstraints.StateManager(), FixedShapedHole(BitVector((0, 0, 0)), []))
+        hole = HerbConstraints.StateHole(HerbConstraints.StateManager(), UniformHole(BitVector((0, 0, 0)), []))
         @test isfilled(hole) == false
     end
 end

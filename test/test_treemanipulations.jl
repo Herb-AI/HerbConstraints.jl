@@ -67,7 +67,7 @@ using HerbCore, HerbGrammar
         ]))
         remove_node!(solver, [1])
         tree = get_tree(solver)
-        @test tree.children[1] isa VariableShapedHole
+        @test tree.children[1] isa Hole
         @test tree.children[1].domain[1] == true
         @test tree.children[1].domain[2] == true
         @test tree.children[1].domain[3] == true

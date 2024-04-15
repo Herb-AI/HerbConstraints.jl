@@ -39,7 +39,7 @@ function propagate!(solver::Solver, c::LocalContains)
                 else
                     #we cannot deduce anything yet, new holes can appear underneath this hole
                     #TODO: optimize this by checking if the target rule can appear as a child of the fixedshaped hole
-                    track!(solver.statistics, "LocalContains softfail (variableshapedhole)")
+                    track!(solver.statistics, "LocalContains softfail (hole)")
                 end
             else
                 #multiple holes can be set to the target value, no deduction can be made as this point
@@ -64,8 +64,8 @@ function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{AbstractHole
 end
 
 function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
-    if !isuniform(node)
-        #TODO: check if the rule might appear underneath this variable shaped hole later
+    if !isfixedshaped(node)
+        #TODO: check if the rule might appear underneath this non-uniform hole later
         # for now, it is assumed this is always possible
         push!(holes, node)
     elseif isfilled(node)

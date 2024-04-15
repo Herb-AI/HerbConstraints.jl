@@ -34,7 +34,7 @@ end
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
 function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
-    @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
+    @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
@@ -106,7 +106,7 @@ Get the hole that is located at the provided `path`.
 """
 function get_hole_at_location(solver::UniformSolver, path::Vector{Int})
     hole = solver.path_to_node[path]
-    @assert hole isa AbstractHole
+    @assert hole isa StateHole
     return hole
 end
 

@@ -28,7 +28,7 @@ using HerbGrammar
     end
 
     @testset "PatternMatchSuccess, UniformHole subsets" begin
-        # The FixedShapedHoles match the DomainRuleNode, regardless of how they are filled
+        # The UniformHoles match the DomainRuleNode, regardless of how they are filled
         hole1 = UniformHole(BitVector((0, 0, 0, 1, 0, 0)), [RuleNode(1), RuleNode(1)])
         hole2 = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(1)])
         hole3 = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])

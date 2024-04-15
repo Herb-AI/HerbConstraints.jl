@@ -33,8 +33,8 @@ struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
 
 `node1` <= `node2` and `node1` > `node2` are both possible depending on the assignment of `hole1` and `hole2`.
 Includes two cases:
-- hole2::AbstractHole: A failed `AbstractHole`-`AbstractHole` comparison. (e.g. Hole(BitVector((1, 0, 1))) vs Hole(BitVector((0, 1, 1))))
-- hole2::Nothing: A failed `AbstractHole`-`RuleNode` comparison. (e.g. Hole(BitVector((1, 0, 1))) vs RuleNode(2))
+- hole2::AbstractHole: A failed `AbstractHole`-`AbstractHole` comparison. (e.g. AbstractHole(BitVector((1, 0, 1))) vs AbstractHole(BitVector((0, 1, 1))))
+- hole2::Nothing: A failed `AbstractHole`-`RuleNode` comparison. (e.g. AbstractHole(BitVector((1, 0, 1))) vs RuleNode(2))
 """
 struct LessThanOrEqualSoftFail <: LessThanOrEqualResult
     hole1::AbstractHole

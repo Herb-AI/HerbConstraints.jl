@@ -26,7 +26,7 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
 
 !!! warning
     The [`Ordered`](@ref) constraint makes use of [`AbstractLocalConstraint`](@ref)s to make sure that constraints 
-    are also enforced in the future when the context of a [`Hole`](@ref) changes. 
+    are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
     Therefore, [`Ordered`](@ref) can only be used in implementations that keep track of the 
     [`AbstractLocalConstraint`](@ref)s and propagate them at the right moments.
 """

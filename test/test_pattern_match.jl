@@ -117,7 +117,7 @@ using HerbGrammar
         @test get_path(rn, match.hole) == [2, 1, 2, 1, 1]
     end
 
-    @testset "PatternMatchSuccessWhenHoleAssignedTo, 1 fixed shaped hole with children" begin
+    @testset "PatternMatchSuccessWhenHoleAssignedTo, 1 uniform hole with children" begin
         rn = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
         result = pattern_match(rn, mn)
@@ -167,7 +167,7 @@ using HerbGrammar
         @test pattern_match(rn2, mn) isa HerbConstraints.PatternMatchHardFail
     end
 
-    @testset "PatternMatchHardFail, 1 fixed shaped hole with an invalid domain" begin
+    @testset "PatternMatchHardFail, 1 uniform hole with an invalid domain" begin
         rn = UniformHole(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), RuleNode(1)])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
         @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
@@ -179,13 +179,13 @@ using HerbGrammar
         @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
     end
 
-    @testset "PatternMatchHardFail, 1 fixed shaped hole with a valid domain, 1 hole with an invalid domain" begin
+    @testset "PatternMatchHardFail, 1 uniform hole with a valid domain, 1 hole with an invalid domain" begin
         rn = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [Hole(BitVector((0, 0, 1, 1, 1, 1))), RuleNode(1)])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
         @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
     end
 
-    @testset "PatternMatchHardFail, 1 fixed shaped hole with an invalid domain, 1 hole with a valid domain" begin
+    @testset "PatternMatchHardFail, 1 uniform hole with an invalid domain, 1 hole with a valid domain" begin
         rn1 = UniformHole(BitVector((0, 0, 0, 0, 1, 1)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
         rn2 = UniformHole(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
@@ -213,7 +213,7 @@ using HerbGrammar
         @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
     end
 
-    @testset "PatternMatchSoftFail, 1 fixed shaped hole with an valid domain, 1 hole with a valid domain" begin
+    @testset "PatternMatchSoftFail, 1 uniform hole with an valid domain, 1 hole with a valid domain" begin
         rn1 = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
         rn2 = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])
@@ -239,7 +239,7 @@ using HerbGrammar
         @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSoftFail
     end
 
-    @testset "Hole vs FixedShapedHoleShapedHole" begin
+    @testset "Hole vs UniformHoleShapedHole" begin
         h1 = UniformHole(BitVector((1, 1, 0, 0, 0, 0)), [])
         h2_softfail = Hole(BitVector((1, 0, 0, 0, 0, 1)))
         h2_hardfail = Hole(BitVector((0, 0, 0, 0, 1, 1)))
@@ -314,7 +314,7 @@ using HerbGrammar
 
     @testset "VarNode HardFails with holes" begin
         mn = RuleNode(4, [VarNode(:x), VarNode(:x)])
-        @testset "Disjoint VariableShapedHoles, after RuleNode Success" begin
+        @testset "Disjoint Holes, after RuleNode Success" begin
             n1 = RuleNode(4, [
                 RuleNode(4, [
                     Hole(BitVector((1, 1, 0, 0, 0, 0))), 
@@ -327,7 +327,7 @@ using HerbGrammar
             ])
             @test pattern_match(n1, mn) isa HerbConstraints.PatternMatchHardFail
         end
-        @testset "Disjoint VariableShapedHoles, after UniformHole SoftFail" begin
+        @testset "Disjoint Holes, after UniformHole SoftFail" begin
             n1 = RuleNode(4, [
                 UniformHole(BitVector((0, 0, 0, 0, 1, 1)), [
                     Hole(BitVector((1, 1, 0, 0, 0, 0))), 
@@ -340,7 +340,7 @@ using HerbGrammar
             ])
             @test pattern_match(n1, mn) isa HerbConstraints.PatternMatchHardFail
         end
-        @testset "Disjoint FixedShapedHoles" begin
+        @testset "Disjoint UniformHoles" begin
             n1 = RuleNode(4, [
                 UniformHole(BitVector((0, 0, 0, 0, 1, 1)), [
                     Hole(BitVector((1, 1, 0, 0, 0, 0))), 
