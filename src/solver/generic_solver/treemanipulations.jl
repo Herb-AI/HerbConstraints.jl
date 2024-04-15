@@ -123,7 +123,7 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         hole = get_hole_at_location(solver, path)
     end
     @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
-    if isfixedshaped(hole)
+    if isuniform(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
         substitute!(solver, path, new_node, is_domain_increasing=false)
@@ -132,7 +132,7 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         # throw("WARNING: attempted to fill a non-uniform hole (untested behavior).")
         # If you encountered this error, it means you are trying to fill a non-uniform hole, this can cause new holes to appear underneath.
         # Usually, constraints should behave differently on uniform holes and non-uniform holes.
-        # If this is also the case for a newly added constraint, make sure to add an `if isfixedshaped(hole) end` check to your propagator.
+        # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
         # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
         # If you are sure that filling in a non-uniform hole is fine, this error can safely be deleted."
         for r ∈ 1:length(hole.domain)

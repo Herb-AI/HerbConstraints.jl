@@ -50,13 +50,13 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
 
     #the general_tree is a non-uniform hole, the specific_tree must be more specific
     #Example: general_tree = Hole({3, 4, 5}). specific_tree = RuleNode(3, [RuleNode(1), RuleNode(1)]).
-    if !isfixedshaped(general_tree)
+    if !isuniform(general_tree)
         return true
     end
 
     #continue checking the children
-    @assert isfixedshaped(general_tree)
-    @assert isfixedshaped(specific_tree) "The specific_tree cannot be a non-uniform Hole at this point."
+    @assert isuniform(general_tree)
+    @assert isuniform(specific_tree) "The specific_tree cannot be a non-uniform Hole at this point."
     @assert length(get_children(specific_tree)) == length(get_children(general_tree))
     for (specific_child, general_child) ∈ zip(get_children(specific_tree), get_children(general_tree))
         if !is_subdomain(specific_child, general_child)

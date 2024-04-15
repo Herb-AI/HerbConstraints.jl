@@ -64,7 +64,7 @@ function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{AbstractHole
 end
 
 function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
-    if !isfixedshaped(node)
+    if !isuniform(node)
         #TODO: check if the rule might appear underneath this non-uniform hole later
         # for now, it is assumed this is always possible
         push!(holes, node)

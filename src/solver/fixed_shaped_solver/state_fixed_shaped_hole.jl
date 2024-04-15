@@ -30,7 +30,7 @@ function StateHole(sm::StateManager, rulenode::RuleNode)
 end
 
 
-HerbCore.isfixedshaped(::StateHole) = true
+HerbCore.isuniform(::StateHole) = true
 
 
 """
