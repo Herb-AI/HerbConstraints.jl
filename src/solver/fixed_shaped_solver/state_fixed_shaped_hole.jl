@@ -1,12 +1,11 @@
-#TODO: StateHole should be a extending from an abstract UniformHole
 """
-	StateHole <: AbstractHole
+	StateHole <: AbstractUniformHole
 
 `StateHole`s are uniform holes used by the `FixedShapedSolver`. Domain manipulations are tracked for backpropagation.
 - `domain`: A `StateSparseSet` representing the rule nodes this hole can take. If size(domain) == 1, this hole should act like a `RuleNode`
 - `children`: The children of this hole in the expression tree.
 """
-mutable struct StateHole <: AbstractHole
+mutable struct StateHole <: AbstractUniformHole
 	domain::StateSparseSet
 	children::Vector{AbstractRuleNode}
 end
