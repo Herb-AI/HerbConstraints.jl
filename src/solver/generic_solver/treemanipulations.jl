@@ -170,7 +170,7 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     
     if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
-        mark_infeasible!(solver)
+        set_infeasible!(solver)
         return
     end
     
@@ -227,7 +227,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
     new_node = nothing
     domain_size = sum(hole.domain)
     if domain_size == 0
-        mark_infeasible!(solver)
+        set_infeasible!(solver)
         return
     elseif hole isa UniformHole
         if domain_size == 1

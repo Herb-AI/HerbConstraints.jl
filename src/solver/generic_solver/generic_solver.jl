@@ -220,11 +220,11 @@ end
 
 
 """
-    mark_infeasible!(solver::GenericSolver)
+    set_infeasible!(solver::GenericSolver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible!(solver::GenericSolver)
+function set_infeasible!(solver::GenericSolver)
     #TODO: immediately delete the state and set the current state to nothing
     solver.state.isfeasible = false
 end

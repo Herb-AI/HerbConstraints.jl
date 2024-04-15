@@ -26,7 +26,7 @@ function propagate!(solver::Solver, c::LocalContains)
         end
         false => begin 
             track!(solver.statistics, "LocalContains inconsistency")
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         holes::Vector{AbstractHole} => begin
             @assert length(holes) > 0

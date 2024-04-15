@@ -43,7 +43,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
                     ::LessThanOrEqualHardFail => begin
                         # vars[name1] > vars[name2]. This means the state is infeasible.
                         track!(solver.statistics, "LocalOrdered inconsistency")
-                        mark_infeasible!(solver) #throw(InconsistencyException())
+                        set_infeasible!(solver) #throw(InconsistencyException())
                     end
                     ::LessThanOrEqualSoftFail => begin
                         # vars[name1] <= vars[name2] and vars[name1] > vars[name2] still possible

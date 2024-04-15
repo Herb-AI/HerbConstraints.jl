@@ -206,11 +206,11 @@ end
 
 
 """
-    mark_infeasible!(solver::Solver)
+    set_infeasible!(solver::Solver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible!(solver::UniformSolver)
+function set_infeasible!(solver::FixedShapedSolver)
     solver.isfeasible = false
 end
 

@@ -36,7 +36,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.
             track!(solver.statistics, "LocalForbidden inconsistency")
-            mark_infeasible!(solver) #throw(InconsistencyException())
+            set_infeasible!(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
             # Propagate the constraint by removing an impossible value from the found hole.

@@ -9,7 +9,7 @@ function remove!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
     if remove!(hole.domain, rule_index)
         if isempty(hole.domain)
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -33,7 +33,7 @@ function remove!(solver::UniformSolver, path::Vector{Int}, rules::Vector{Int})
     end
     if domain_updated
         if isempty(hole.domain)
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -52,7 +52,7 @@ function remove_above!(solver::UniformSolver, path::Vector{Int}, rule_index::Int
     hole = get_hole_at_location(solver, path)
     if remove_above!(hole.domain, rule_index)
         if isempty(hole.domain)
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -71,7 +71,7 @@ function remove_below!(solver::UniformSolver, path::Vector{Int}, rule_index::Int
     hole = get_hole_at_location(solver, path)
     if remove_below!(hole.domain, rule_index)
         if isempty(hole.domain)
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -87,7 +87,7 @@ function remove_all_but!(solver::UniformSolver, path::Vector{Int}, rule_index::I
     hole = get_hole_at_location(solver, path)
     if remove_all_but!(hole.domain, rule_index)
         if isempty(hole.domain)
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)

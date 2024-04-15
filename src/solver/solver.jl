@@ -11,7 +11,7 @@ Each solver should implement at least:
 - `post!`
 - `get_tree`
 - `get_grammar`
-- `mark_infeasible!`
+- `set_infeasible!`
 - `isfeasible`
 - `HerbCore.get_node_at_location`
 - `get_hole_at_location`
