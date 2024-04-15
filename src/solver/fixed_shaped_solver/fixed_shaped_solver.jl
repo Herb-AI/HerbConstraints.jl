@@ -34,7 +34,7 @@ end
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
 function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
-    @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
+    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
