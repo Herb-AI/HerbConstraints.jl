@@ -33,7 +33,7 @@ end
 """
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
+function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
@@ -50,8 +50,8 @@ function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::Abstract
         ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
         ::Nothing => nothing
     end
-    if !isnothing(statistics) statistics.name = "FixedShapedSolver" end
-    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics, derivation_heuristic)
+    if !isnothing(statistics) statistics.name = "UniformSolver" end
+    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics, derivation_heuristic)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     if isfeasible(solver)
@@ -80,11 +80,11 @@ end
 
 
 """
-    get_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+    get_path(solver::UniformSolver, node::AbstractRuleNode)
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::FixedShapedSolver, node::AbstractRuleNode)::Vector{Int}
+function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vector{Int}
     return solver.node_to_path[node]
 end
 
@@ -132,11 +132,11 @@ end
 
 
 """
-    deactivate!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
+    deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
+function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -155,12 +155,12 @@ end
 
 
 """
-    post!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
+    post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
-function post!(solver::FixedShapedSolver, constraint::AbstractLocalConstraint)
+function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
@@ -210,7 +210,7 @@ end
 
 Function to be called if any inconsistency has been detected
 """
-function set_infeasible!(solver::FixedShapedSolver)
+function set_infeasible!(solver::UniformSolver)
     solver.isfeasible = false
 end
 
@@ -274,13 +274,13 @@ end
 
 
 """
-    next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateHole, Nothing}
+    next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
 
 Built-in iterator. Search for the next unvisited solution.
 Returns nothing if all solutions have been found already.
 """
-function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateHole, Nothing}
-    if solver.nsolutions == 1000000 @warn "FixedShapedSolver is iterating over more than 1000000 solutions..." end
+function next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
+    if solver.nsolutions == 1000000 @warn "UniformSolver is iterating over more than 1000000 solutions..." end
     if solver.nsolutions > 0
         # backtrack from the previous solution
         restore!(solver)
