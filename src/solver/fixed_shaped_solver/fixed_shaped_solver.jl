@@ -12,7 +12,7 @@ NOBRANCHES = Vector{Branch}()
 """
 A DFS solver that uses `StateFixedShapedHole`s.
 """
-mutable struct FixedShapedSolver <: Solver
+mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateFixedShapedHole}
@@ -30,9 +30,9 @@ end
 
 
 """
-    FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
+    UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
+function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
     sm = StateManager()
     tree = StateFixedShapedHole(sm, fixed_shaped_tree)
@@ -46,11 +46,11 @@ function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::Abstract
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
-        ::Bool => with_statistics ? SolverStatistics("FixedShapedSolver") : nothing
+        ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
         ::Nothing => nothing
     end
-    if !isnothing(statistics) statistics.name = "FixedShapedSolver" end
-    solver = FixedShapedSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics)
+    if !isnothing(statistics) statistics.name = "UniformSolver" end
+    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     if isfeasible(solver)
@@ -62,11 +62,11 @@ end
 
 
 """
-    notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, path::Vector{Int})
+    notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
 
 Notify all grammar constraints about the new `node` and its (grand)children
 """
-function notify_new_nodes(solver::FixedShapedSolver, node::AbstractRuleNode, path::Vector{Int})
+function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
     for (i, childnode) ∈ enumerate(get_children(node))
         notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
@@ -79,31 +79,31 @@ end
 
 
 """
-    get_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+    get_path(solver::UniformSolver, node::AbstractRuleNode)
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)
     return solver.node_to_path[node]
 end
 
 
 """
-    get_node_at_location(solver::FixedShapedSolver, path::Vector{Int})
+    get_node_at_location(solver::UniformSolver, path::Vector{Int})
 
 Get the node that is located at the provided `path`.
 """
-function HerbCore.get_node_at_location(solver::FixedShapedSolver, path::Vector{Int})
+function HerbCore.get_node_at_location(solver::UniformSolver, path::Vector{Int})
     return solver.path_to_node[path]
 end
 
 
 """
-    get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
+    get_hole_at_location(solver::UniformSolver, path::Vector{Int})
 
 Get the hole that is located at the provided `path`.
 """
-function get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
+function get_hole_at_location(solver::UniformSolver, path::Vector{Int})
     hole = solver.path_to_node[path]
     @assert hole isa AbstractHole
     return hole
@@ -111,31 +111,31 @@ end
 
 
 """
-    function get_grammar(solver::FixedShapedSolver)::AbstractGrammar
+    function get_grammar(solver::UniformSolver)::AbstractGrammar
 
 Get the grammar.
 """
-function get_grammar(solver::FixedShapedSolver)::AbstractGrammar
+function get_grammar(solver::UniformSolver)::AbstractGrammar
     return solver.grammar
 end
 
 
 """
-    function get_tree(solver::FixedShapedSolver)::AbstractRuleNode
+    function get_tree(solver::UniformSolver)::AbstractRuleNode
 
 Get the root of the tree. This remains the same instance throughout the entire search.
 """
-function get_tree(solver::FixedShapedSolver)::AbstractRuleNode
+function get_tree(solver::UniformSolver)::AbstractRuleNode
     return solver.tree
 end
 
 
 """
-    deactivate!(solver::FixedShapedSolver, constraint::LocalConstraint)
+    deactivate!(solver::UniformSolver, constraint::LocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::FixedShapedSolver, constraint::LocalConstraint)
+function deactivate!(solver::UniformSolver, constraint::LocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -154,12 +154,12 @@ end
 
 
 """
-    post!(solver::FixedShapedSolver, constraint::LocalConstraint)
+    post!(solver::UniformSolver, constraint::LocalConstraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
-function post!(solver::FixedShapedSolver, constraint::LocalConstraint)
+function post!(solver::UniformSolver, constraint::LocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
@@ -178,11 +178,11 @@ end
 
 
 """
-    notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
+    notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
-function notify_tree_manipulation(solver::FixedShapedSolver, event_path::Vector{Int})
+function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
     if !isfeasible(solver) return end
     for (constraint, isactive) ∈ solver.isactive
         if get_value(isactive) == 1
@@ -195,11 +195,11 @@ end
 
 
 """
-    isfeasible(solver::FixedShapedSolver)
+    isfeasible(solver::UniformSolver)
 
 Returns true if no inconsistency has been detected.
 """
-function isfeasible(solver::FixedShapedSolver)
+function isfeasible(solver::UniformSolver)
     return solver.isfeasible
 end
 
@@ -209,7 +209,7 @@ end
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible!(solver::FixedShapedSolver)
+function mark_infeasible!(solver::UniformSolver)
     solver.isfeasible = false
 end
 
@@ -217,7 +217,7 @@ end
 """
 Save the current state of the solver, can restored using `restore!`
 """
-function save_state!(solver::FixedShapedSolver)
+function save_state!(solver::UniformSolver)
     @assert isfeasible(solver)
     track!(solver.statistics, "save_state!")
     save_state!(solver.sm)
@@ -227,7 +227,7 @@ end
 """
 Restore state of the solver until the last `save_state!`
 """
-function restore!(solver::FixedShapedSolver)
+function restore!(solver::UniformSolver)
     track!(solver.statistics, "restore!")
     restore!(solver.sm)
     solver.isfeasible = true
@@ -249,7 +249,7 @@ A possible branching scheme could be to be split up in three `Branch`ing constra
 - `Branch(firsthole, 4)`
 - `Branch(firsthole, 5)`
 """
-function generate_branches(solver::FixedShapedSolver)::Vector{Branch}
+function generate_branches(solver::UniformSolver)::Vector{Branch}
     #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
     @assert isfeasible(solver)
     function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
@@ -269,13 +269,13 @@ end
 
 
 """
-    next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
+    next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
 
 Built-in iterator. Search for the next unvisited solution.
 Returns nothing if all solutions have been found already.
 """
-function next_solution!(solver::FixedShapedSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
-    if solver.nsolutions == 1000000 @warn "FixedShapedSolver is iterating over more than 1000000 solutions..." end
+function next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
+    if solver.nsolutions == 1000000 @warn "UniformSolver is iterating over more than 1000000 solutions..." end
     if solver.nsolutions > 0
         # backtrack from the previous solution
         restore!(solver)
@@ -325,13 +325,13 @@ end
 
 
 """
-    count_solutions(solver::FixedShapedSolver)
+    count_solutions(solver::UniformSolver)
 
 Iterate over all solutions and count the number of solutions encountered.
 !!! warning:
     Solutions are overwritten. It is not possible to return all the solutions without copying. 
 """
-function count_solutions(solver::FixedShapedSolver)
+function count_solutions(solver::UniformSolver)
     count = 0
     s = next_solution!(solver)
     while !isnothing(s)

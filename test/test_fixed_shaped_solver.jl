@@ -1,4 +1,4 @@
-@testset verbose=true "FixedShapedSolver" begin
+@testset verbose=true "UniformSolver" begin
 
     function create_dummy_grammar_and_tree_128programs()
         grammar = @csgrammar begin
@@ -23,7 +23,7 @@
 
     @testset "Without constraints" begin
         grammar, fixed_shaped_tree = create_dummy_grammar_and_tree_128programs()
-        fixed_shaped_solver = FixedShapedSolver(grammar, fixed_shaped_tree)
+        fixed_shaped_solver = UniformSolver(grammar, fixed_shaped_tree)
         @test HerbConstraints.count_solutions(fixed_shaped_solver) == 128
     end
 
@@ -31,13 +31,13 @@
         #forbid "a - a"
         grammar, fixed_shaped_tree = create_dummy_grammar_and_tree_128programs()
         addconstraint!(grammar, Forbidden(RuleNode(2, [VarNode(:a), VarNode(:a)])))
-        fixed_shaped_solver = FixedShapedSolver(grammar, fixed_shaped_tree)
+        fixed_shaped_solver = UniformSolver(grammar, fixed_shaped_tree)
         @test HerbConstraints.count_solutions(fixed_shaped_solver) == 120
 
         #forbid all rulenodes
         grammar, fixed_shaped_tree = create_dummy_grammar_and_tree_128programs()
         addconstraint!(grammar, Forbidden(VarNode(:a)))
-        fixed_shaped_solver = FixedShapedSolver(grammar, fixed_shaped_tree)
+        fixed_shaped_solver = UniformSolver(grammar, fixed_shaped_tree)
         @test HerbConstraints.count_solutions(fixed_shaped_solver) == 0
     end
 
@@ -46,7 +46,7 @@
             S = 1
         end
         
-        solver = FixedShapedSolver(grammar, RuleNode(1))
+        solver = UniformSolver(grammar, RuleNode(1))
         @test next_solution!(solver) == RuleNode(1)
         @test isnothing(next_solution!(solver))
     end
@@ -76,7 +76,7 @@
             ]),
             UniformHole(BitVector((1, 1, 0, 0)), [])
         ])
-        solver = FixedShapedSolver(grammar, tree)
+        solver = UniformSolver(grammar, tree)
         @test isnothing(next_solution!(solver))
     end
 
@@ -105,7 +105,7 @@
             ]),
             UniformHole(BitVector((1, 1, 0, 0)), [])
         ])
-        solver = FixedShapedSolver(grammar, tree)
+        solver = UniformSolver(grammar, tree)
         @test isnothing(next_solution!(solver))
     end
 end

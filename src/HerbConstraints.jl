@@ -127,7 +127,7 @@ export
 
     #fixed shaped solver
     next_solution!,
-    FixedShapedSolver,
+    UniformSolver,
 
     #state fixed shaped hole
     StateFixedShapedHole,
