@@ -122,7 +122,7 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     empty!(solver.schedule)
     solver.state = State(tree)
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
-        if (node isa Hole)
+        if (node isa AbstractHole)
             simplify_hole!(solver, path)
         end
         for (i, childnode) ∈ enumerate(get_children(node))
@@ -256,13 +256,13 @@ function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{I
 end
 
 """
-    get_hole_at_location(solver::GenericSolver, location::Vector{Int})::Hole
+    get_hole_at_location(solver::GenericSolver, location::Vector{Int})::AbstractHole
 
-Get the node at path `location` and assert it is a [`Hole`](@ref).
+Get the node at path `location` and assert it is a [`AbstractHole`](@ref).
 """
-function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::Hole
+function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::AbstractHole
     hole = get_node_at_location(get_tree(solver), location)
-    @assert hole isa Hole "Hole $hole is of non-Hole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
+    @assert hole isa AbstractHole "AbstractHole $hole is of non-AbstractHole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
     return hole
 end
 

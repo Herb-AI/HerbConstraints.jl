@@ -21,7 +21,7 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
 
 !!! warning
     The [`Forbidden`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
-    are also enforced in the future when the context of a [`Hole`](@ref) changes. 
+    are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
     Therefore, [`Forbidden`](@ref) can only be used in implementations that keep track of the 
     [`LocalConstraint`](@ref)s and propagate them at the right moments.
 """
@@ -33,7 +33,7 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
         @match get_node_at_location(solver, path) begin
-            hole::Hole => if !hole.domain[c.tree.ind] return end
+            hole::AbstractHole => if !hole.domain[c.tree.ind] return end
             node::RuleNode => if node.ind != c.tree.ind return end
         end
     end

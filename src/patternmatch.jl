@@ -19,7 +19,7 @@ end
 The pattern can be matched when the `hole` is filled with any of the given `ind`(s).
 """
 struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
-    hole::Hole
+    hole::AbstractHole
     ind::Union{Int, Vector{Int}}
 end
 
@@ -35,7 +35,7 @@ The pattern can still be matched in a non-trivial way. Includes two cases:
 - a single hole is involved, but needs to be filled with a node of size >= 2
 """
 struct PatternMatchSoftFail <: PatternMatchResult
-    hole::Hole
+    hole::AbstractHole
 end
 
 """
@@ -68,8 +68,8 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNo
     # Consider two equivalent constraints: 
     #     A) Forbidden(RuleNode(3, [RuleNode(3, [VarNode(:a)])]))
     #     B) Forbidden(RuleNode(3, [RuleNode(3)]))
-    # Constraint A has the correct arities for rule 3. This is the expected format.
-    # Constraint B has a more implicit way of saying that the children of the final node don't matter.
+    # AbstractConstraint A has the correct arities for rule 3. This is the expected format.
+    # AbstractConstraint B has a more implicit way of saying that the children of the final node don't matter.
     # Currently, constraints of type B are not supported, as they might lead into unexpected behavior.
     # Use the following 3 lines if type B should be allowed:
     # if (length(rns) == 0 || length(mns) == 0)
@@ -119,7 +119,7 @@ function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, v
         end
         return pattern_match(get_children(node), get_children(domainrulenode), vars)
     else
-        #(Hole, DomainRuleNode)
+        #(AbstractHole, DomainRuleNode)
         if are_disjoint(node.domain, domainrulenode.domain)
             return PatternMatchHardFail()
         end
@@ -156,14 +156,14 @@ end
 #TODO: write unit tests for pattern matches with `StateFixedShapedHole`
 
 """
-    pattern_match(h1::Union{RuleNode, Hole}, h2::Union{RuleNode, Hole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
 
-Comparing any pair of [`Rulenode`](@ref) and/or [`Hole`](@ref).
-It is important to note that some `Hole`s are already filled and should be treated as `RuleNode`.
+Comparing any pair of [`Rulenode`](@ref) and/or [`AbstractHole`](@ref).
+It is important to note that some `AbstractHole`s are already filled and should be treated as `RuleNode`.
 This is why this function is dispatched on `(isfilled(h1), isfilled(h2))`.
-The '(RuleNode, Hole)' case could still include two nodes of type `Hole`, but one of them should be treated as a rulenode.
+The '(RuleNode, AbstractHole)' case could still include two nodes of type `AbstractHole`, but one of them should be treated as a rulenode.
 """
-function pattern_match(h1::Union{RuleNode, Hole}, h2::Union{RuleNode, Hole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+function pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
     @match (isfilled(h1), isfilled(h2)) begin
         #(RuleNode, RuleNode)
         (true, true) => begin
@@ -173,12 +173,12 @@ function pattern_match(h1::Union{RuleNode, Hole}, h2::Union{RuleNode, Hole}, var
             return pattern_match(get_children(h1), get_children(h2), vars)
         end
 
-        #(RuleNode, Hole)
+        #(RuleNode, AbstractHole)
         (true, false) => begin
             if !h2.domain[get_rule(h1)]
                 return PatternMatchHardFail()
             end
-            if isfixedshaped(h2)
+            if isuniform(h2)
                 children_match_result = pattern_match(get_children(h1), get_children(h2), vars)
                 @match children_match_result begin
                     ::PatternMatchHardFail => return children_match_result;
@@ -197,15 +197,15 @@ function pattern_match(h1::Union{RuleNode, Hole}, h2::Union{RuleNode, Hole}, var
             return PatternMatchSoftFail(h2)
         end
 
-        #(Hole, RuleNode)
+        #(AbstractHole, RuleNode)
         (false, true) => pattern_match(h2, h1, vars) #commutativity
 
-        #(Hole, Hole)
+        #(AbstractHole, AbstractHole)
         (false, false) => begin
             if are_disjoint(h1.domain, h2.domain)
                 return PatternMatchHardFail()
             end
-            if isfixedshaped(h1) && isfixedshaped(h2)
+            if isuniform(h1) && isuniform(h2)
                 children_match_result = pattern_match(get_children(h1), get_children(h2), vars)
                 @match children_match_result begin
                     ::PatternMatchHardFail => return children_match_result;
@@ -214,7 +214,7 @@ function pattern_match(h1::Union{RuleNode, Hole}, h2::Union{RuleNode, Hole}, var
                     ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(children_match_result.hole);
                 end
             end
-            return PatternMatchSoftFail(isfixedshaped(h1) ? h2 : h1)
+            return PatternMatchSoftFail(isuniform(h1) ? h2 : h1)
         end
     end
 end

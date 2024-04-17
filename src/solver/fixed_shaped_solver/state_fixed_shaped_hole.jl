@@ -1,20 +1,20 @@
-#TODO: StateFixedShapedHole should be a extending from an abstract FixedShapedHole
+#TODO: StateFixedShapedHole should be a extending from an abstract UniformHole
 """
-	StateFixedShapedHole <: Hole
+	StateFixedShapedHole <: AbstractHole
 
 - `domain`: A `StateSparseSet` representing the rule nodes this hole can take. If size(domain) == 1, this hole should act like a `RuleNode`
 - `children`: The children of this hole in the expression tree.
 """
-mutable struct StateFixedShapedHole <: Hole
+mutable struct StateFixedShapedHole <: AbstractHole
 	domain::StateSparseSet
 	children::Vector{AbstractRuleNode}
 end
 
 
 """
-Converts a [`FixedShapedHole`](@ref) to a [`StateFixedShapedHole`](@ref)
+Converts a [`UniformHole`](@ref) to a [`StateFixedShapedHole`](@ref)
 """
-function StateFixedShapedHole(sm::StateManager, hole::FixedShapedHole)
+function StateFixedShapedHole(sm::StateManager, hole::UniformHole)
 	sss_domain = StateSparseSet(sm, hole.domain)
 	children = [StateFixedShapedHole(sm, child) for child ∈ hole.children]
 	return StateFixedShapedHole(sss_domain, children)
@@ -30,7 +30,7 @@ function StateFixedShapedHole(sm::StateManager, rulenode::RuleNode)
 end
 
 
-HerbCore.isfixedshaped(::StateFixedShapedHole) = true
+HerbCore.isuniform(::StateFixedShapedHole) = true
 
 
 """
@@ -52,7 +52,7 @@ Holes with domain size 1 are fixed to a rule.
 Returns whether the hole has domain size 1. (holes with an empty domain are not considered to be fixed)
 """
 function HerbCore.isfilled(hole::StateFixedShapedHole)::Bool
-	#TODO: isfilled(::Hole) = false
+	#TODO: isfilled(::AbstractHole) = false
 	#TODO: isfilled(::RuleNode) = true
 	return size(hole.domain) == 1
 end

@@ -30,17 +30,17 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
             end
         end
         
-        #(RuleNode, Hole), the rule must be inside the domain of the general_tree
+        #(RuleNode, AbstractHole), the rule must be inside the domain of the general_tree
         (true, false) => begin 
             if !general_tree.domain[get_rule(specific_tree)]
                 return false
             end
         end
 
-        #(Hole, RuleNode), the specific_tree holds more rules than the general_tree, this cannot be a subdomain
+        #(AbstractHole, RuleNode), the specific_tree holds more rules than the general_tree, this cannot be a subdomain
         (false, true) => return false
 
-        #(Hole, Hole), dispatch to the is_subdomain for domains
+        #(AbstractHole, AbstractHole), dispatch to the is_subdomain for domains
         (false, false) => begin 
             if !is_subdomain(specific_tree.domain, general_tree.domain)
                 return false
@@ -49,14 +49,14 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
     end
 
     #the general_tree is a variable shaped hole, the specific_tree must be more specific
-    #Example: general_tree = VariableShapedHole({3, 4, 5}). specific_tree = RuleNode(3, [RuleNode(1), RuleNode(1)]).
-    if !isfixedshaped(general_tree)
+    #Example: general_tree = Hole({3, 4, 5}). specific_tree = RuleNode(3, [RuleNode(1), RuleNode(1)]).
+    if !isuniform(general_tree)
         return true
     end
 
     #continue checking the children
-    @assert isfixedshaped(general_tree)
-    @assert isfixedshaped(specific_tree) "The specific_tree cannot be a VariableShapedHole at this point."
+    @assert isuniform(general_tree)
+    @assert isuniform(specific_tree) "The specific_tree cannot be a Hole at this point."
     @assert length(get_children(specific_tree)) == length(get_children(general_tree))
     for (specific_child, general_child) ∈ zip(get_children(specific_tree), get_children(general_tree))
         if !is_subdomain(specific_child, general_child)
@@ -67,11 +67,11 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
 end
 
 """
-    partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
+    partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
 
-Partition a [VariableShapedHole](@ref) into subdomains grouped by childtypes
+Partition a [Hole](@ref) into subdomains grouped by childtypes
 """
-function partition(hole::VariableShapedHole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
+function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
     domain = copy(hole.domain)
     fixed_shaped_domains = []
     while true

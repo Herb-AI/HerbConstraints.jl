@@ -3,7 +3,7 @@
 
 A [`PropagatorConstraint`] that forbids a certain derivation sequence.
 `sequence` defines the forbidden sequence. 
-Each rule that would complete the sequence when expanding a [`Hole`](@ref) in an 
+Each rule that would complete the sequence when expanding a [`AbstractHole`](@ref) in an 
 [`AbstractRuleNode`](@ref) tree is removed from the domain.
 The derivation sequence is the path from the root to the hole.
 

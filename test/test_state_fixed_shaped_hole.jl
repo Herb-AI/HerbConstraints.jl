@@ -1,12 +1,12 @@
 @testset verbose=true "StateFixedShapedHole" begin
     @testset "convert, isfilled and get_rule" begin
-        root_stateless = FixedShapedHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
-            FixedShapedHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)
-                FixedShapedHole(BitVector((0, 0, 0, 1, 0)), [])         # domain size 1 (assigned)
+        root_stateless = UniformHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
+            UniformHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)
+                UniformHole(BitVector((0, 0, 0, 1, 0)), [])         # domain size 1 (assigned)
                 RuleNode(4)                                             # remains a rulenode
             ]),
             RuleNode(5, [                                               # remains a rulenode
-                FixedShapedHole(BitVector((0, 0, 1, 1, 0)), [])         # domain size 2
+                UniformHole(BitVector((0, 0, 1, 1, 0)), [])         # domain size 2
             ])
         ])
         sm = HerbConstraints.StateManager()
@@ -45,13 +45,13 @@
     end
 
     @testset "contains_hole" begin
-        root_stateless = FixedShapedHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
-            FixedShapedHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)
-                FixedShapedHole(BitVector((0, 0, 0, 1, 0)), [])         # domain size 1 (assigned)
+        root_stateless = UniformHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
+            UniformHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)
+                UniformHole(BitVector((0, 0, 0, 1, 0)), [])         # domain size 1 (assigned)
                 RuleNode(4)                                             # remains a rulenode
             ]),
             RuleNode(5, [                                               # remains a rulenode
-                FixedShapedHole(BitVector((0, 0, 1, 1, 0)), [])         # domain size 2
+                UniformHole(BitVector((0, 0, 1, 1, 0)), [])         # domain size 2
             ])
         ])
         sm = HerbConstraints.StateManager()
@@ -63,7 +63,7 @@
     end
 
     @testset "is_filled (empty domain)" begin
-        hole = HerbConstraints.StateFixedShapedHole(HerbConstraints.StateManager(), FixedShapedHole(BitVector((0, 0, 0)), []))
+        hole = HerbConstraints.StateFixedShapedHole(HerbConstraints.StateManager(), UniformHole(BitVector((0, 0, 0)), []))
         @test isfilled(hole) == false
     end
 end

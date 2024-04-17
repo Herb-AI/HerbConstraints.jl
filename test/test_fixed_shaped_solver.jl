@@ -10,11 +10,11 @@
         end
 
         fixed_shaped_tree = RuleNode(1, [
-            FixedShapedHole(BitVector((1, 1, 1, 1, 0, 0, 0, 0)), [
-                FixedShapedHole(BitVector((0, 0, 0, 0, 1, 1, 1, 1)), [])
-                FixedShapedHole(BitVector((0, 0, 0, 0, 1, 0, 0, 1)), [])
+            UniformHole(BitVector((1, 1, 1, 1, 0, 0, 0, 0)), [
+                UniformHole(BitVector((0, 0, 0, 0, 1, 1, 1, 1)), [])
+                UniformHole(BitVector((0, 0, 0, 0, 1, 0, 0, 1)), [])
             ]),
-            FixedShapedHole(BitVector((0, 0, 0, 0, 1, 1, 1, 1)), [])
+            UniformHole(BitVector((0, 0, 0, 0, 1, 1, 1, 1)), [])
         ])
          # 4 * 4 * 2 * 4 = 128 programs without constraints
 
@@ -69,12 +69,12 @@
         addconstraint!(grammar, constraint1)
         addconstraint!(grammar, constraint2)
         
-        tree = FixedShapedHole(BitVector((0, 0, 1, 1)), [
-            FixedShapedHole(BitVector((0, 0, 1, 1)), [
-                FixedShapedHole(BitVector((1, 1, 0, 0)), []),
-                FixedShapedHole(BitVector((1, 1, 0, 0)), [])
+        tree = UniformHole(BitVector((0, 0, 1, 1)), [
+            UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
             ]),
-            FixedShapedHole(BitVector((1, 1, 0, 0)), [])
+            UniformHole(BitVector((1, 1, 0, 0)), [])
         ])
         solver = FixedShapedSolver(grammar, tree)
         @test isnothing(next_solution!(solver))
@@ -98,12 +98,12 @@
         addconstraint!(grammar, constraint1)
         addconstraint!(grammar, constraint2)
         
-        tree = FixedShapedHole(BitVector((0, 0, 1, 1)), [
-            FixedShapedHole(BitVector((0, 0, 1, 1)), [
-                FixedShapedHole(BitVector((1, 1, 0, 0)), []),
-                FixedShapedHole(BitVector((1, 1, 0, 0)), [])
+        tree = UniformHole(BitVector((0, 0, 1, 1)), [
+            UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
             ]),
-            FixedShapedHole(BitVector((1, 1, 0, 0)), [])
+            UniformHole(BitVector((1, 1, 0, 0)), [])
         ])
         solver = FixedShapedSolver(grammar, tree)
         @test isnothing(next_solution!(solver))

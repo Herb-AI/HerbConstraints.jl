@@ -23,7 +23,7 @@ function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
     end
 end
 
-HerbCore.isfixedshaped(::VarNode) = false
+HerbCore.isuniform(::VarNode) = false
 
 """
     contains_varnode(rn::AbstractRuleNode, name::Symbol)

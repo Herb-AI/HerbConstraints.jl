@@ -27,22 +27,22 @@ using HerbGrammar
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchSuccess
     end
 
-    @testset "PatternMatchSuccess, FixedShapedHole subsets" begin
+    @testset "PatternMatchSuccess, UniformHole subsets" begin
         # The FixedShapedHoles match the DomainRuleNode, regardless of how they are filled
-        hole1 = FixedShapedHole(BitVector((0, 0, 0, 1, 0, 0)), [RuleNode(1), RuleNode(1)])
-        hole2 = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(1)])
-        hole3 = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
+        hole1 = UniformHole(BitVector((0, 0, 0, 1, 0, 0)), [RuleNode(1), RuleNode(1)])
+        hole2 = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(1)])
+        hole3 = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         @test pattern_match(hole1, drn) isa HerbConstraints.PatternMatchSuccess
         @test pattern_match(hole2, drn) isa HerbConstraints.PatternMatchSuccess
         @test pattern_match(hole3, drn) isa HerbConstraints.PatternMatchSuccess
     end
 
-    @testset "PatternMatchSuccess, FixedShapedHole subsets, but children fail" begin
-        # The root FixedShapedHole match the DomainRuleNode, but the children do not match
-        hole_hardfail = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
-        hole_successwhen = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
-        hole_softfail = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
+    @testset "PatternMatchSuccess, UniformHole subsets, but children fail" begin
+        # The root UniformHole match the DomainRuleNode, but the children do not match
+        hole_hardfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
+        hole_successwhen = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
+        hole_softfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         @test pattern_match(hole_hardfail, drn) isa HerbConstraints.PatternMatchHardFail
         @test pattern_match(hole_successwhen, drn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
@@ -55,16 +55,16 @@ using HerbGrammar
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchSuccess
     end
 
-    @testset "PatternMatchSuccessWhenHoleAssignedTo, VariableShapedHole" begin
+    @testset "PatternMatchSuccessWhenHoleAssignedTo, Hole" begin
         # The pattern match is successful when the hole is assigned to one specific value
-        hole = VariableShapedHole(BitVector((0, 1, 1, 1, 1, 0)))
+        hole = Hole(BitVector((0, 1, 1, 1, 1, 0)))
         drn = DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])
         match = pattern_match(hole, drn)
         @test match isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
         @test match.ind == 2
 
         # The pattern match is successful when the hole is assigned to one of 2 values
-        hole = VariableShapedHole(BitVector((1, 1, 1, 1, 1, 0)))
+        hole = Hole(BitVector((1, 1, 1, 1, 1, 0)))
         drn = DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])
         match = pattern_match(hole, drn)
         @test match isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
@@ -73,16 +73,16 @@ using HerbGrammar
         @test 2 ∈ match.ind
     end
 
-    @testset "PatternMatchSuccessWhenHoleAssignedTo, terminal FixedShapedHole" begin
+    @testset "PatternMatchSuccessWhenHoleAssignedTo, terminal UniformHole" begin
         # The pattern match is successful when the hole is assigned to one specific value
-        hole = FixedShapedHole(BitVector((0, 1, 1, 0, 0, 0)), [])
+        hole = UniformHole(BitVector((0, 1, 1, 0, 0, 0)), [])
         drn = DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])
         match = pattern_match(hole, drn)
         @test match isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
         @test match.ind == 2
 
         # The pattern match is successful when the hole is assigned to one of 2 values
-        hole = FixedShapedHole(BitVector((1, 1, 1, 0, 0, 0)), [])
+        hole = UniformHole(BitVector((1, 1, 1, 0, 0, 0)), [])
         drn = DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])
         match = pattern_match(hole, drn)
         @test match isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
@@ -91,8 +91,8 @@ using HerbGrammar
         @test 2 ∈ match.ind
     end
 
-    @testset "PatternMatchSuccessWhenHoleAssignedTo, non-terminal FixedShapedHole" begin
-        hole = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
+    @testset "PatternMatchSuccessWhenHoleAssignedTo, non-terminal UniformHole" begin
+        hole = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), RuleNode(1)])
         match = pattern_match(hole, drn)
         @test match isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
@@ -101,14 +101,14 @@ using HerbGrammar
         @test 6 ∈ match.ind
     end
 
-    @testset "PatternMatchHardFail, FixedShapedHole, domains are disjoint" begin
+    @testset "PatternMatchHardFail, UniformHole, domains are disjoint" begin
         # at the root
-        node = FixedShapedHole(BitVector((0, 0, 1, 1, 0, 0)), [RuleNode(1), RuleNode(1)])
+        node = UniformHole(BitVector((0, 0, 1, 1, 0, 0)), [RuleNode(1), RuleNode(1)])
         drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), RuleNode(1)])
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchHardFail
 
         # at the second child
-        node = RuleNode(4, [RuleNode(1), FixedShapedHole(BitVector((1, 1, 0, 0, 0, 0)), [])])
+        node = RuleNode(4, [RuleNode(1), UniformHole(BitVector((1, 1, 0, 0, 0, 0)), [])])
         drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), DomainRuleNode(BitVector((0, 0, 1, 1, 0, 0)), [])])
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchHardFail
     end
@@ -134,9 +134,9 @@ using HerbGrammar
     @testset "PatternMatchSoftFail, 2 PatternMatchSuccessWhenHoleAssignedTo" begin
         drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), []), DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])])
 
-        node_roothole = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
-        node_childhole = RuleNode(6, [FixedShapedHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
-        node_2holes = FixedShapedHole(BitVector((0, 0, 0, 1, 1, 1)), [FixedShapedHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
+        node_roothole = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
+        node_childhole = RuleNode(6, [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
+        node_2holes = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
         
         match_roothole = pattern_match(node_roothole, drn)
         match_childhole = pattern_match(node_childhole, drn)
@@ -155,8 +155,8 @@ using HerbGrammar
         @test match_2holes isa HerbConstraints.PatternMatchSoftFail
     end
 
-    @testset "PatternMatchSoftFail, VariableShapedHole, non-terminal DomainRuleNode" begin
-        hole = VariableShapedHole(BitVector((0, 0, 0, 0, 1, 1)))
+    @testset "PatternMatchSoftFail, Hole, non-terminal DomainRuleNode" begin
+        hole = Hole(BitVector((0, 0, 0, 0, 1, 1)))
         drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), RuleNode(1)])
         @test pattern_match(hole, drn) isa HerbConstraints.PatternMatchSoftFail
     end

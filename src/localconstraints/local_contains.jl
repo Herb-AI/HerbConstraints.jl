@@ -28,12 +28,12 @@ function propagate!(solver::Solver, c::LocalContains)
             track!(solver.statistics, "LocalContains inconsistency")
             mark_infeasible!(solver)
         end
-        holes::Vector{Hole} => begin
+        holes::Vector{AbstractHole} => begin
             @assert length(holes) > 0
             if length(holes) == 1
-                if isfixedshaped(holes[1])
+                if isuniform(holes[1])
                     track!(solver.statistics, "LocalContains deduction")
-                    path = vcat(c.path, get_node_path(node, holes[1]))
+                    path = vcat(c.path, get_path(node, holes[1]))
                     deactivate!(solver, c)
                     remove_all_but!(solver, path, c.rule)
                 else
@@ -57,14 +57,14 @@ Recursive helper function for the LocalContains constraint
 Returns one of the following:
 - `true`, if the `node` does contains the `rule`
 - `false`, if the `node` does not contain the `rule`
-- `Vector{Hole}`, if the `node` contains the `rule` if one the `holes` gets filled with the target rule
+- `Vector{AbstractHole}`, if the `node` contains the `rule` if one the `holes` gets filled with the target rule
 """
-function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{Hole}, Bool}
-    return _contains(node, rule, Vector{Hole}())
+function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{AbstractHole}, Bool}
+    return _contains(node, rule, Vector{AbstractHole}())
 end
 
-function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{Hole})::Union{Vector{Hole}, Bool}
-    if !isfixedshaped(node)
+function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
+    if !isuniform(node)
         #TODO: check if the rule might appear underneath this variable shaped hole later
         # for now, it is assumed this is always possible
         push!(holes, node)
@@ -82,7 +82,7 @@ function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{Hole})::Unio
     return _contains(get_children(node), rule, holes)
 end
 
-function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{Hole})::Union{Vector{Hole}, Bool}
+function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     for child ∈ children
         if _contains(child, rule, holes) == true
             return true

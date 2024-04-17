@@ -25,18 +25,18 @@ using HerbGrammar
 
     @testset "is_subdomain true (AbstractRuleNode)" begin
         @test is_subdomain(RuleNode(1), Hole(BitVector((1, 1, 1))))
-        @test is_subdomain(FixedShapedHole(BitVector((1, 1, 0)), []), Hole(BitVector((1, 1, 1))))
-        @test is_subdomain(FixedShapedHole(BitVector((1, 1, 1)), []), Hole(BitVector((1, 1, 1))))
+        @test is_subdomain(UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((1, 1, 1))))
+        @test is_subdomain(UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((1, 1, 1))))
         @test is_subdomain(Hole(BitVector((1, 1, 1))), Hole(BitVector((1, 1, 1))))
 
         specific_tree = RuleNode(3, [
-            FixedShapedHole(BitVector((1, 1, 0)), []),
+            UniformHole(BitVector((1, 1, 0)), []),
             RuleNode(3, [
                 Hole(BitVector((1, 1, 1))),
                 RuleNode(1)
             ])
         ])
-        general_tree = FixedShapedHole(BitVector((0, 1, 1)), [
+        general_tree = UniformHole(BitVector((0, 1, 1)), [
             Hole(BitVector((1, 1, 1))),
             Hole(BitVector((1, 0, 1)))
         ])
@@ -45,18 +45,18 @@ using HerbGrammar
 
     @testset "is_subdomain false (AbstractRuleNode)" begin
         @test is_subdomain(RuleNode(1), Hole(BitVector((0, 1, 1)))) == false
-        @test is_subdomain(FixedShapedHole(BitVector((1, 1, 0)), []), Hole(BitVector((0, 1, 1)))) == false
-        @test is_subdomain(FixedShapedHole(BitVector((1, 1, 1)), []), Hole(BitVector((0, 1, 1)))) == false
+        @test is_subdomain(UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((0, 1, 1)))) == false
+        @test is_subdomain(UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((0, 1, 1)))) == false
         @test is_subdomain(Hole(BitVector((1, 1, 1))), Hole(BitVector((0, 1, 1)))) == false
 
         specific_tree = RuleNode(3, [
-            FixedShapedHole(BitVector((1, 1, 0)), []),
+            UniformHole(BitVector((1, 1, 0)), []),
             RuleNode(2, [ # The specific_tree has a RuleNode(2) at the second child
                 Hole(BitVector((1, 1, 1))),
                 RuleNode(1)
             ])
         ])
-        general_tree = FixedShapedHole(BitVector((0, 1, 1)), [
+        general_tree = UniformHole(BitVector((0, 1, 1)), [
             Hole(BitVector((1, 1, 1))),
             Hole(BitVector((1, 0, 1))) # RuleNode(2) is not part of this domain
         ])

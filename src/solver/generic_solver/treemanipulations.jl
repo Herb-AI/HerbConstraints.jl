@@ -117,8 +117,8 @@ It is assumed rule_index ∈ hole.domain
 """
 function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
     hole = get_hole_at_location(solver, path)
-    @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
-    if isfixedshaped(hole)
+    @assert hole.domain[rule_index] "AbstractHole $hole cannot be filled with rule $rule_index"
+    if isuniform(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
     else
@@ -126,7 +126,7 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
         # If you encountered this error, it means you are trying to fill a variable shaped hole, this can cause new holes to appear underneath.
         # Usually, constraints should behave differently on fixed shaped holes and variable shaped holes.
-        # If this is also the case for a newly added constraint, make sure to add an `if isfixedshaped(hole) end` check to your propagator.
+        # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
         # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
         # If you are sure that filling in a variable shaped hole is fine, this error can safely be deleted."
         for r ∈ 1:length(hole.domain)
@@ -194,7 +194,7 @@ end
 """
     simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
-Takes a [Hole](@ref) and tries to simplify it to a [FixedShapedHole](@ref) or [RuleNode](@ref).
+Takes a [AbstractHole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
@@ -205,15 +205,15 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
     if domain_size == 0
         mark_infeasible!(solver)
         return
-    elseif hole isa FixedShapedHole
+    elseif hole isa UniformHole
         if domain_size == 1
             new_node = RuleNode(findfirst(hole.domain), hole.children)
         end
-    elseif hole isa VariableShapedHole
+    elseif hole isa Hole
         if domain_size == 1
             new_node = RuleNode(findfirst(hole.domain), grammar)
         elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
-            new_node = FixedShapedHole(hole.domain, grammar)
+            new_node = UniformHole(hole.domain, grammar)
         end
     else
         @assert !isnothing(hole) "No node exists at path $path in the current state"
@@ -226,7 +226,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         for i ∈ 1:length(new_node.children)
             # try to simplify the new children
             child_path = push!(copy(path), i)
-            if (new_node.children[i] isa Hole)
+            if (new_node.children[i] isa AbstractHole)
                 simplify_hole!(solver, child_path)
             end
         end

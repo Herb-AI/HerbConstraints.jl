@@ -33,7 +33,7 @@ end
     FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
 function FixedShapedSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
-    @assert !contains_variable_shaped_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
+    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
     sm = StateManager()
     tree = StateFixedShapedHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
@@ -79,11 +79,11 @@ end
 
 
 """
-    get_node_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+    get_path(solver::FixedShapedSolver, node::AbstractRuleNode)
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_node_path(solver::FixedShapedSolver, node::AbstractRuleNode)
+function HerbCore.get_path(solver::FixedShapedSolver, node::AbstractRuleNode)
     return solver.node_to_path[node]
 end
 
@@ -105,7 +105,7 @@ Get the hole that is located at the provided `path`.
 """
 function get_hole_at_location(solver::FixedShapedSolver, path::Vector{Int})
     hole = solver.path_to_node[path]
-    @assert hole isa Hole
+    @assert hole isa AbstractHole
     return hole
 end
 

@@ -42,8 +42,8 @@ function propagate!(solver::Solver, c::LocalForbidden)
             # Propagate the constraint by removing an impossible value from the found hole.
             # Then, constraint is satisfied and does not have to be re-propagated.
             track!(solver.statistics, "LocalForbidden deduction")
-            #path = get_node_path(get_tree(solver), match.hole)
-            path = vcat(c.path, get_node_path(node, match.hole))
+            #path = get_path(get_tree(solver), match.hole)
+            path = vcat(c.path, get_path(node, match.hole))
             deactivate!(solver, c)
             remove!(solver, path, match.ind)
         end

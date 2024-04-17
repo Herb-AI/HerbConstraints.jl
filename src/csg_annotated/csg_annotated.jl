@@ -45,7 +45,7 @@ macro csgrammar_annotated(expression)
     rules = Any[]
     types = Symbol[]
     bytype = Dict{Symbol,Vector{Int}}()
-    constraints = Vector{Constraint}()
+    constraints = Vector{AbstractConstraint}()
 
     rule_index = 1
 
@@ -148,7 +148,7 @@ transitive: creates an (incorrect) Forbidden constraint
 forbidden_path(path::Vector{Union{Symbol, Int}}): creates a ForbiddenPath constraint with the original rule included
 ... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
 """
-function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::Constraint
+function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::AbstractConstraint
     if annotation isa Expr
         # function-like annotations
         if annotation.head == :call

@@ -17,8 +17,8 @@ using HerbCore, HerbGrammar
             ])
         ])
         #tree = RuleNode(4, [leftnode, rightnode]) #more trivial case
-        leftpath = get_node_path(tree, leftnode)
-        rightpath = get_node_path(tree, rightnode)
+        leftpath = get_path(tree, leftnode)
+        rightpath = get_path(tree, rightnode)
         new_state!(solver, tree)
         leftnode = get_node_at_location(solver, leftpath) #leftnode might have been simplified by `new_state!`
         rightnode = get_node_at_location(solver, rightpath) #rightnode might have been simplified by `new_state!`
@@ -195,7 +195,7 @@ using HerbCore, HerbGrammar
         new_state!(solver, tree)
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSuccess
-        @test contains_variable_shaped_hole(get_tree(solver)) == true
+        @test contains_nonuniform_hole(get_tree(solver)) == true
         @test number_of_holes(get_tree(solver)) == 1
     end
 end
