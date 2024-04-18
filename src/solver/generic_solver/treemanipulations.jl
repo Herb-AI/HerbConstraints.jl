@@ -250,7 +250,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         for i ∈ 1:length(new_node.children)
             # try to simplify the new children
             child_path = push!(copy(path), i)
-            if (new_node.children[i] isa AbstractHole)
+            if (new_node.children[i] isa Hole)
                 simplify_hole!(solver, child_path)
             end
         end

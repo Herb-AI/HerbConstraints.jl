@@ -68,8 +68,8 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNo
     # Consider two equivalent constraints: 
     #     A) Forbidden(RuleNode(3, [RuleNode(3, [VarNode(:a)])]))
     #     B) Forbidden(RuleNode(3, [RuleNode(3)]))
-    # AbstractConstraint A has the correct arities for rule 3. This is the expected format.
-    # AbstractConstraint B has a more implicit way of saying that the children of the final node don't matter.
+    # Constraint A has the correct arities for rule 3. This is the expected format.
+    # Constraint B has a more implicit way of saying that the children of the final node don't matter.
     # Currently, constraints of type B are not supported, as they might lead into unexpected behavior.
     # Use the following 3 lines if type B should be allowed:
     # if (length(rns) == 0 || length(mns) == 0)
