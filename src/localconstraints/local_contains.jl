@@ -4,7 +4,7 @@ LocalContains
 
 Enforces that a given `rule` appears at or below the given `path` at least once.
 """
-struct LocalContains <: LocalConstraint
+struct LocalContains <: AbstractLocalConstraint
 	path::Vector{Int}
     rule::Int
 end
@@ -26,7 +26,7 @@ function propagate!(solver::Solver, c::LocalContains)
         end
         false => begin 
             track!(solver.statistics, "LocalContains inconsistency")
-            mark_infeasible!(solver)
+            set_infeasible!(solver)
         end
         holes::Vector{AbstractHole} => begin
             @assert length(holes) > 0
@@ -39,7 +39,7 @@ function propagate!(solver::Solver, c::LocalContains)
                 else
                     #we cannot deduce anything yet, new holes can appear underneath this hole
                     #TODO: optimize this by checking if the target rule can appear as a child of the fixedshaped hole
-                    track!(solver.statistics, "LocalContains softfail (variableshapedhole)")
+                    track!(solver.statistics, "LocalContains softfail (hole)")
                 end
             else
                 #multiple holes can be set to the target value, no deduction can be made as this point
@@ -65,7 +65,7 @@ end
 
 function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     if !isuniform(node)
-        #TODO: check if the rule might appear underneath this variable shaped hole later
+        #TODO: check if the rule might appear underneath this non-uniform hole later
         # for now, it is assumed this is always possible
         push!(holes, node)
     elseif isfilled(node)

@@ -18,7 +18,7 @@ struct ForbiddenPath <: PropagatorConstraint
 end
 
 
-struct LocalForbiddenPath <: LocalConstraint
+struct LocalForbiddenPath <: AbstractLocalConstraint
 	path::Vector{Int}
     sequence::Vector{Int}                   #[1, 2]
     sequence_does_not_contain::Vector{Int}  #[3] # double negation: FORBID if sequence does NOT contain a 3.

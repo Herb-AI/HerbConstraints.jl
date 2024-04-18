@@ -1,24 +1,24 @@
 """
     GenericSolver
 
-Maintains a feasible partial program in a [`State`](@ref). A [`ProgramIterator`](@ref) may manipulate the partial tree with the following tree manipulations:
+Maintains a feasible partial program in a [`SolverState`](@ref). A [`ProgramIterator`](@ref) may manipulate the partial tree with the following tree manipulations:
 - `substitute!`
 - `remove!`
 - `remove_below!`
 - `remove_above!`
 - `remove_all_but!`
 
-Each [`State`](@ref) holds an independent propagation program. Program iterators can freely move back and forth between states using:
+Each [`SolverState`](@ref) holds an independent propagation program. Program iterators can freely move back and forth between states using:
 - `new_state!`
 - `save_state!`
 - `load_state!`
 """
 mutable struct GenericSolver <: Solver
     grammar::AbstractGrammar
-    state::Union{State, Nothing}
-    schedule::PriorityQueue{LocalConstraint, Int}
+    state::Union{SolverState, Nothing}
+    schedule::PriorityQueue{AbstractLocalConstraint, Int}
     statistics::Union{SolverStatistics, Nothing}
-    use_fixedshapedsolver::Bool
+    use_uniformsolver::Bool
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
@@ -30,9 +30,9 @@ end
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_fixedshapedsolver=true)
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_uniformsolver=true)
     init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_fixedshapedsolver=use_fixedshapedsolver)
+    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_uniformsolver=use_uniformsolver)
 end
 
 
@@ -41,20 +41,20 @@ end
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_fixedshapedsolver=true)
+function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true)
     stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{LocalConstraint, Int}(), stats, use_fixedshapedsolver, false, typemax(Int), typemax(Int))
+    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, typemax(Int), typemax(Int))
     new_state!(solver, init_node)
     return solver
 end
 
 
 """
-    deactivate!(solver::GenericSolver, constraint::LocalConstraint)
+    deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::GenericSolver, constraint::LocalConstraint)
+function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -96,13 +96,13 @@ end
 
 
 """
-    post!(solver::GenericSolver, constraint::LocalConstraint)
+    post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
 
 Imposes the `constraint` to the current state.
 By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
-function post!(solver::GenericSolver, constraint::LocalConstraint)
+function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     track!(solver.statistics, "post! $(typeof(constraint))")
     # add to the list of active constraints
@@ -120,7 +120,7 @@ Overwrites the current state and propagates constraints on the `tree` from the g
 function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     track!(solver.statistics, "new_state!")
     empty!(solver.schedule)
-    solver.state = State(tree)
+    solver.state = SolverState(tree)
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
         if (node isa AbstractHole)
             simplify_hole!(solver, path)
@@ -130,7 +130,8 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
         end
     end
     notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
-    _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state
+    tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
+    _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state. 
     fix_point!(solver)
 end
 
@@ -140,18 +141,18 @@ end
 
 Returns a copy of the current state that can be restored by calling `load_state!(solver, state)`
 """
-function save_state!(solver::GenericSolver)::State
+function save_state!(solver::GenericSolver)::SolverState
     track!(solver.statistics, "save_state!")
     return copy(get_state(solver))
 end
 
 
 """
-    load_state!(solver::GenericSolver, state::State)
+    load_state!(solver::GenericSolver, state::SolverState)
 
 Overwrites the current state with the given `state`
 """
-function load_state!(solver::GenericSolver, state::State)
+function load_state!(solver::GenericSolver, state::SolverState)
     empty!(solver.schedule)
     solver.state = state
 end
@@ -189,17 +190,17 @@ end
 
 
 """
-    function get_state(solver::GenericSolver)::State
+    function get_state(solver::GenericSolver)::SolverState
 
-Get the current [`State`]@(ref) of the solver.
+Get the current [`SolverState`]@(ref) of the solver.
 """
-function get_state(solver::GenericSolver)::State
+function get_state(solver::GenericSolver)::SolverState
     return solver.state
 end
 
 
 """
-    function get_max_depth(solver::GenericSolver)::State
+    function get_max_depth(solver::GenericSolver)::SolverState
 
 Get the maximum depth of the tree.
 """
@@ -209,7 +210,7 @@ end
 
 
 """
-    function get_max_depth(solver::GenericSolver)::State
+    function get_max_depth(solver::GenericSolver)::SolverState
 
 Get the maximum number of [`AbstractRuleNode`](@ref)s allowed inside the tree.
 """
@@ -219,11 +220,11 @@ end
 
 
 """
-    mark_infeasible!(solver::GenericSolver)
+    set_infeasible!(solver::GenericSolver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible!(solver::GenericSolver)
+function set_infeasible!(solver::GenericSolver)
     #TODO: immediately delete the state and set the current state to nothing
     solver.state.isfeasible = false
 end

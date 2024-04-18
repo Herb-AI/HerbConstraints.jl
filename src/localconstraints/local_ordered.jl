@@ -3,7 +3,7 @@ Enforces an order over two or more subtrees that fill the variables
 specified in `order` when the pattern is applied at the location given by `path`.
 Use an `Ordered` constraint for enforcing this throughout the entire search space.
 """
-mutable struct LocalOrdered <: LocalConstraint
+mutable struct LocalOrdered <: AbstractLocalConstraint
     path::Vector{Int}
     tree::AbstractRuleNode
     order::Vector{Symbol}
@@ -43,7 +43,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
                     ::LessThanOrEqualHardFail => begin
                         # vars[name1] > vars[name2]. This means the state is infeasible.
                         track!(solver.statistics, "LocalOrdered inconsistency")
-                        mark_infeasible!(solver) #throw(InconsistencyException())
+                        set_infeasible!(solver) #throw(InconsistencyException())
                     end
                     ::LessThanOrEqualSoftFail => begin
                         # vars[name1] <= vars[name2] and vars[name1] > vars[name2] still possible

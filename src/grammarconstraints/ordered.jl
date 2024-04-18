@@ -1,7 +1,7 @@
 """
-    Ordered <: GrammarConstraint
+    Ordered <: AbstractGrammarConstraint
 
-A [`GrammarConstraint`](@ref) that enforces a specific order in [`MatchVar`](@ref) 
+A [`AbstractGrammarConstraint`](@ref) that enforces a specific order in [`MatchVar`](@ref) 
 assignments in the pattern defined by `tree`.
 Nodes in the pattern can either be a [`RuleNode`](@ref), which contains a rule index corresponding to the 
 rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children.
@@ -25,12 +25,12 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     assignment to `v` less than the index of the assignment to `w`, violating the order.
 
 !!! warning
-    The [`Ordered`](@ref) constraint makes use of [`LocalConstraint`](@ref)s to make sure that constraints 
+    The [`Ordered`](@ref) constraint makes use of [`AbstractLocalConstraint`](@ref)s to make sure that constraints 
     are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
     Therefore, [`Ordered`](@ref) can only be used in implementations that keep track of the 
-    [`LocalConstraint`](@ref)s and propagate them at the right moments.
+    [`AbstractLocalConstraint`](@ref)s and propagate them at the right moments.
 """
-struct Ordered <: GrammarConstraint
+struct Ordered <: AbstractGrammarConstraint
     tree::AbstractRuleNode
     order::Vector{Symbol}
 end
@@ -63,4 +63,3 @@ function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
     end
     return all(check_tree(c, child) for child ∈ tree.children)
 end
-

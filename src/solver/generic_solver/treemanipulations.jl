@@ -113,29 +113,34 @@ end
 
 Fill in the hole located at the `path` with rule `rule_index`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
-It is assumed rule_index ∈ hole.domain
+It is assumed rule_index ∈ hole.domain.
+
+!!! warning: If the `hole` is known to be in the current tree, the hole can be passed directly.
+    The caller has to make sure that the hole instance is actually present at the provided `path`.
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
-    hole = get_hole_at_location(solver, path)
-    @assert hole.domain[rule_index] "AbstractHole $hole cannot be filled with rule $rule_index"
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole, Nothing}=nothing)
+    if isnothing(hole)
+        hole = get_hole_at_location(solver, path)
+    end
+    @assert hole.domain[rule_index] "Hole $hole cannot be filled with rule $rule_index"
     if isuniform(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
+        substitute!(solver, path, new_node, is_domain_increasing=false)
     else
-        # reduce the domain of the variable shaped hole and let `simplify_hole!` take care of instantiating the children correctly
-        throw("WARNING: attempted to fill a variable shaped hole (untested behavior).")
-        # If you encountered this error, it means you are trying to fill a variable shaped hole, this can cause new holes to appear underneath.
-        # Usually, constraints should behave differently on fixed shaped holes and variable shaped holes.
+        # reduce the domain of the non-uniform hole and let `simplify_hole!` take care of instantiating the children correctly
+        # throw("WARNING: attempted to fill a non-uniform hole (untested behavior).")
+        # If you encountered this error, it means you are trying to fill a non-uniform hole, this can cause new holes to appear underneath.
+        # Usually, constraints should behave differently on uniform holes and non-uniform holes.
         # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
         # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
-        # If you are sure that filling in a variable shaped hole is fine, this error can safely be deleted."
+        # If you are sure that filling in a non-uniform hole is fine, this error can safely be deleted."
         for r ∈ 1:length(hole.domain)
             hole.domain[r] = false
         end
         hole.domain[rule_index] = true
         simplify_hole!(solver, path)
     end
-    substitute!(solver, path, new_node, is_domain_increasing=false)
 end
 
 
@@ -162,9 +167,10 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
         old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
-    if get_tree_size(solver) > get_max_size(solver)
+    
+    if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
-        mark_infeasible!(solver)
+        set_infeasible!(solver)
         return
     end
     
@@ -191,19 +197,37 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     end
 end
 
+
+"""
+    function remove_node!(solver::GenericSolver, path::Vector{Int})
+
+Remove the node at the given `path` by substituting it with a hole of the same symbol.
+"""
+function remove_node!(solver::GenericSolver, path::Vector{Int})
+    track!(solver.statistics, "remove_node!")
+    node = get_node_at_location(solver, path)
+    @assert !(node isa Hole)
+    grammar = get_grammar(solver)
+    type = grammar.types[get_rule(node)]
+    domain = copy(grammar.domains[type]) #must be copied, otherwise we are mutating the grammar
+    substitute!(solver, path, Hole(domain), is_domain_increasing=true)
+end
+
+
 """
     simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
-Takes a [AbstractHole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
+Takes a [Hole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
+    if !isfeasible(solver) return end
     hole = get_hole_at_location(solver, path)
     grammar = get_grammar(solver)
     new_node = nothing
     domain_size = sum(hole.domain)
     if domain_size == 0
-        mark_infeasible!(solver)
+        set_infeasible!(solver)
         return
     elseif hole isa UniformHole
         if domain_size == 1
@@ -226,7 +250,7 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         for i ∈ 1:length(new_node.children)
             # try to simplify the new children
             child_path = push!(copy(path), i)
-            if (new_node.children[i] isa AbstractHole)
+            if (new_node.children[i] isa Hole)
                 simplify_hole!(solver, child_path)
             end
         end

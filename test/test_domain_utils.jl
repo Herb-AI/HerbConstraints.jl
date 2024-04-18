@@ -2,6 +2,8 @@ using HerbGrammar
 @testset verbose=true "Domain Utils" begin
 
     @testset "is_subdomain (BitVector and StateSparseSet)" begin
+        #The domain represents a set of rules. In this case the domain represents the set {1, 3, 4, 5, 8}.
+        #is_subdomain checks if the two provided domains form a subset relation.
         domain = BitVector((1, 0, 1, 1, 1, 0, 0, 1))
 
         #(BitVector, BitVector)
@@ -24,6 +26,7 @@ using HerbGrammar
     end
 
     @testset "is_subdomain true (AbstractRuleNode)" begin
+        #is_subdomain for rulenodes checks if a specific tree can be obtained by repeatedly filling in holes from the general_tree
         @test is_subdomain(RuleNode(1), Hole(BitVector((1, 1, 1))))
         @test is_subdomain(UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((1, 1, 1))))
         @test is_subdomain(UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((1, 1, 1))))
@@ -63,7 +66,21 @@ using HerbGrammar
         @test is_subdomain(specific_tree, general_tree) == false
     end
 
+    @testset "is_subdomain false (AbstractRuleNode, no holes)" begin
+        #the specific_tree is larger than the general_tree
+        specific_tree = RuleNode(8, [
+            RuleNode(5)
+            RuleNode(7, [
+                RuleNode(4),
+                RuleNode(5)
+            ])
+        ])
+        general_tree = RuleNode(9)
+        @test is_subdomain(specific_tree, general_tree) == false
+    end
+
     @testset "partition" begin
+        #partion groups the rules by childtypes
         g = @csgrammar begin
             A = 1           #1
             A = 1           #2

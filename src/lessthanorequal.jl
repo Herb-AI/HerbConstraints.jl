@@ -33,8 +33,8 @@ struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
 
 `node1` <= `node2` and `node1` > `node2` are both possible depending on the assignment of `hole1` and `hole2`.
 Includes two cases:
-- hole2::AbstractHole: A failed `AbstractHole`-`AbstractHole` comparison. (e.g. Hole(BitVector((1, 0, 1))) vs Hole(BitVector((0, 1, 1))))
-- hole2::Nothing: A failed `AbstractHole`-`RuleNode` comparison. (e.g. Hole(BitVector((1, 0, 1))) vs RuleNode(2))
+- hole2::AbstractHole: A failed `AbstractHole`-`AbstractHole` comparison. (e.g. AbstractHole(BitVector((1, 0, 1))) vs AbstractHole(BitVector((0, 1, 1))))
+- hole2::Nothing: A failed `AbstractHole`-`RuleNode` comparison. (e.g. AbstractHole(BitVector((1, 0, 1))) vs RuleNode(2))
 """
 struct LessThanOrEqualSoftFail <: LessThanOrEqualResult
     hole1::AbstractHole
@@ -140,14 +140,14 @@ function make_less_than_or_equal!(
 end
 
 
-#TODO: all `make_less_than_or_equal!` functions for `StateFixedShapedHole`s are untested and copied from similar cases
+#TODO: all `make_less_than_or_equal!` functions for `StateHole`s are untested and copied from similar cases
 #TODO: refactor the entire family of `make_less_than_or_equal!` functions to be more type resilient
-#TODO: write unit tests for `make_less_than_or_equal!` with `StateFixedShapedHole`
+#TODO: write unit tests for `make_less_than_or_equal!` with `StateHole`
 
 
 function make_less_than_or_equal!(
     solver::Solver,
-    hole::StateFixedShapedHole,
+    hole::StateHole,
     node::RuleNode
 )
     @assert size(hole.domain) > 0
@@ -174,7 +174,7 @@ end
 function make_less_than_or_equal!(
     solver::Solver,
     node::RuleNode,
-    hole::StateFixedShapedHole
+    hole::StateHole
 )
     @assert size(hole.domain) > 0
     path = get_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
@@ -198,8 +198,8 @@ end
 
 function make_less_than_or_equal!(
     solver::Solver,
-    hole1::StateFixedShapedHole,
-    hole2::StateFixedShapedHole
+    hole1::StateHole,
+    hole2::StateHole
 )
     @assert (size(hole1.domain) > 0) && (size(hole2.domain) > 0)
     @match (isfilled(hole1), isfilled(hole2)) begin

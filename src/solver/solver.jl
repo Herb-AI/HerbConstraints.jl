@@ -5,13 +5,13 @@ Abstract constraint solver.
 Each solver should have at least the following fields:
 - `statistics::SolverStatistics`
 - `fix_point_running::Bool`
-- `schedule::PriorityQueue{LocalConstraint, Int}`
+- `schedule::PriorityQueue{AbstractLocalConstraint, Int}`
 
 Each solver should implement at least:
 - `post!`
 - `get_tree`
 - `get_grammar`
-- `mark_infeasible!`
+- `set_infeasible!`
 - `isfeasible`
 - `HerbCore.get_node_at_location`
 - `get_hole_at_location`
@@ -43,11 +43,11 @@ end
 
 
 """
-    schedule(solver::GenericSolver, constraint::LocalConstraint)
+    schedule(solver::GenericSolver, constraint::AbstractLocalConstraint)
 
 Schedules the `constraint` for propagation.
 """
-function schedule!(solver::Solver, constraint::LocalConstraint)
+function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
         track!(solver.statistics, "schedule!")
@@ -57,14 +57,14 @@ end
 
 
 """
-    shouldschedule(solver::Solver, constraint::LocalConstraint, path::Vector{Int})::Bool
+    shouldschedule(solver::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
 
 Function that is called when a tree manipulation occured at the `path`.
 Returns true if the `constraint` should be scheduled for propagation.
 
 Default behavior: return true iff the manipulation happened at or below the constraint path.
 """
-function shouldschedule(::Solver, constraint::LocalConstraint, path::Vector{Int})::Bool
+function shouldschedule(::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
     return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
 end
 

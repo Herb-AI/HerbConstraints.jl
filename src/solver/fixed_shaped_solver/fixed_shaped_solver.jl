@@ -2,7 +2,7 @@
 Representation of a branching constraint in the search tree.
 """
 struct Branch
-    hole::StateFixedShapedHole
+    hole::StateHole
     rule::Int
 end
 
@@ -10,39 +10,40 @@ end
 NOBRANCHES = Vector{Branch}()
 
 """
-A DFS solver that uses `StateFixedShapedHole`s.
+A DFS solver that uses `StateHole`s.
 """
 mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
-    tree::Union{RuleNode, StateFixedShapedHole}
+    tree::Union{RuleNode, StateHole}
     unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    isactive::Dict{LocalConstraint, StateInt}
-    canceledconstraints::Set{LocalConstraint}
+    isactive::Dict{AbstractLocalConstraint, StateInt}
+    canceledconstraints::Set{AbstractLocalConstraint}
     nsolutions::Int
     isfeasible::Bool
-    schedule::PriorityQueue{LocalConstraint, Int}
+    schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
+    derivation_heuristic
 end
 
 
 """
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
-    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains variable shaped holes"
+function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
+    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
-    tree = StateFixedShapedHole(sm, fixed_shaped_tree)
+    tree = StateHole(sm, fixed_shaped_tree)
     unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    isactive = Dict{LocalConstraint, StateInt}()
-    canceledconstraints = Set{LocalConstraint}()
+    isactive = Dict{AbstractLocalConstraint, StateInt}()
+    canceledconstraints = Set{AbstractLocalConstraint}()
     nsolutions = 0
-    schedule = PriorityQueue{LocalConstraint, Int}()
+    schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
@@ -50,7 +51,7 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Nothing => nothing
     end
     if !isnothing(statistics) statistics.name = "UniformSolver" end
-    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics)
+    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics, derivation_heuristic)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     if isfeasible(solver)
@@ -83,7 +84,7 @@ end
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)
+function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vector{Int}
     return solver.node_to_path[node]
 end
 
@@ -105,7 +106,7 @@ Get the hole that is located at the provided `path`.
 """
 function get_hole_at_location(solver::UniformSolver, path::Vector{Int})
     hole = solver.path_to_node[path]
-    @assert hole isa AbstractHole
+    @assert hole isa StateHole
     return hole
 end
 
@@ -131,11 +132,11 @@ end
 
 
 """
-    deactivate!(solver::UniformSolver, constraint::LocalConstraint)
+    deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
 
 Function that should be called whenever the constraint is already satisfied and never has to be repropagated.
 """
-function deactivate!(solver::UniformSolver, constraint::LocalConstraint)
+function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
         track!(solver.statistics, "deactivate! removed from schedule")
@@ -154,12 +155,12 @@ end
 
 
 """
-    post!(solver::UniformSolver, constraint::LocalConstraint)
+    post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
 
 Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
-function post!(solver::UniformSolver, constraint::LocalConstraint)
+function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
     propagate!(solver, constraint)
@@ -205,11 +206,11 @@ end
 
 
 """
-    mark_infeasible!(solver::Solver)
+    set_infeasible!(solver::Solver)
 
 Function to be called if any inconsistency has been detected
 """
-function mark_infeasible!(solver::UniformSolver)
+function set_infeasible!(solver::UniformSolver)
     solver.isfeasible = false
 end
 
@@ -252,9 +253,13 @@ A possible branching scheme could be to be split up in three `Branch`ing constra
 function generate_branches(solver::UniformSolver)::Vector{Branch}
     #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
     @assert isfeasible(solver)
-    function _dfs(node::Union{StateFixedShapedHole, RuleNode}) #::Vector{Branch}
-        if node isa StateFixedShapedHole && size(node.domain) > 1
-            return [Branch(node, rule) for rule ∈ node.domain]
+    function _dfs(node::Union{StateHole, RuleNode}) #::Vector{Branch}
+        if node isa StateHole && size(node.domain) > 1
+            #use the derivation_heuristic if the parent_iterator is set up 
+            if isnothing(solver.derivation_heuristic)
+                return [Branch(node, rule) for rule ∈ node.domain]
+            end
+            return [Branch(node, rule) for rule ∈ solver.derivation_heuristic(findall(node.domain))]
         end
         for child ∈ node.children
             branches = _dfs(child)
@@ -269,19 +274,19 @@ end
 
 
 """
-    next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
+    next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
 
 Built-in iterator. Search for the next unvisited solution.
 Returns nothing if all solutions have been found already.
 """
-function next_solution!(solver::UniformSolver)::Union{RuleNode, StateFixedShapedHole, Nothing}
+function next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
     if solver.nsolutions == 1000000 @warn "UniformSolver is iterating over more than 1000000 solutions..." end
     if solver.nsolutions > 0
         # backtrack from the previous solution
         restore!(solver)
     end
     while length(solver.unvisited_branches) > 0
-        branches = top(solver.unvisited_branches)
+        branches = first(solver.unvisited_branches)
         if length(branches) > 0
             # current depth has unvisted branches, pick a branch to explore
             branch = pop!(branches)

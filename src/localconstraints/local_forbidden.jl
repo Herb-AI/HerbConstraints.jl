@@ -6,7 +6,7 @@ Forbids the a subtree that matches the `tree` to be generated at the location
 provided by the path. 
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
-struct LocalForbidden <: LocalConstraint
+struct LocalForbidden <: AbstractLocalConstraint
     path::Vector{Int}
     tree::AbstractRuleNode
 end
@@ -36,7 +36,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.
             track!(solver.statistics, "LocalForbidden inconsistency")
-            mark_infeasible!(solver) #throw(InconsistencyException())
+            set_infeasible!(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
             # Propagate the constraint by removing an impossible value from the found hole.
