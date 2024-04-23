@@ -48,6 +48,7 @@ include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
 
 include("solver/fixed_shaped_solver/state_manager.jl")
+include("solver/fixed_shaped_solver/state_stack.jl")
 include("solver/fixed_shaped_solver/state_sparse_set.jl")
 include("solver/fixed_shaped_solver/state_fixed_shaped_hole.jl")
 include("solver/fixed_shaped_solver/fixed_shaped_solver.jl")

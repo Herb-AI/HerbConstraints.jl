@@ -144,6 +144,7 @@ function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     end
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
+        track!(solver.statistics, "deactivate!")
         set_value!(solver.isactive[constraint], 0)
         return
     end
