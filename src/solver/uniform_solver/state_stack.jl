@@ -8,7 +8,7 @@ struct StateStack{T}
 end
 
 """
-    StateStack(vec::Vector{T})
+    function StateStack{T}(sm::AbstractStateManager) where T
 
 Create an empty StateStack supporting elements of type T
 """
@@ -17,7 +17,7 @@ function StateStack{T}(sm::AbstractStateManager) where T
 end
 
 """
-    StateStack(vec::Vector{T}, sm::AbstractStateManager)
+    function StateStack{T}(sm::AbstractStateManager, vec::Vector{T}) where T
 
 Create a StateStack for the provided `vec`
 """

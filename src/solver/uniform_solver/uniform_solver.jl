@@ -17,12 +17,12 @@ end
 
 
 """
-    UniformSolver(grammar::AbstractGrammar, uniform_tree::AbstractRuleNode)
+    UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function UniformSolver(grammar::AbstractGrammar, uniform_tree::AbstractRuleNode; with_statistics=false)
-    @assert !contains_nonuniform_hole(uniform_tree) "$(uniform_tree) contains non-uniform holes"
+function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
+    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
-    tree = StateHole(sm, uniform_tree)
+    tree = StateHole(sm, fixed_shaped_tree)
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
     isactive = Dict{AbstractLocalConstraint, StateInt}()
