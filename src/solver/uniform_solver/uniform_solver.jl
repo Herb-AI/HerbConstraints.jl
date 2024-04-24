@@ -154,8 +154,12 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
         return
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
-    @assert constraint ∉ keys(solver.isactive) "Attempted to post a constraint that was already posted before"
-    solver.isactive[constraint] = StateInt(solver.sm, 1)
+    if (constraint ∈ keys(solver.isactive))
+        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active"
+    else
+        solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
+    end
+    set_value!(solver.isactive[constraint], 1)
 end
 
 
