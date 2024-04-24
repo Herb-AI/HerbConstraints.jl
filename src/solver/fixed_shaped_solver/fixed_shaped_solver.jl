@@ -1,48 +1,32 @@
 """
-Representation of a branching constraint in the search tree.
-"""
-struct Branch
-    hole::StateHole
-    rule::Int
-end
-
-#Shared reference to an empty vector to reduce memory allocations.
-NOBRANCHES = Vector{Branch}()
-
-"""
-A DFS solver that uses `StateHole`s.
+A DFS-based solver that uses `StateHole`s that support backtracking.
 """
 mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateHole}
-    unvisited_branches::Stack{Vector{Branch}}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
     isactive::Dict{AbstractLocalConstraint, StateInt}
     canceledconstraints::Set{AbstractLocalConstraint}
-    nsolutions::Int
     isfeasible::Bool
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
-    derivation_heuristic
 end
 
 
 """
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false, derivation_heuristic=nothing)
+function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
-    unvisited_branches = Stack{Vector{Branch}}()
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
     isactive = Dict{AbstractLocalConstraint, StateInt}()
     canceledconstraints = Set{AbstractLocalConstraint}()
-    nsolutions = 0
     schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
@@ -51,13 +35,9 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Nothing => nothing
     end
     if !isnothing(statistics) statistics.name = "UniformSolver" end
-    solver = UniformSolver(grammar, sm, tree, unvisited_branches, path_to_node, node_to_path, isactive, canceledconstraints, nsolutions, true, schedule, fix_point_running, statistics, derivation_heuristic)
+    solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
-    if isfeasible(solver)
-        save_state!(solver)
-        push!(unvisited_branches, generate_branches(solver)) #generate initial branches for the root search node
-    end
     return solver
 end
 
@@ -235,114 +215,3 @@ function restore!(solver::UniformSolver)
     solver.isfeasible = true
 end
 
-#TODO: implement more branching schemes
-"""
-Returns a vector of disjoint branches to expand the search tree at its current state.
-Example:
-```
-# pseudo code
-Hole(domain=[2, 4, 5], children=[
-    Hole(domain=[1, 6]), 
-    Hole(domain=[1, 6])
-])
-```
-A possible branching scheme could be to be split up in three `Branch`ing constraints:
-- `Branch(firsthole, 2)`
-- `Branch(firsthole, 4)`
-- `Branch(firsthole, 5)`
-"""
-function generate_branches(solver::UniformSolver)::Vector{Branch}
-    #omitting `::Vector{Branch}` from `_dfs` speeds up the search by a factor of 2
-    @assert isfeasible(solver)
-    function _dfs(node::Union{StateHole, RuleNode}) #::Vector{Branch}
-        if node isa StateHole && size(node.domain) > 1
-            #use the derivation_heuristic if the parent_iterator is set up 
-            if isnothing(solver.derivation_heuristic)
-                return [Branch(node, rule) for rule ∈ node.domain]
-            end
-            return [Branch(node, rule) for rule ∈ solver.derivation_heuristic(findall(node.domain))]
-        end
-        for child ∈ node.children
-            branches = _dfs(child)
-            if !isempty(branches)
-                return branches
-            end
-        end
-        return NOBRANCHES
-    end
-    return _dfs(solver.tree)
-end
-
-
-"""
-    next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
-
-Built-in iterator. Search for the next unvisited solution.
-Returns nothing if all solutions have been found already.
-"""
-function next_solution!(solver::UniformSolver)::Union{RuleNode, StateHole, Nothing}
-    if solver.nsolutions == 1000000 @warn "UniformSolver is iterating over more than 1000000 solutions..." end
-    if solver.nsolutions > 0
-        # backtrack from the previous solution
-        restore!(solver)
-    end
-    while length(solver.unvisited_branches) > 0
-        branches = first(solver.unvisited_branches)
-        if length(branches) > 0
-            # current depth has unvisted branches, pick a branch to explore
-            branch = pop!(branches)
-            save_state!(solver)
-            remove_all_but!(solver, solver.node_to_path[branch.hole], branch.rule)
-            if isfeasible(solver)
-                # generate new branches for the new search node
-                branches = generate_branches(solver)
-                if length(branches) == 0
-                    # search node is a solution leaf node, return the solution
-                    solver.nsolutions += 1
-                    track!(solver.statistics, "#CompleteTrees")
-                    return solver.tree
-                else
-                    # search node is an (non-root) internal node, store the branches to visit
-                    track!(solver.statistics, "#InternalSearchNodes")
-                    push!(solver.unvisited_branches, branches)
-                end
-            else
-                # search node is an infeasible leaf node, backtrack
-                track!(solver.statistics, "#InfeasibleTrees")
-                restore!(solver)
-            end
-        else
-            # search node is an exhausted internal node, backtrack
-            restore!(solver)
-            pop!(solver.unvisited_branches)
-        end
-    end
-    if solver.nsolutions == 0 && isfeasible(solver)
-        _isfilledrecursive(node) = isfilled(node) && all(_isfilledrecursive(c) for c ∈ node.children)
-        if _isfilledrecursive(solver.tree)
-            # search node is the root and the only solution, return the solution (edgecase)
-            solver.nsolutions += 1
-            track!(solver.statistics, "#CompleteTrees")
-            return solver.tree
-        end
-    end
-    return nothing
-end
-
-
-"""
-    count_solutions(solver::UniformSolver)
-
-Iterate over all solutions and count the number of solutions encountered.
-!!! warning:
-    Solutions are overwritten. It is not possible to return all the solutions without copying. 
-"""
-function count_solutions(solver::UniformSolver)
-    count = 0
-    s = next_solution!(solver)
-    while !isnothing(s)
-        count += 1
-        s = next_solution!(solver)
-    end
-    return count
-end

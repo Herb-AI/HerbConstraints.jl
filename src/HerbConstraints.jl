@@ -127,8 +127,7 @@ export
     increment!,
     decrement!,
 
-    #fixed shaped solver
-    next_solution!,
+    #uniform solver
     UniformSolver,
 
     #state fixed shaped hole

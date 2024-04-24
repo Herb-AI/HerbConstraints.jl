@@ -1,5 +1,3 @@
-include("state_manager.jl")
-
 """
 Simple stack that can only increase in size.
 Supports backtracking by decreasing the size to the saved size.
