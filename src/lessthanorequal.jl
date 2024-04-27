@@ -10,14 +10,40 @@ abstract type LessThanOrEqualResult end
 
 
 """
-    struct LessThanOrEqualSuccess <: LessThanOrEqualResult
+    abstract type LessThanOrEqualSuccess <: LessThanOrEqualResult
 
 `node1` <= `node2` is guaranteed under all possible assignments of the holes involved.
-- `isequal` is true iff `node1` == `node2`. This field is needed to handle tiebreakers in the dfs
+The strictness of a LessThanOrEqualSuccess is specified by 1 of 2 concrete cases:
+- [`LessThanOrEqualSuccessLessThan`](@ref): `node1` < `node2`
+- [`LessThanOrEqualSuccessEquality`](@ref): `node1` == `node2`
+- [`LessThanOrEqualSuccessWithHoles`](@ref): `node1` <= `node2`. Unable to specific.
 """
-struct LessThanOrEqualSuccess <: LessThanOrEqualResult
-    isequal::Bool
-end
+abstract type LessThanOrEqualSuccess <: LessThanOrEqualResult end
+
+
+"""
+    struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
+
+`node1` < `node2` is guaranteed under all possible assignments of the holes involved.
+"""
+struct LessThanOrEqualSuccessLessThan <: LessThanOrEqualSuccess end
+
+
+"""
+    struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
+
+`node1` == `node2` is guaranteed under all possible assignments of the holes involved.
+"""
+struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
+
+
+"""
+    struct LessThanOrEqualSuccessWithHoles <: LessThanOrEqualSuccess end
+
+`node1` <= `node2` is guaranteed under all possible assignments of the holes involved.
+Because of the holes involved, it is not possible to specify '<' or '=='.
+"""
+struct LessThanOrEqualSuccessWithHoles <: LessThanOrEqualSuccess end
 
 
 """
@@ -45,7 +71,7 @@ LessThanOrEqualSoftFail(hole) = LessThanOrEqualSoftFail(hole, nothing)
 
 
 """
-    function make_less_than_or_equal!(solver::Solver, n1::AbstractRuleNode, n2::AbstractRuleNode)::LessThanOrEqualResult
+    function make_less_than_or_equal!(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole})::LessThanOrEqualResult
 
 Ensures that n1<=n2 by removing impossible values from holes. Returns one of the following results:
 - [`LessThanOrEqualSuccess`](@ref). When [n1<=n2].
@@ -53,216 +79,185 @@ Ensures that n1<=n2 by removing impossible values from holes. Returns one of the
 - [`LessThanOrEqualSoftFail`](@ref). When no further deductions can be made, but [n1<=n2] and [n1>n2] are still possible.
 """
 function make_less_than_or_equal!(
-    solver::Solver,
-    nodes1::Vector{AbstractRuleNode},
-    nodes2::Vector{AbstractRuleNode}
+    solver::Solver, 
+    hole1::Union{RuleNode, AbstractHole}, 
+    hole2::Union{RuleNode, AbstractHole}
 )::LessThanOrEqualResult
-    for (node1, node2) ∈ zip(nodes1, nodes2)
-        result = make_less_than_or_equal!(solver, node1, node2)
-        @match result begin
-            ::LessThanOrEqualSuccess => if !result.isequal return result end;
-            ::LessThanOrEqualHardFail => return result;
-            ::LessThanOrEqualSoftFail => return result;
-        end
-    end
-    return LessThanOrEqualSuccess(true)
+    make_less_than_or_equal!(solver, hole1, hole2, Vector{Tuple{AbstractHole, Int}}())
 end
 
+"""
+    function make_less_than_or_equal!(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, guards::Vector{Tuple{AbstractHole, Int}})::LessThanOrEqualResult
 
+Helper function that keeps track of the guards
+"""
 function make_less_than_or_equal!(
-    solver::Solver,
-    node1::RuleNode,
-    node2::RuleNode
+    solver::Solver, 
+    hole1::Union{RuleNode, AbstractHole}, 
+    hole2::Union{RuleNode, AbstractHole},
+    guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
-    if get_rule(node1) < get_rule(node2)
-        return LessThanOrEqualSuccess(false)
-    elseif get_rule(node1) > get_rule(node2)
-        return LessThanOrEqualHardFail()
-    end
-    return make_less_than_or_equal!(solver, node1.children, node2.children)
-end
-
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    hole::AbstractHole,
-    node::RuleNode
-)
-    path = get_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
-    remove_above!(solver, path, get_rule(node))
-    if !isfeasible(solver)
-        return LessThanOrEqualHardFail()
-    end
-    #the hole might be replaced with a node, so we need to get whatever is at that location now
-    @match get_node_at_location(solver, path) begin
-        filledhole::RuleNode => return make_less_than_or_equal!(solver, filledhole, node)
-        hole::AbstractHole => return LessThanOrEqualSoftFail(hole)
-    end
-end
-
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    node::RuleNode,
-    hole::AbstractHole
-)
-    path = get_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
-    remove_below!(solver, path, get_rule(node))
-    if !isfeasible(solver)
-        return LessThanOrEqualHardFail()
-    end
-    #the hole might be replaced with a node, so we need to get whatever is at that location now
-    @match get_node_at_location(solver, path) begin
-        filledhole::RuleNode => return make_less_than_or_equal!(solver, node, filledhole)
-        hole::AbstractHole => return LessThanOrEqualSoftFail(hole)
-    end
-end
-
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    hole1::AbstractHole,
-    hole2::AbstractHole
-)
-    left_highest_ind = findlast(hole1.domain)
-    right_lowest_ind = findfirst(hole2.domain)
-    if left_highest_ind <= right_lowest_ind
-        # For example: Hole[1, 0, 1, 0, 0, 0] <= Hole[0, 0, 1, 1, 0, 1]
-        return LessThanOrEqualSuccess(false)
-    end
-    left_lowest_ind = findfirst(hole1.domain)
-    right_highest_ind = findlast(hole2.domain)
-    if left_lowest_ind > right_highest_ind
-        #For example: Hole[0, 0, 0, 1, 1, 1] > Hole[1, 1, 0, 0, 0, 0]
-        return LessThanOrEqualHardFail()
-    end
-    return LessThanOrEqualSoftFail(hole1, hole2)
-end
-
-
-#TODO: all `make_less_than_or_equal!` functions for `StateHole`s are untested and copied from similar cases
-#TODO: refactor the entire family of `make_less_than_or_equal!` functions to be more type resilient
-#TODO: write unit tests for `make_less_than_or_equal!` with `StateHole`
-
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    hole::StateHole,
-    node::RuleNode
-)
-    @assert size(hole.domain) > 0
-    path = get_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
-    remove_above!(solver, path, get_rule(node))
-    if !isfeasible(solver)
-        return LessThanOrEqualHardFail()
-    end
-    if isfilled(hole)
-        #(node, node)-case
-        if get_rule(hole) < get_rule(node)
-            return LessThanOrEqualSuccess(false)
-        elseif get_rule(hole) > get_rule(node)
-            return LessThanOrEqualHardFail()
-        end
-        return make_less_than_or_equal!(solver, hole.children, node.children)
-    else
-        #(hole, node)-case
-        return LessThanOrEqualSoftFail(hole)
-    end
-end
-
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    node::RuleNode,
-    hole::StateHole
-)
-    @assert size(hole.domain) > 0
-    path = get_path(get_tree(solver), hole) #TODO: optimize. very inefficient to go from hole->path->hole
-    remove_below!(solver, path, get_rule(node))
-    if !isfeasible(solver)
-        return LessThanOrEqualHardFail()
-    end
-    if isfilled(hole)
-        #(node, node)-case
-        if get_rule(node) < get_rule(hole)
-            return LessThanOrEqualSuccess(false)
-        elseif get_rule(node) > get_rule(hole)
-            return LessThanOrEqualHardFail()
-        end
-        return make_less_than_or_equal!(solver, node.children, hole.children)
-    else
-        #(node, hole)-case
-        return LessThanOrEqualSoftFail(hole)
-    end
-end
-
-function make_less_than_or_equal!(
-    solver::Solver,
-    hole1::StateHole,
-    hole2::StateHole
-)
-    @assert (size(hole1.domain) > 0) && (size(hole2.domain) > 0)
+    @assert isfeasible(solver)
+    path1 = get_path(get_tree(solver), hole1) #TODO: optimize. very inefficient to go from hole->path->hole
+    path2 = get_path(get_tree(solver), hole2)
     @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin
+            #(RuleNode, RuleNode)
             if get_rule(hole1) < get_rule(hole2)
-                return LessThanOrEqualSuccess(false)
+                return LessThanOrEqualSuccessLessThan()
             elseif get_rule(hole1) > get_rule(hole2)
                 return LessThanOrEqualHardFail()
             end
-            return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+            return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
         end
         (true, false) => begin
-            path = get_path(get_tree(solver), hole2) #TODO: optimize. very inefficient to go from hole->path->hole
-            remove_below!(solver, path, get_rule(hole1))
+            #(RuleNode, AbstractHole)
+            if length(guards) > 0
+                if get_rule(hole1) > findlast(hole2.domain)
+                    return LessThanOrEqualHardFail()
+                elseif get_rule(hole1) > findfirst(hole2.domain)
+                    return LessThanOrEqualSoftFail(hole2)
+                end
+            end
+            remove_below!(solver, path2, get_rule(hole1))
             if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
             end
-            if isfilled(hole2)
-                #(node, node)-case
-                if get_rule(hole1) < get_rule(hole2)
-                    return LessThanOrEqualSuccess(false)
-                elseif get_rule(hole1) > get_rule(hole2)
-                    return LessThanOrEqualHardFail()
+            hole2 = get_node_at_location(solver, path2)
+            if isuniform(hole2)
+                if !isfilled(hole2)
+                    if get_rule(hole1) < findfirst(hole2.domain)
+                        # 2 < {3, 4}, tiebreaking is not needed
+                        return LessThanOrEqualSuccessLessThan()
+                    end
+                    # 2 <= {2, 3}, add this hole as a guard for tiebreaking.
+                    push!(guards, (hole2, get_rule(hole1)))
+                elseif get_rule(hole1) < get_rule(hole2)
+                    # 2 < 3, tiebreaking is not needed
+                    return LessThanOrEqualSuccessLessThan()
                 end
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+                # tiebreak on the children
+                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
             else
-                #(node, hole)-case
                 return LessThanOrEqualSoftFail(hole2)
             end
         end
         (false, true) => begin
-            path = get_path(get_tree(solver), hole1) #TODO: optimize. very inefficient to go from hole->path->hole
-            remove_above!(solver, path, get_rule(hole2))
+            #(AbstractHole, RuleNode)
+            if length(guards) > 0
+                if findfirst(hole1.domain) > get_rule(hole2)
+                    return LessThanOrEqualHardFail()
+                elseif findlast(hole1.domain) > get_rule(hole2)
+                    return LessThanOrEqualSoftFail(hole1)
+                end
+            end
+            remove_above!(solver, path1, get_rule(hole2))
             if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
             end
-            if isfilled(hole1)
-                #(node, node)-case
-                if get_rule(hole1) < get_rule(hole2)
-                    return LessThanOrEqualSuccess(false)
-                elseif get_rule(hole1) > get_rule(hole2)
-                    return LessThanOrEqualHardFail()
+            hole1 = get_node_at_location(solver, path1)
+            if isuniform(hole1)
+                if !isfilled(hole1)
+                    if findlast(hole1.domain) < get_rule(hole2)
+                        # {2, 3} < 4, with or without children.
+                        return LessThanOrEqualSuccessLessThan()
+                    end
+                    # 2 <= {2, 3}, add this hole as a guard for tiebreaking.
+                    push!(guards, (hole1, get_rule(hole2)))
+                elseif get_rule(hole1) < get_rule(hole2)
+                    # 2 < 3, tiebreaking is not needed
+                    return LessThanOrEqualSuccessLessThan()
                 end
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children)
+                # tiebreak on the children
+                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
             else
-                #(hole, node)-case
                 return LessThanOrEqualSoftFail(hole1)
             end
         end
         (false, false) => begin
-            left_highest_ind = findlast(hole1.domain)
-            right_lowest_ind = findfirst(hole2.domain)
-            if left_highest_ind <= right_lowest_ind
-                # For example: Hole[1, 0, 1, 0, 0, 0] <= Hole[0, 0, 1, 1, 0, 1]
-                return LessThanOrEqualSuccess(false)
+            #(AbstractHole, AbstractHole)
+            if length(guards) > 0
+                if findfirst(hole1.domain) > findlast(hole2.domain)
+                    return LessThanOrEqualHardFail()
+                elseif findlast(hole1.domain) > findfirst(hole2.domain)
+                    return LessThanOrEqualSoftFail(hole1, hole2)
+                end
             end
-            left_lowest_ind = findfirst(hole1.domain)
-            right_highest_ind = findlast(hole2.domain)
-            if left_lowest_ind > right_highest_ind
-                #For example: Hole[0, 0, 0, 1, 1, 1] > Hole[1, 1, 0, 0, 0, 0]
+            # Example:
+            # Before: {2, 3, 5} <= {1, 3, 4}
+            # After:  {2, 3} <= {3, 4}
+            left_lowest_ind = findfirst(hole1.domain) #2
+            remove_below!(solver, path2, left_lowest_ind) #removes the 1
+            if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
             end
-            return LessThanOrEqualSoftFail(hole1, hole2)
+            right_highest_ind = findlast(hole2.domain) #4
+            remove_above!(solver, path1, right_highest_ind) #removes the 5
+            if !isfeasible(solver)
+                return LessThanOrEqualHardFail()
+            end
+            hole1 = get_node_at_location(solver, path1)
+            hole2 = get_node_at_location(solver, path2)
+            if !isuniform(hole1)
+                return LessThanOrEqualSoftFail(hole1)
+            end
+            if !isuniform(hole2)
+                return LessThanOrEqualSoftFail(hole2)
+            end
+            if !(isfilled(hole1) || isfilled(hole2))
+                left_highest_ind = findlast(hole1.domain)
+                right_lowest_ind = findfirst(hole2.domain)
+                if left_highest_ind == right_lowest_ind
+                    # {2, 3} <= {3, 4}, try to tiebreak on the children
+                    push!(guards, (hole1, 0))
+                    push!(guards, (hole2, 0))
+                    return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                elseif left_highest_ind < right_lowest_ind
+                    # {2, 3} < {7, 8}, success
+                    return LessThanOrEqualSuccessLessThan()
+                else
+                    # {2, 3} <=> {2, 3}, softfail
+                    return LessThanOrEqualSoftFail(hole1, hole2)
+                end
+            end
+            #at least one of the holes is a rulenode now, dispatch to another case
+            return make_less_than_or_equal!(solver, hole1, hole2, guards)
         end
     end
+end
+
+"""
+    function make_less_than_or_equal!(solver::Solver, nodes1::Vector{AbstractRuleNode}, nodes2::Vector{AbstractRuleNode}, guards::Vector{Tuple{AbstractHole, Int}})::LessThanOrEqualResult
+
+Helper function that tiebreaks on children.
+"""
+function make_less_than_or_equal!(
+    solver::Solver,
+    nodes1::Vector{AbstractRuleNode},
+    nodes2::Vector{AbstractRuleNode},
+    guards::Vector{Tuple{AbstractHole, Int}}
+)::LessThanOrEqualResult
+    for (node1, node2) ∈ zip(nodes1, nodes2)
+        result = make_less_than_or_equal!(solver, node1, node2, guards)
+        @match result begin
+            ::LessThanOrEqualSuccessWithHoles => ();
+            ::LessThanOrEqualSuccessEquality => ();
+            ::LessThanOrEqualSuccessLessThan => return result;
+            ::LessThanOrEqualSoftFail => return result;
+            ::LessThanOrEqualHardFail => begin 
+                if length(guards) == 0
+                    return result
+                elseif length(guards) == 1
+                    # a single guard is involved, preventing equality on the guard prevents the hardfail on the tiebreak
+                    path = get_path(get_tree(solver), guards[1][1])
+                    remove!(solver, path, guards[1][2])
+                    return LessThanOrEqualSuccessLessThan()
+                else
+                    # multiple guards are involved, we cannot deduce anything
+                    return LessThanOrEqualSoftFail(guards[1][1], guards[2][1])
+                end
+            end
+        end
+    end
+    return isnothing(guards) ? LessThanOrEqualSuccessEquality() : LessThanOrEqualSuccessWithHoles()
 end

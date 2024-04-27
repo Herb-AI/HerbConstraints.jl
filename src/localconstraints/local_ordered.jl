@@ -15,7 +15,7 @@ end
 Enforce that the [`VarNode`](@ref)s in the `tree` are in the specified `order`.
 First the node located at the `path` is matched to see if the ordered constraint applies here.
 The nodes matching the variables are stored in the `vars` dictionary.
-Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.
+Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.   
 """
 function propagate!(solver::Solver, c::LocalOrdered)
     @assert isfeasible(solver)
@@ -36,7 +36,8 @@ function propagate!(solver::Solver, c::LocalOrdered)
             ()
         end
         ::PatternMatchSuccess => begin 
-            # The forbidden tree is exactly matched. 
+            # The forbidden tree is exactly matched.
+            should_deactivate = true 
             for (name1, name2) ∈ zip(c.order[1:end-1], c.order[2:end])
                 #remove values is handled inside make_less_than_or_equal!
                 @match make_less_than_or_equal!(solver, vars[name1], vars[name2]) begin
@@ -44,18 +45,22 @@ function propagate!(solver::Solver, c::LocalOrdered)
                         # vars[name1] > vars[name2]. This means the state is infeasible.
                         track!(solver.statistics, "LocalOrdered inconsistency")
                         set_infeasible!(solver) #throw(InconsistencyException())
+                        return
                     end
                     ::LessThanOrEqualSoftFail => begin
                         # vars[name1] <= vars[name2] and vars[name1] > vars[name2] still possible
-                        # TODO: watcher. use the holes referenced inside the softfail for more efficient path-based repropagation
-                        ()
+                        # TODO: watcher. use the holes referenced inside the softfail for more efficient repropagation
+                        should_deactivate = false
                     end
                     ::LessThanOrEqualSuccess => begin
                         # vars[name1] <= vars[name2]. the constaint is satisfied
                         # No repropagation needed
-                        deactivate!(solver, c)
+                        ()
                     end
                 end
+            end
+            if should_deactivate
+                deactivate!(solver, c)
             end
         end
     end
