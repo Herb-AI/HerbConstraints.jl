@@ -96,4 +96,13 @@
         @test get_value(a) == 10
         @test get_value(b) == 100
     end
+
+    @testset "behavior needed for constraint unposting" begin
+        sm = HerbConstraints.StateManager()
+        save_state!(sm)
+        a = StateInt(sm, 0)         # initialize a new state int, set its value to 0 (post a new constraint)
+        set_value!(a, 1)            # immediately update the state int to 1 (activate the newly posted constraint)
+        restore!(sm)            
+        @test get_value(a) == 0     # on backtrack, the new constraint should be deactivated
+    end
 end

@@ -47,11 +47,12 @@ include("solver/generic_solver/state.jl")
 include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
 
-include("solver/fixed_shaped_solver/state_manager.jl")
-include("solver/fixed_shaped_solver/state_sparse_set.jl")
-include("solver/fixed_shaped_solver/state_fixed_shaped_hole.jl")
-include("solver/fixed_shaped_solver/fixed_shaped_solver.jl")
-include("solver/fixed_shaped_solver/fixed_shaped_solver_treemanipulations.jl")
+include("solver/uniform_solver/state_manager.jl")
+include("solver/uniform_solver/state_stack.jl")
+include("solver/uniform_solver/state_sparse_set.jl")
+include("solver/uniform_solver/state_hole.jl")
+include("solver/uniform_solver/uniform_solver.jl")
+include("solver/uniform_solver/uniform_treemanipulations.jl")
 include("solver/domainutils.jl")
 
 include("patternmatch.jl")
@@ -127,8 +128,7 @@ export
     increment!,
     decrement!,
 
-    #fixed shaped solver
-    next_solution!,
+    #uniform solver
     UniformSolver,
 
     #state fixed shaped hole
