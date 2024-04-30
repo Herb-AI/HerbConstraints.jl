@@ -129,9 +129,9 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
             _dfs_simplify(childnode, push!(copy(path), i))
         end
     end
-    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
-    tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
     _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state. 
+    tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
+    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
     fix_point!(solver)
 end
 
