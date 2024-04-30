@@ -13,6 +13,7 @@ using Test
     include("test_forbidden.jl")
     include("test_ordered.jl")
     include("test_contains.jl")
+    include("test_forbidden_sequence.jl")
 
     include("test_state_stack.jl")
     include("test_state_sparse_set.jl")

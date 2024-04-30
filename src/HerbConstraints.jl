@@ -61,11 +61,12 @@ include("lessthanorequal.jl")
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
 include("localconstraints/local_contains.jl")
+include("localconstraints/local_forbidden_sequence.jl")
 
 include("grammarconstraints/forbidden.jl")
 include("grammarconstraints/ordered.jl")
 include("grammarconstraints/contains.jl")
-
+include("grammarconstraints/forbidden_sequence.jl")
 
 export
     AbstractGrammarConstraint,
@@ -80,11 +81,13 @@ export
     Forbidden,
     Ordered,
     Contains,
+    ForbiddenSequence,
 
     #local constraints
     LocalForbidden,
     LocalOrdered,
     LocalContains,
+    LocalForbiddenSequence,
 
     #public solver functions
     GenericSolver,
