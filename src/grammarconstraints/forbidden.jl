@@ -18,12 +18,6 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     Therefore, this tree invalid.
 - `Forbidden(RuleNode(3, [VarNode(:v), VarNode(:v)]))` forbids `c` to be filled with `4`, since that would 
     make both assignments to `v` equal, which causes a successful match.
-
-!!! warning
-    The [`Forbidden`](@ref) constraint makes use of [`AbstractLocalConstraint`](@ref)s to make sure that constraints 
-    are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
-    Therefore, [`Forbidden`](@ref) can only be used in implementations that keep track of the 
-    [`AbstractLocalConstraint`](@ref)s and propagate them at the right moments.
 """
 struct Forbidden <: AbstractGrammarConstraint
     tree::AbstractRuleNode
@@ -41,7 +35,7 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
 end
 
 """
-    check_tree(c::Forbidden, g::AbstractGrammar, tree::RuleNode)::Bool
+    check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
