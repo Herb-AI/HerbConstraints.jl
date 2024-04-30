@@ -1,6 +1,6 @@
 using HerbCore, HerbGrammar
 
-@testset verbose=true "LessThanOrEqual" begin
+@testset verbose=false "LessThanOrEqual" begin
 
     function create_dummy_solver(leftnode::AbstractRuleNode, rightnode::AbstractRuleNode)
         grammar = @csgrammar begin

@@ -1,4 +1,4 @@
-@testset verbose=true "Ordered" begin
+@testset verbose=false "Ordered" begin
     @testset "check_tree true, length(order)=2" begin
         ordered = Ordered(RuleNode(4, [
             VarNode(:a),

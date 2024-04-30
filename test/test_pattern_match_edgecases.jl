@@ -2,7 +2,7 @@ using HerbCore
 using HerbGrammar
 
 #These test contain edgecases that fail in the current implemention
-@testset verbose=true "PatternMatch Edgecase" begin
+@testset verbose=false "PatternMatch Edgecase" begin
 
     #the grammar is not needed in the current implementation
     g = @csgrammar begin
