@@ -12,7 +12,7 @@ Examples:
 - `ForbiddenSequence([1, 2, 4])` enforces that rule `4` cannot be applied at `b`, `c` or `d`.
 - `ForbiddenSequence([1, 4])` enforces that rule `4` cannot be applied anywhere.
 
-If any of the rules in `ignore_if` appears on the sequence, the constraint is ignored.
+If any of the rules in `ignore_if` appears in the sequence, the constraint is ignored.
 Suppose the forbidden `sequence = [1, 2, 3]` and `ignore_if = [99]`
 Consider the following paths from the root:
 - `[1, 2, 2, 3]` is forbidden, as the sequence does not contain `99`
@@ -28,11 +28,9 @@ ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) = ForbiddenSeq
 
 function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
-    if c.tree isa RuleNode
-        @match get_node_at_location(solver, path) begin
-            hole::AbstractHole => if !hole.domain[c.sequence[end]] return end
-            node::RuleNode => if node.ind != c.sequence[end] return end
-        end
+    @match get_node_at_location(solver, path) begin
+        hole::AbstractHole => if !hole.domain[c.sequence[end]] return end
+        node::RuleNode => if node.ind != c.sequence[end] return end
     end
     post!(solver, LocalForbiddenSequence(path, c.sequence, c.ignore_if))
 end
