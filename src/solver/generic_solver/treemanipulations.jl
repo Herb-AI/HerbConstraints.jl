@@ -176,21 +176,21 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     
     if isnothing(is_domain_increasing)
         #automatically decide if the event is domain increasing
-        track!(solver.statistics, "substitute! checks is_domain_increasing")
+        track!(solver, "substitute! checks is_domain_increasing")
         is_domain_increasing = !is_subdomain(new_node, old_node)
     end
     if is_domain_increasing
         #propagate all constraints from the ground up
-        track!(solver.statistics, "substitute! (domain increasing)")
+        track!(solver, "substitute! (domain increasing)")
         new_state!(solver, get_tree(solver))
     else
         if !have_same_shape(new_node, old_node)
             #unknown locations have been added to the tree
             #let the grammar constraint post new local constraints at these new paths
-            track!(solver.statistics, "substitute! (domain decreasing, different shape)")
+            track!(solver, "substitute! (domain decreasing, different shape)")
             notify_new_nodes(solver, new_node, path)
         else
-            track!(solver.statistics, "substitute! (domain decreasing, same shape)")
+            track!(solver, "substitute! (domain decreasing, same shape)")
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -204,7 +204,7 @@ end
 Remove the node at the given `path` by substituting it with a hole of the same symbol.
 """
 function remove_node!(solver::GenericSolver, path::Vector{Int})
-    track!(solver.statistics, "remove_node!")
+    track!(solver, "remove_node!")
     node = get_node_at_location(solver, path)
     @assert !(node isa Hole)
     grammar = get_grammar(solver)

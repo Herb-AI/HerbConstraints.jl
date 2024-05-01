@@ -11,6 +11,15 @@ struct LocalForbiddenSequence <: AbstractLocalConstraint
 end
 
 """
+    shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
+
+Return true iff the manipulation happened at or above the constraint path.
+"""
+function shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
+    return (length(constraint.path) >= length(path)) && (path== constraint.path[1:length(path)] )
+end
+
+"""
     function propagate!(solver::Solver, c::LocalForbiddenSequence)
 
 """
@@ -18,6 +27,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     #TODO: it would be better to precompute the list of `nodes` on the path.
     # however, in the GenericSolver, uniform holes might be replaced with a rule node, so the instances might change
     nodes = get_nodes_on_path(get_tree(solver), c.path)
+    track!(solver, "LocalForbiddenSequence propagation")
 
     # c.sequence = [1, 2, 3]
     # c.nodes = [RuleNode(1), RuleNode(2), UniformHole(1, 2), UniformHole(2, 4), RuleNode(3)]
@@ -32,6 +42,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
                 deactivate!(solver, c)
+                track!(solver, "LocalForbiddenSequence deactivate by ignore_if")
                 return
             elseif (rule == forbidden_rule)
                 i -= 1
@@ -58,16 +69,25 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         end
     end
     if i > 0
+        track!(solver, "LocalForbiddenSequence deactivate")
         deactivate!(solver, c)
         return
     end
     if length(forbidden_assignments) == 0
+        track!(solver, "LocalForbiddenSequence inconsistency")
         set_infeasible!(solver)
         return
     elseif length(forbidden_assignments) == 1
         path_idx, rule = forbidden_assignments[1]
+        if rule isa Int
+            track!(solver, "LocalForbiddenSequence deduction")
+        else
+            track!(solver, "LocalForbiddenSequence deduction by ignore_if")
+        end
+        if path_idx > length(c.path)
+            deactivate!(solver, c)
+        end
         remove!(solver, c.path[1:path_idx-1], rule)
-        propagate!(solver, c)
         return
     end
 
@@ -87,17 +107,24 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
             forbidden_assignment = (path_idx, forbidden_rule)
             i -= 1
         end
+        if i == 0
+            break
+        end
     end
     if i > 0
         return
     end
     if isnothing(forbidden_assignment)
+        track!(solver, "LocalForbiddenSequence inconsistency (method 2)")
         set_infeasible!(solver)
         return
     end
+    track!(solver, "LocalForbiddenSequence deduction (method 2)")
     path_idx, rule = forbidden_assignment
+    if path_idx > length(c.path)
+        deactivate!(solver, c)
+    end
     remove!(solver, c.path[1:path_idx-1], rule)
-    propagate!(solver, c)
 end
 
 
