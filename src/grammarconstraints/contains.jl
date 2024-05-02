@@ -6,21 +6,21 @@ struct Contains <: AbstractGrammarConstraint
     rule::Int
 end
 
-function on_new_node(solver::Solver, contraint::Contains, path::Vector{Int})
+function on_new_node(solver::Solver, c::Contains, path::Vector{Int})
     if length(path) == 0
         #only post a local constraint at the root
-        post!(solver, LocalContains(path, contraint.rule))
+        post!(solver, LocalContains(path, c.rule))
     end
 end
 
 """
-    check_tree(contraint::Contains, tree::AbstractRuleNode)::Bool
+    check_tree(c::Contains, tree::AbstractRuleNode)::Bool
 
-Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
+Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Contains`](@ref) constraint.
 """
-function check_tree(contraint::Contains, tree::AbstractRuleNode)::Bool
-    if get_rule(tree) == contraint.rule
+function check_tree(c::Contains, tree::AbstractRuleNode)::Bool
+    if get_rule(tree) == c.rule
         return true
     end
-    return any(check_tree(contraint, child) for child ∈ get_children(tree))
+    return any(check_tree(c, child) for child ∈ get_children(tree))
 end
