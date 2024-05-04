@@ -157,7 +157,7 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
     if (constraint ∈ keys(solver.isactive))
-        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active"
+        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
     else
         solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
     end
