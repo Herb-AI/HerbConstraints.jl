@@ -66,13 +66,6 @@
         @test isfeasible(solver) == false
     end
 
-    @testset "propagate" begin
-        constraint = ForbiddenSequence([1, 2, 3])
-        solver = dummy_solver([1, 2, 3], constraint)
-        tree = get_tree(solver)
-        @assert true
-    end
-
     @testset "check_tree" begin
         @testset "Valid trees" begin
             constraint = ForbiddenSequence([1, 2, 3])
