@@ -98,7 +98,7 @@ function make_less_than_or_equal!(
     guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
-    path1 = get_path(get_tree(solver), hole1) #TODO: optimize. very inefficient to go from hole->path->hole
+    path1 = get_path(get_tree(solver), hole1)
     path2 = get_path(get_tree(solver), hole2)
     @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin

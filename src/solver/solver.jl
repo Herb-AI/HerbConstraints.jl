@@ -51,7 +51,7 @@ function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
         track!(solver, "schedule!")
-        enqueue!(solver.schedule, constraint, 99) #TODO: replace `99` with `get_priority(c)`
+        enqueue!(solver.schedule, constraint, 99)
     end
 end
 

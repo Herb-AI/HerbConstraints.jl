@@ -64,10 +64,8 @@ function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
         delete!(solver.schedule, constraint)
     end
     if constraint ∉ get_state(solver).active_constraints
-        #TODO: make sure this code branch is never reached
-        # a deactivated constraint was propagated again and deactivated again...
         track!(solver, "deactivate! (unnecessary)")
-        # @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
+        @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
         # This assertion error can occur if a `propagate!` function is called outside `fix_point!`
         # For example, assume that `propagate!` function is called from `post!`
         # Consider the following call stack:
@@ -167,7 +165,6 @@ end
 Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
 """
 function get_tree_size(solver::GenericSolver)::Int
-    #TODO: potential optimization: precompute/cache the size of the tree
     return length(get_tree(solver))
 end
 
@@ -240,7 +237,6 @@ end
 Function to be called if any inconsistency has been detected
 """
 function set_infeasible!(solver::GenericSolver)
-    #TODO: immediately delete the state and set the current state to nothing
     solver.state.isfeasible = false
 end
 

@@ -149,8 +149,6 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     propagate!(solver, constraint)
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
-        #TODO: reduce the amount of `post!` calls in the fixed shaped solver
-        # See https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=57401412
         track!(solver, "cancel post (2/2)")
         delete!(solver.canceledconstraints, constraint)
         return

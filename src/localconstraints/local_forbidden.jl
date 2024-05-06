@@ -29,8 +29,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
             track!(solver, "LocalForbidden hardfail")
         end;
         match::PatternMatchSoftFail => begin 
-            # The constraint will re-propagated on any tree manipulation.
-            # TODO: watcher. only propagate when needed.
+            # The constraint needs to be re-propagated
             track!(solver, "LocalForbidden softfail")
         end
         ::PatternMatchSuccess => begin 

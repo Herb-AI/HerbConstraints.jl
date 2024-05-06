@@ -1,8 +1,3 @@
-#TODO: tree manipulations should be callable by passing a `hole`, instead of a `path`
-# Related issue: https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=54473456
-
-#TODO: unit test all tree manipulations
-
 """
     remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 

@@ -1,8 +1,6 @@
 using HerbCore
 using HerbGrammar
 
-#TODO: check if the information in a softfail is correct. for now, the information in softfails is ignored.
-
 @testset verbose=false "PatternMatch with DomainRuleNode" begin
 
     #the grammar is not needed in the current implementation

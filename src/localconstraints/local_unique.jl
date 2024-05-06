@@ -17,10 +17,6 @@ Uses a helper function to retrieve a list of holes that can potentially hold the
 If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
 """
 function propagate!(solver::Solver, c::LocalUnique)
-    #TODO: don't do a dfs for `holes` and `count`, cache them in the constraint.
-    # Two reasons why we can't have this in the current framework:
-    #    1. Hole instances can get replaced. So direct references to holes can before invalid.
-    #    2. Constraints are shared among different solver states, so they are stateless.
     node = get_node_at_location(solver, c.path)
     holes = Vector{AbstractHole}()
     count = _count_occurrences!(node, c.rule, holes)

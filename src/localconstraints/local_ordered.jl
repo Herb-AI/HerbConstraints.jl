@@ -31,7 +31,6 @@ function propagate!(solver::Solver, c::LocalOrdered)
         end;
         ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
             # The constraint will re-propagated on any tree manipulation.
-            # TODO: watcher. only propagate when needed.
             track!(solver, "LocalOrdered match softfail")
             ()
         end
@@ -39,7 +38,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
             # The forbidden tree is exactly matched.
             should_deactivate = true 
             for (name1, name2) ∈ zip(c.order[1:end-1], c.order[2:end])
-                #remove values is handled inside make_less_than_or_equal!
+                # Removing rules is handled inside make_less_than_or_equal!
                 @match make_less_than_or_equal!(solver, vars[name1], vars[name2]) begin
                     ::LessThanOrEqualHardFail => begin
                         # vars[name1] > vars[name2]. This means the state is infeasible.
@@ -49,12 +48,10 @@ function propagate!(solver::Solver, c::LocalOrdered)
                     end
                     ::LessThanOrEqualSoftFail => begin
                         # vars[name1] <= vars[name2] and vars[name1] > vars[name2] still possible
-                        # TODO: watcher. use the holes referenced inside the softfail for more efficient repropagation
                         should_deactivate = false
                     end
                     ::LessThanOrEqualSuccess => begin
-                        # vars[name1] <= vars[name2]. the constaint is satisfied
-                        # No repropagation needed
+                        # vars[name1] <= vars[name2]. the constaint is satisfied. repropagation is never needed.
                         ()
                     end
                 end

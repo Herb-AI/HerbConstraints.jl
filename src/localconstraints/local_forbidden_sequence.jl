@@ -24,21 +24,15 @@ end
 
 """
 function propagate!(solver::Solver, c::LocalForbiddenSequence)
-    #TODO: it would be better to precompute the list of `nodes` on the path.
-    # however, in the GenericSolver, uniform holes might be replaced with a rule node, so the instances might change
     nodes = get_nodes_on_path(get_tree(solver), c.path)
     track!(solver, "LocalForbiddenSequence propagation")
-
-    # c.sequence = [1, 2, 3]
-    # c.nodes = [RuleNode(1), RuleNode(2), UniformHole(1, 2), UniformHole(2, 4), RuleNode(3)]
-    # c.nodes = [1, {2, 4}, 1, {2, 4}, 3]
 
     # Smallest match
     forbidden_assignments = Vector{Tuple{Int, Any}}()
     i = length(c.sequence)
     for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
         forbidden_rule = c.sequence[i]
-        if (node isa RuleNode) || (node isa StateHole && isfilled(node)) #TODO: in herbcore: isfilled(::AbstractHole) = false
+        if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
                 deactivate!(solver, c)
@@ -96,7 +90,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     forbidden_assignment = nothing
     for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
         forbidden_rule = c.sequence[i]
-        if (node isa RuleNode) || (node isa StateHole && isfilled(node)) #TODO: in herbcore: isfilled(::AbstractHole) = false
+        if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
                 return
@@ -134,7 +128,6 @@ end
 Gets a list of nodes on the `path`, starting (and including) the `root`.
 """
 function get_nodes_on_path(node::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
-    #TODO: HerbCore has a similar function: `get_rulesequence` that was implemented before the concept of uniformholes. That function should probably be deleted.
     nodes = Vector{AbstractRuleNode}()
     push!(nodes, node)
     for i ∈ path

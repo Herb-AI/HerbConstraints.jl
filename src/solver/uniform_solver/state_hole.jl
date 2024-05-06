@@ -39,7 +39,6 @@ HerbCore.isuniform(::StateHole) = true
 Assuming the hole has domain size 1, get the rule it is currently assigned to.
 """
 function HerbCore.get_rule(hole::StateHole)::Int
-	#TODO: get_rule(n::RuleNode) = n.ind
 	@assert isfilled(hole) "$(hole) has not been filled yet, unable to get the rule"
 	return findfirst(hole.domain)
 end
@@ -52,8 +51,6 @@ Holes with domain size 1 are fixed to a rule.
 Returns whether the hole has domain size 1. (holes with an empty domain are not considered to be fixed)
 """
 function HerbCore.isfilled(hole::StateHole)::Bool
-	#TODO: isfilled(::AbstractHole) = false
-	#TODO: isfilled(::RuleNode) = true
 	return size(hole.domain) == 1
 end
 
