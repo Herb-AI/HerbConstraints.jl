@@ -42,7 +42,7 @@ end
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
-    stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
+    stats = with_statistics ? SolverStatistics() : nothing
     solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
