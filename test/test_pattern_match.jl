@@ -247,6 +247,36 @@ using HerbGrammar
         @test pattern_match(h1, h2_hardfail) isa HerbConstraints.PatternMatchHardFail
     end
 
+    @testset "StateHole" begin
+        @testset "Success" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSuccess
+        end
+
+        @testset "SuccessWhenHoleAssignedTo" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
+        end
+
+        @testset "Softfail" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSoftFail
+        end
+
+        @testset "Hardfail" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((0, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchHardFail
+        end
+    end
+
     @testset "VarNode assigned to a RuleNode" begin
         mn = RuleNode(4, [VarNode(:x), VarNode(:x)])
         @testset "Depth1" begin
