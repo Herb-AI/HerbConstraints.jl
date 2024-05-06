@@ -30,9 +30,9 @@ end
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_uniformsolver=true)
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
     init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_uniformsolver=use_uniformsolver)
+    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_uniformsolver=use_uniformsolver, max_size = max_size, max_depth = max_depth)
 end
 
 
@@ -41,9 +41,9 @@ end
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true)
-    stats = with_statistics ? SolverStatistics() : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, typemax(Int), typemax(Int))
+function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
+    stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
+    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
@@ -189,6 +189,18 @@ Get the grammar.
 """
 function get_grammar(solver::GenericSolver)::AbstractGrammar
     return solver.grammar
+end
+
+"""
+    function get_starting_symbol(solver::GenericSolver)::Symbol
+
+Get the symbol from the solver.
+"""
+function get_starting_symbol(solver::GenericSolver)::Symbol
+    root = get_tree(solver)
+    rule = isfilled(root) ?  get_rule(root) : findfirst(root.domain)
+    grammar = get_grammar(solver)
+    return grammar.types[rule]
 end
 
 
