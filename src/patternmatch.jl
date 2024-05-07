@@ -38,6 +38,9 @@ struct PatternMatchSoftFail <: PatternMatchResult
     hole::AbstractHole
 end
 
+#Shared reference to a dict of vars to reduce memory allocations.
+VARS = Dict{Symbol, AbstractRuleNode}()
+
 """
     pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode)::PatternMatchResult
 
@@ -45,7 +48,8 @@ Recursively tries to match [`AbstractRuleNode`](@ref) `rn` with [`AbstractRuleNo
 Returns a `PatternMatchResult` that describes if the pattern was matched.
 """
 function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode)::PatternMatchResult
-    pattern_match(rn, mn, Dict{Symbol, AbstractRuleNode}())
+    empty!(VARS)
+    pattern_match(rn, mn, VARS)
 end
 
 """
