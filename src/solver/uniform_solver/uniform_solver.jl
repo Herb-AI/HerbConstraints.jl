@@ -31,7 +31,7 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
-        ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
+        ::Bool => with_statistics ? SolverStatistics() : nothing
         ::Nothing => nothing
     end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
