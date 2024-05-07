@@ -1,5 +1,5 @@
 using HerbGrammar
-@testset verbose=true "Domain Utils" begin
+@testset verbose=false "Domain Utils" begin
 
     @testset "is_subdomain (BitVector and StateSparseSet)" begin
         #The domain represents a set of rules. In this case the domain represents the set {1, 3, 4, 5, 8}.

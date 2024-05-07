@@ -34,12 +34,14 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
         ::Nothing => nothing
     end
-    if !isnothing(statistics) statistics.name = "UniformSolver" end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     return solver
 end
+
+
+get_name(::UniformSolver) = "UniformSolver"
 
 
 """
@@ -119,18 +121,18 @@ Function that should be called whenever the constraint is already satisfied and 
 function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
-        track!(solver.statistics, "deactivate! removed from schedule")
+        track!(solver, "deactivate! removed from schedule")
         delete!(solver.schedule, constraint)
     end
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
-        track!(solver.statistics, "deactivate!")
+        track!(solver, "deactivate!")
         set_value!(solver.isactive[constraint], 0)
         return
     end
     # the constraint is satisfied during its initial propagation
     # the constraint was not posted yet, the post should be canceled
-    track!(solver.statistics, "cancel post (1/2)")
+    track!(solver, "cancel post (1/2)")
     push!(solver.canceledconstraints, constraint)
 end
 
@@ -147,15 +149,13 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     propagate!(solver, constraint)
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
-        #TODO: reduce the amount of `post!` calls in the fixed shaped solver
-        # See https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=57401412
-        track!(solver.statistics, "cancel post (2/2)")
+        track!(solver, "cancel post (2/2)")
         delete!(solver.canceledconstraints, constraint)
         return
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
     if (constraint ∈ keys(solver.isactive))
-        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active"
+        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
     else
         solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
     end
@@ -205,7 +205,7 @@ Save the current state of the solver, can restored using `restore!`
 """
 function save_state!(solver::UniformSolver)
     @assert isfeasible(solver)
-    track!(solver.statistics, "save_state!")
+    track!(solver, "save_state!")
     save_state!(solver.sm)
 end
 
@@ -214,7 +214,7 @@ end
 Restore state of the solver until the last `save_state!`
 """
 function restore!(solver::UniformSolver)
-    track!(solver.statistics, "restore!")
+    track!(solver, "restore!")
     restore!(solver.sm)
     solver.isfeasible = true
 end

@@ -23,12 +23,6 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
 - `Ordered(RuleNode(3, [VarNode(:v), VarNode(:w)]), [:w, :v])` removes every rule 
     with an index of 4 or less from the domain of `c`, since that would make the index of the 
     assignment to `v` less than the index of the assignment to `w`, violating the order.
-
-!!! warning
-    The [`Ordered`](@ref) constraint makes use of [`AbstractLocalConstraint`](@ref)s to make sure that constraints 
-    are also enforced in the future when the context of a [`AbstractHole`](@ref) changes. 
-    Therefore, [`Ordered`](@ref) can only be used in implementations that keep track of the 
-    [`AbstractLocalConstraint`](@ref)s and propagate them at the right moments.
 """
 struct Ordered <: AbstractGrammarConstraint
     tree::AbstractRuleNode
@@ -47,7 +41,7 @@ function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
 end
 
 """
-    check_tree(c::Ordered, g::AbstractGrammar, tree::RuleNode)::Bool
+    check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Ordered`](@ref) constraint.
 """

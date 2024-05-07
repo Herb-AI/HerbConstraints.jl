@@ -1,4 +1,4 @@
-@testset verbose=true "Contains" begin
+@testset verbose=false "Contains" begin
     contains = Contains(2)
 
     @testset "check_tree true" begin

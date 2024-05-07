@@ -42,11 +42,14 @@ end
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
-    stats = with_statistics ? SolverStatistics("GenericSolver") : nothing
+    stats = with_statistics ? SolverStatistics() : nothing
     solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
+
+
+get_name(::GenericSolver) = "GenericSolver"
 
 
 """
@@ -57,14 +60,12 @@ Function that should be called whenever the constraint is already satisfied and 
 function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
-        track!(solver.statistics, "deactivate! removed from schedule")
+        track!(solver, "deactivate! removed from schedule")
         delete!(solver.schedule, constraint)
     end
     if constraint ∉ get_state(solver).active_constraints
-        #TODO: make sure this code branch is never reached
-        # a deactivated constraint was propagated again and deactivated again...
-        track!(solver.statistics, "deactivate! (unnecessary)")
-        # @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
+        track!(solver, "deactivate! (unnecessary)")
+        @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
         # This assertion error can occur if a `propagate!` function is called outside `fix_point!`
         # For example, assume that `propagate!` function is called from `post!`
         # Consider the following call stack:
@@ -104,7 +105,7 @@ Constraints can overload this method to add themselves to notify lists or trigge
 """
 function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
-    track!(solver.statistics, "post! $(typeof(constraint))")
+    track!(solver, "post! $(typeof(constraint))")
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
@@ -118,7 +119,7 @@ end
 Overwrites the current state and propagates constraints on the `tree` from the ground up
 """
 function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
-    track!(solver.statistics, "new_state!")
+    track!(solver, "new_state!")
     empty!(solver.schedule)
     solver.state = SolverState(tree)
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
@@ -142,7 +143,7 @@ end
 Returns a copy of the current state that can be restored by calling `load_state!(solver, state)`
 """
 function save_state!(solver::GenericSolver)::SolverState
-    track!(solver.statistics, "save_state!")
+    track!(solver, "save_state!")
     return copy(get_state(solver))
 end
 
@@ -164,7 +165,6 @@ end
 Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
 """
 function get_tree_size(solver::GenericSolver)::Int
-    #TODO: potential optimization: precompute/cache the size of the tree
     return length(get_tree(solver))
 end
 
@@ -237,7 +237,6 @@ end
 Function to be called if any inconsistency has been detected
 """
 function set_infeasible!(solver::GenericSolver)
-    #TODO: immediately delete the state and set the current state to nothing
     solver.state.isfeasible = false
 end
 

@@ -1,4 +1,4 @@
-@testset verbose=true "Forbidden" begin
+@testset verbose=false "Forbidden" begin
     forbidden = Forbidden(RuleNode(4, [
         VarNode(:a),
         VarNode(:a)

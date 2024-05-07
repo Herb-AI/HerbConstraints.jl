@@ -18,33 +18,33 @@ If there is only a single hole that can potentially hold the target rule, that h
 """
 function propagate!(solver::Solver, c::LocalContains)
     node = get_node_at_location(solver, c.path)
-    track!(solver.statistics, "LocalContains propagation")
+    track!(solver, "LocalContains propagation")
     @match _contains(node, c.rule) begin
         true => begin 
-            track!(solver.statistics, "LocalContains satisfied")
+            track!(solver, "LocalContains satisfied")
             deactivate!(solver, c)
         end
         false => begin 
-            track!(solver.statistics, "LocalContains inconsistency")
+            track!(solver, "LocalContains inconsistency")
             set_infeasible!(solver)
         end
         holes::Vector{AbstractHole} => begin
             @assert length(holes) > 0
             if length(holes) == 1
                 if isuniform(holes[1])
-                    track!(solver.statistics, "LocalContains deduction")
+                    track!(solver, "LocalContains deduction")
                     path = vcat(c.path, get_path(node, holes[1]))
                     deactivate!(solver, c)
                     remove_all_but!(solver, path, c.rule)
                 else
-                    #we cannot deduce anything yet, new holes can appear underneath this hole
-                    #TODO: optimize this by checking if the target rule can appear as a child of the fixedshaped hole
-                    track!(solver.statistics, "LocalContains softfail (hole)")
+                    # we cannot deduce anything yet, new holes can appear underneath this hole
+                    # optimize this by checking if the target rule can appear as a child of the hole
+                    track!(solver, "LocalContains softfail (non-uniform hole)")
                 end
             else
-                #multiple holes can be set to the target value, no deduction can be made as this point
-                #TODO: optimize by only repropagating if the number of holes involved is <= 2
-                track!(solver.statistics, "LocalContains softfail (>= 2 holes)")
+                # multiple holes can be set to the target value, no deduction can be made as this point
+                # optimize by only repropagating if the number of holes involved is <= 2
+                track!(solver, "LocalContains softfail (>= 2 holes)")
             end
         end
     end
@@ -65,8 +65,7 @@ end
 
 function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     if !isuniform(node)
-        #TODO: check if the rule might appear underneath this non-uniform hole later
-        # for now, it is assumed this is always possible
+        # the rule might appear underneath this non-uniform hole
         push!(holes, node)
     elseif isfilled(node)
         # if the rulenode is the target rule, return true

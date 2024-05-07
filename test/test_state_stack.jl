@@ -1,4 +1,4 @@
-@testset verbose=true "StateStack" begin
+@testset verbose=false "StateStack" begin
     @testset "empty" begin
         sm = HerbConstraints.StateManager()
         stack = HerbConstraints.StateStack{Int}(sm)

@@ -20,28 +20,27 @@ Deductions are based on the type of the [`PatternMatchResult`](@ref) returned by
 """
 function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
-    track!(solver.statistics, "LocalForbidden propagation")
+    track!(solver, "LocalForbidden propagation")
     @match pattern_match(node, c.tree) begin
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
-            track!(solver.statistics, "LocalForbidden hardfail")
+            track!(solver, "LocalForbidden hardfail")
         end;
         match::PatternMatchSoftFail => begin 
-            # The constraint will re-propagated on any tree manipulation.
-            # TODO: watcher. only propagate when needed.
-            track!(solver.statistics, "LocalForbidden softfail")
+            # The constraint needs to be re-propagated
+            track!(solver, "LocalForbidden softfail")
         end
         ::PatternMatchSuccess => begin 
             # The forbidden tree is exactly matched. This means the state is infeasible.
-            track!(solver.statistics, "LocalForbidden inconsistency")
+            track!(solver, "LocalForbidden inconsistency")
             set_infeasible!(solver) #throw(InconsistencyException())
         end
         match::PatternMatchSuccessWhenHoleAssignedTo => begin
             # Propagate the constraint by removing an impossible value from the found hole.
             # Then, constraint is satisfied and does not have to be re-propagated.
-            track!(solver.statistics, "LocalForbidden deduction")
+            track!(solver, "LocalForbidden deduction")
             #path = get_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_path(node, match.hole))
             deactivate!(solver, c)

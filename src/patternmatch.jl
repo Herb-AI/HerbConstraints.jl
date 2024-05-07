@@ -63,7 +63,7 @@ Pairwise tries to match two ordered lists of [AbstractRuleNode](@ref)s.
 Typically, this function is used to pattern match the children two AbstractRuleNodes.
 """
 function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNode}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    #TODO: decide if invalid arities are allowed in constraints. 
+    # Currently, invalid arities are not supported.
     # Suppose rule 3 = "S -> -S"
     # Consider two equivalent constraints: 
     #     A) Forbidden(RuleNode(3, [RuleNode(3, [VarNode(:a)])]))
@@ -152,8 +152,6 @@ function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, v
         end
     end
 end
-
-#TODO: write unit tests for pattern matches with `StateHole`
 
 """
     pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult

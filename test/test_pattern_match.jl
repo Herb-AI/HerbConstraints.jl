@@ -1,9 +1,7 @@
 using HerbCore
 using HerbGrammar
 
-#TODO: check if the information in a softfail is correct. for now, the information in softfails is ignored.
-
-@testset verbose=true "PatternMatch" begin
+@testset verbose=false "PatternMatch" begin
 
     #the grammar is not needed in the current implementation
     g = @csgrammar begin
@@ -245,6 +243,36 @@ using HerbGrammar
         h2_hardfail = Hole(BitVector((0, 0, 0, 0, 1, 1)))
         @test pattern_match(h1, h2_softfail) isa HerbConstraints.PatternMatchSoftFail
         @test pattern_match(h1, h2_hardfail) isa HerbConstraints.PatternMatchHardFail
+    end
+
+    @testset "StateHole" begin
+        @testset "Success" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSuccess
+        end
+
+        @testset "SuccessWhenHoleAssignedTo" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
+        end
+
+        @testset "Softfail" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchSoftFail
+        end
+
+        @testset "Hardfail" begin
+            sm = HerbConstraints.StateManager()
+            h1 = StateHole(sm, UniformHole(BitVector((1, 0, 0)), [RuleNode(3)]))
+            h2 = StateHole(sm, UniformHole(BitVector((0, 1, 0)), [RuleNode(3)]))
+            @test pattern_match(h1, h2) isa HerbConstraints.PatternMatchHardFail
+        end
     end
 
     @testset "VarNode assigned to a RuleNode" begin
