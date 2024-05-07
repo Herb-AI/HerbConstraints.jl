@@ -10,9 +10,11 @@ using Test
     include("test_pattern_match_domainrulenode.jl")
     #include("test_pattern_match_edgecases.jl")
     include("test_lessthanorequal.jl")
+    include("test_makeequal.jl")
     include("test_forbidden.jl")
     include("test_ordered.jl")
     include("test_contains.jl")
+    include("test_contains_subtree.jl")
     include("test_forbidden_sequence.jl")
     include("test_unique.jl")
 
