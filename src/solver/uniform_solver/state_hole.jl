@@ -84,6 +84,27 @@ end
 HerbCore.get_children(hole::StateHole) = hole.children
 
 
+function Base.:(==)(A::StateHole, B::StateHole)
+	isfilled(A) && isfilled(B) &&
+    	(get_rule(A) == get_rule(B)) && 
+		(length(A.children) == length(B.children)) &&
+		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
+end
+
+function Base.:(==)(A::RuleNode, B::StateHole)
+	isfilled(B) &&
+    	(get_rule(A) == get_rule(B)) && 
+		(length(A.children) == length(B.children)) &&
+		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
+end
+
+function Base.:(==)(A::StateHole, B::RuleNode)
+	isfilled(A) &&
+    	(get_rule(A) == get_rule(B)) && 
+		(length(A.children) == length(B.children)) &&
+		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
+end
+
 """
 	freeze_state(hole::StateHole)::RuleNode
 
