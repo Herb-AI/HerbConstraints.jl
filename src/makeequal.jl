@@ -53,8 +53,6 @@ function make_equal!(
     vars::Dict{Symbol, AbstractRuleNode}
 )::MakeEqualResult
     @assert isfeasible(solver)
-    path1 = get_path(get_tree(solver), hole1)
-    path2 = get_path(get_tree(solver), hole2)
     @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin
             #(RuleNode, RuleNode)
@@ -69,6 +67,7 @@ function make_equal!(
                 set_infeasible!(solver)
                 return MakeEqualHardFail()
             end
+            path2 = get_path(solver, hole2)
             remove_all_but!(solver, path2, get_rule(hole1))
             hole2 = get_node_at_location(solver, path2)
         end
@@ -78,6 +77,7 @@ function make_equal!(
                 set_infeasible!(solver)
                 return MakeEqualHardFail()
             end
+            path1 = get_path(solver, hole1)
             remove_all_but!(solver, path1, get_rule(hole2))
             hole1 = get_node_at_location(solver, path1)
         end
@@ -87,6 +87,8 @@ function make_equal!(
             if length(rules) == 0
                 return MakeEqualHardFail()
             elseif length(rules) == 1
+                path1 = get_path(solver, hole1)
+                path2 = get_path(solver, hole2)
                 remove_all_but!(solver, path1, rules[1])
                 remove_all_but!(solver, path2, rules[2])
                 hole1 = get_node_at_location(solver, path1)

@@ -256,6 +256,15 @@ end
 
 
 """
+    get_path(solver::UniformSolver, node::AbstractRuleNode)
+
+Get the path at which the `node` is located.
+"""
+function HerbCore.get_path(solver::GenericSolver, node::AbstractRuleNode)::Vector{Int}
+    return get_path(get_tree(solver), node)
+end
+
+"""
     HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
 
 Get the node at path `location`.
