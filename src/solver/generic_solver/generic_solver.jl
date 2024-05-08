@@ -109,7 +109,10 @@ function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
+    solver.fix_point_running = true
     propagate!(solver, constraint)
+    solver.fix_point_running = false
+    fix_point!(solver)
 end
 
 

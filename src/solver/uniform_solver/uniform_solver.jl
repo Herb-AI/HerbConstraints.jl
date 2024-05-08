@@ -146,7 +146,10 @@ Converts the constraint to a state constraint and schedules it for propagation.
 function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
+    solver.fix_point_running = true
     propagate!(solver, constraint)
+    solver.fix_point_running = false
+    fix_point!(solver)
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
         track!(solver, "cancel post (2/2)")
