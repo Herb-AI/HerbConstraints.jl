@@ -81,7 +81,8 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNo
     # end
     @assert length(rns) == length(mns) "Unable to pattern match rulenodes with different arities"
     match_result = PatternMatchSuccess()
-    for child_match_result ∈ map(tup -> pattern_match(tup[2][1], tup[2][2], vars), enumerate(zip(rns, mns)))
+    for (n1, n2) ∈ zip(rns, mns)
+        child_match_result = pattern_match(n1, n2, vars)
         @match child_match_result begin
             ::PatternMatchHardFail => return child_match_result;
             ::PatternMatchSoftFail => (match_result = child_match_result); #continue searching for a hardfail
