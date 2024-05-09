@@ -87,10 +87,11 @@ function make_equal!(
             if length(rules) == 0
                 return MakeEqualHardFail()
             elseif length(rules) == 1
+                rule = rules[1]
                 path1 = get_path(solver, hole1)
                 path2 = get_path(solver, hole2)
-                remove_all_but!(solver, path1, rules[1])
-                remove_all_but!(solver, path2, rules[2])
+                remove_all_but!(solver, path1, rule)
+                remove_all_but!(solver, path2, rule)
                 hole1 = get_node_at_location(solver, path1)
                 hole2 = get_node_at_location(solver, path2)
             else
