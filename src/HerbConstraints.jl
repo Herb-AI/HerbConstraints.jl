@@ -36,6 +36,17 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
+
+"""
+    function get_priority(::AbstractLocalConstraint)
+
+Used to determine which constraint to propagate first in [`fix_point!`](@ref).
+Constraints with fast propagators and/or strong inference should be propagated first.
+"""
+function get_priority(::AbstractLocalConstraint)
+    return 0
+end
+
 include("csg_annotated/csg_annotated.jl")
 
 include("varnode.jl")
