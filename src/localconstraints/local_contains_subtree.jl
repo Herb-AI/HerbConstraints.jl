@@ -66,24 +66,28 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                 remove!(c.indices, i)
             end
         end
-        if length(c.indices) == 1
+        n = length(c.indices)
+        if n == 0
+            track!(solver, "LocalContainsSubtree inconsistency (0 candidates remaining)")
+            set_infeasible!(solver)
+            return
+        elseif n == 1
             @match make_equal!(solver, c.candidates[findfirst(c.indices)], c.tree) begin
                 ::MakeEqualSuccess => begin 
                     track!(solver, "LocalContainsSubtree deduction (1 candidate remaining)")
                     deactivate!(solver, c);
-                    return;
+                    return
                 end 
                 ::MakeEqualHardFail => begin 
                     track!(solver, "LocalContainsSubtree inconsistency (1 candidate remaining)")
                     set_infeasible!(solver);
-                    return;
+                    return
                 end 
                 ::MakeEqualSoftFail => begin
                     track!(solver, "LocalContainsSubtree softfail (1 candidate remaining)");
                     return
                 end 
             end
-            return
         end
     end
     track!(solver, "LocalContainsSubtree softfail (>=2 candidates)")
