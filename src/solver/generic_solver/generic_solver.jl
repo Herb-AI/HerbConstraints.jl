@@ -109,10 +109,10 @@ function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
+    temp = solver.fix_point_running
     solver.fix_point_running = true
     propagate!(solver, constraint)
-    solver.fix_point_running = false
-    fix_point!(solver)
+    solver.fix_point_running = temp
 end
 
 
@@ -259,7 +259,7 @@ end
 
 
 """
-    get_path(solver::UniformSolver, node::AbstractRuleNode)
+    get_path(solver::GenericSolver, node::AbstractRuleNode)
 
 Get the path at which the `node` is located.
 """
