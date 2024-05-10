@@ -102,7 +102,8 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                 end
             end
         end
-        if isnothing(c.indices) || (size(c.indices) == 1)
+        n = isnothing(c.indices) ? 1 : size(c.indices)
+        if n == 1
             # If there is a single candidate remaining, set it equal to the target tree
             index = isnothing(c.indices) ? 1 : findfirst(c.indices)
             @match make_equal!(solver, c.candidates[index], c.tree) begin
@@ -121,6 +122,10 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                     return
                 end 
             end
+        elseif n == 0
+            track!(solver, "LocalContainsSubtree inconsistency")
+            set_infeasible!(solver)
+            return
         end
         track!(solver, "LocalContainsSubtree softfail (>=2 candidates)")
     end
