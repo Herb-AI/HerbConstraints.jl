@@ -94,6 +94,16 @@ end
 
 
 """
+    get_nodes(solver)
+
+Return an iterator over all nodes in the tree
+"""
+function get_nodes(solver)
+    return keys(solver.node_to_path)
+end
+
+
+"""
     function get_grammar(solver::UniformSolver)::AbstractGrammar
 
 Get the grammar.
