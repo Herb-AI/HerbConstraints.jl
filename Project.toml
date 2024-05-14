@@ -10,7 +10,7 @@ HerbGrammar = "4ef9e186-2fe5-4b24-8de7-9f7291f24af7"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 
 [compat]
-DataStructures = "^0.18.20"
+DataStructures = "0.17,0.18"
 HerbCore = "^0.3.0"
 HerbGrammar = "^0.3.0"
 MLStyle = "^0.4.17"
