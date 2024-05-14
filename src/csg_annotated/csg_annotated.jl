@@ -38,14 +38,14 @@ end
 ```
 """
 macro csgrammar_annotated(expression)
-	# collect and remove labels
+    # collect and remove labels
     labels = _get_labels!(expression)
 
     # parse rules, get constraints from annotations
     rules = Any[]
     types = Symbol[]
     bytype = Dict{Symbol,Vector{Int}}()
-    constraints = Vector{Constraint}()
+    constraints = Vector{AbstractConstraint}()
 
     rule_index = 1
 
@@ -92,10 +92,11 @@ macro csgrammar_annotated(expression)
 
     # determine parameters
     alltypes = collect(keys(bytype))
-	is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
-	is_eval = [iseval(rule) for rule ∈ rules]
-	childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
-	domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
+    is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
+    is_eval = [iseval(rule) for rule ∈ rules]
+    childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
+    bychildtypes = [BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for i1 ∈ 1:length(rules)]
+    domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
 
     return ContextSensitiveGrammar(
         rules,
@@ -103,8 +104,9 @@ macro csgrammar_annotated(expression)
         is_terminal,
         is_eval,
         bytype,
-		domains,
+        domains,
         childtypes,
+        bychildtypes,
         nothing,
         constraints
     )
@@ -146,7 +148,7 @@ transitive: creates an (incorrect) Forbidden constraint
 forbidden_path(path::Vector{Union{Symbol, Int}}): creates a ForbiddenPath constraint with the original rule included
 ... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
 """
-function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::Constraint
+function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::AbstractConstraint
     if annotation isa Expr
         # function-like annotations
         if annotation.head == :call

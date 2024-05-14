@@ -2,110 +2,153 @@ module HerbConstraints
 
 using HerbCore
 using HerbGrammar
+using DataStructures
+using MLStyle
 
 """
-    PropagatorConstraint <: Constraint
+    abstract type AbstractGrammarConstraint <: AbstractConstraint
 
-Abstract type representing all propagator constraints.
-Each propagator constraint has an implementation of a [`propagate`](@ref)-function that takes
-
-- the [`PropagatorConstraint`](@ref)
-- a [`AbstractGrammar`](@ref)
-- a [`GrammarContext`](@ref), which most importantly contains the tree and the location 
-  in the tree where propagation should take place.
-- The `domain` which the [`propagate`](@ref)-function prunes. 
-
-The [`propagate`](@ref)-function returns a tuple containing
-
-- The pruned `domain`
-- A list of new [`LocalConstraint`](@ref)s
+Abstract type representing all user-defined constraints.
+Each grammar constraint has a related [AbstractLocalConstraint](@ref) that is responsible for propagating the constraint at a specific location in the tree.
+Grammar constraints should implement `on_new_node` to post a [`AbstractLocalConstraint`](@ref) at that new node
 """
-abstract type PropagatorConstraint <: Constraint end
+abstract type AbstractGrammarConstraint <: AbstractConstraint end
 
 """
-    abstract type LocalConstraint <: Constraint
+    abstract type AbstractLocalConstraint <: AbstractConstraint
 
 Abstract type representing all local constraints.
-Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
-Each local constraint contains a `path` to a specific location in the tree.  
-Each local constraint has an implementation of a [`propagate`](@ref)-function that takes
+Each local constraint contains a `path` that points to a specific location in the tree at which the constraint applies.
 
-- the [`LocalConstraint`](@ref)
-- a [`AbstractGrammar`](@ref)
-- a [`GrammarContext`](@ref), which most importantly contains the tree and the location 
-  in the tree where propagation should take place.
-- The `domain` which the [`propagate`](@ref)-function prunes. 
-
-The [`propagate`](@ref)-function returns a tuple containing
-
-- The pruned `domain`
-- A list of new [`LocalConstraint`](@ref)s
-
-!!! warning
-    By default, [`LocalConstraint`](@ref)s are only propagated once.
-    Constraints that have to be propagated more frequently should return 
-    themselves in the list of new local constraints.
+Each local constraint should implement a [`propagate!`](@ref)-function.
+Inside the [`propagate!`](@ref) function, the constraint can use the following solver functions:
+- `remove!`: Elementary tree manipulation. Removes a value from a domain. (other tree manipulations are: `remove_above!`, `remove_below!`, `remove_all_but!`)
+- `deactivate!`: Prevent repropagation. Call this as soon as the constraint is satisfied.
+- `set_infeasible!`: Report a non-trivial inconsistency. Call this if the constraint can never be satisfied. An empty domain is considered a trivial inconsistency, such inconsistencies are already handled by tree manipulations.
+- `isfeasible`: Check if the current tree is still feasible. Return from the propagate function, as soon as infeasibility is detected.
 """
-abstract type LocalConstraint <: Constraint end
+abstract type AbstractLocalConstraint <: AbstractConstraint end
 
-@enum PropagateFailureReason unchanged_domain=1
-PropagatedDomain = Union{PropagateFailureReason, Vector{Int}}
 
-include("matchfail.jl")
-include("matchnode.jl")
-include("context.jl")
-include("patternmatch.jl")
-include("rulenodematch.jl")
+"""
+    function get_priority(::AbstractLocalConstraint)
+
+Used to determine which constraint to propagate first in [`fix_point!`](@ref).
+Constraints with fast propagators and/or strong inference should be propagated first.
+"""
+function get_priority(::AbstractLocalConstraint)
+    return 0
+end
 
 include("csg_annotated/csg_annotated.jl")
 
-include("propagatorconstraints/comesafter.jl")
-include("propagatorconstraints/forbidden_path.jl")
-include("propagatorconstraints/require_on_left.jl")
-include("propagatorconstraints/forbidden.jl")
-include("propagatorconstraints/ordered.jl")
-include("propagatorconstraints/condition.jl")
-include("propagatorconstraints/one_of.jl")
+include("varnode.jl")
+include("domainrulenode.jl")
+
+include("solver/solver.jl")
+include("solver/solverstatistics.jl")
+include("solver/generic_solver/state.jl")
+include("solver/generic_solver/generic_solver.jl")
+include("solver/generic_solver/treemanipulations.jl")
+
+include("solver/uniform_solver/state_manager.jl")
+include("solver/uniform_solver/state_stack.jl")
+include("solver/uniform_solver/state_sparse_set.jl")
+include("solver/uniform_solver/state_hole.jl")
+include("solver/uniform_solver/uniform_solver.jl")
+include("solver/uniform_solver/uniform_treemanipulations.jl")
+include("solver/domainutils.jl")
+
+include("patternmatch.jl")
+include("lessthanorequal.jl")
+include("makeequal.jl")
 
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
-include("localconstraints/local_condition.jl")
-include("localconstraints/local_one_of.jl")
+include("localconstraints/local_contains.jl")
+include("localconstraints/local_contains_subtree.jl")
+include("localconstraints/local_forbidden_sequence.jl")
+include("localconstraints/local_unique.jl")
+
+include("grammarconstraints/forbidden.jl")
+include("grammarconstraints/ordered.jl")
+include("grammarconstraints/contains.jl")
+include("grammarconstraints/contains_subtree.jl")
+include("grammarconstraints/forbidden_sequence.jl")
+include("grammarconstraints/unique.jl")
 
 export
-    AbstractMatchNode,
-    MatchNode,
-    MatchVar,
-    matchnode2expr,
+    AbstractGrammarConstraint,
+    AbstractLocalConstraint,
 
-    GrammarContext,
-    addparent!,
-    copy_and_insert,
-
-    contains_var,
-
-    PropagatorConstraint,
-    LocalConstraint,
-    PropagateFailureReason,
-    PropagatedDomain,
-
-    propagate,
+    DomainRuleNode,
+    VarNode,
+    pattern_match,
     check_tree,
-
-    generateconstraints!,
-
-    ComesAfter,
-    ForbiddenPath,
-    RequireOnLeft,
+    
+    #grammar constraints
     Forbidden,
     Ordered,
-    Condition,
-    OneOf,
+    Contains,
+    ContainsSubtree,
+    ForbiddenSequence,
+    Unique,
 
+    #local constraints
     LocalForbidden,
     LocalOrdered,
-    LocalCondition
-    LocalOrdered,
-    LocalOneOf
+    LocalContains,
+    LocalContainsSubtree,
+    LocalForbiddenSequence,
+    LocalUnique,
+
+    #public solver functions
+    GenericSolver,
+    Solver,
+    SolverState,
+    new_state!,
+    save_state!,
+    load_state!,
+    isfeasible,
+    get_state,
+    get_tree,
+    get_grammar,
+    get_starting_symbol,
+    get_state,
+    get_node_at_location,
+    get_hole_at_location,
+    get_max_depth,
+    get_max_size,
+    get_tree_size,
+
+    #tree manipulations
+    remove!,
+    remove_all_but!,
+    substitute!,
+    remove_node!,
+
+    #domainutils
+    is_subdomain,
+    partition,
+    are_disjoint,
+    get_intersection,
+
+    #solverstatistics
+    track!,
+
+    #functions related to stateful objects
+    restore!,
+    StateInt,
+    get_value,
+    set_value!,
+    increment!,
+    decrement!,
+
+    #uniform solver
+    UniformSolver,
+
+    #state fixed shaped hole
+    StateHole,
+    freeze_state
 
 end # module HerbConstraints
