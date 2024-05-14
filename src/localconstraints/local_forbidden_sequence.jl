@@ -93,11 +93,18 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
+                #softfail (ignore if)
                 return
             elseif (rule == forbidden_rule)
                 i -= 1
             end
         elseif isnothing(forbidden_assignment)
+            for r ∈ c.ignore_if
+                if node.domain[r]
+                    #softfail (ignore if)
+                    return
+                end
+            end
             forbidden_assignment = (path_idx, forbidden_rule)
             i -= 1
         end

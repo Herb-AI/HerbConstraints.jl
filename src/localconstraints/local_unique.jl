@@ -3,11 +3,15 @@
     LocalUnique <: AbstractLocalConstraint
 
 Enforces that a given `rule` appears at or below the given `path` at most once.
+In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
 struct LocalUnique <: AbstractLocalConstraint
 	path::Vector{Int}
     rule::Int
+    holes::Vector{AbstractHole}
 end
+
+LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
 
 """
     function propagate!(solver::Solver, c::LocalUnique)
@@ -17,25 +21,30 @@ Uses a helper function to retrieve a list of holes that can potentially hold the
 If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
 """
 function propagate!(solver::Solver, c::LocalUnique)
-    node = get_node_at_location(solver, c.path)
-    holes = Vector{AbstractHole}()
-    count = _count_occurrences!(node, c.rule, holes)
     track!(solver, "LocalUnique propagation")
+    if (solver isa GenericSolver) | isempty(c.holes)
+        empty!(c.holes)
+        node = get_node_at_location(solver, c.path)
+        count = _count_occurrences!(node, c.rule, c.holes)
+    else
+        #only search for the target rule in the cached list of holes
+        count = _count_occurrences(c.holes, c.rule)
+    end
     if count >= 2
         set_infeasible!(solver)
         track!(solver, "LocalUnique inconsistency")
     elseif count == 1
-        if all(isuniform(hole) for hole ∈ holes)
+        if all(isuniform(hole) for hole ∈ c.holes)
             track!(solver, "LocalUnique deactivate")
             deactivate!(solver, c)
         end 
-        for hole ∈ holes
+        for hole ∈ c.holes
             deductions = 0
-            if hole.domain[c.rule] == true
-                path = get_path(get_tree(solver), hole)
+            if (hole.domain[c.rule] == true) && !isfilled(hole)
+                path = get_path(solver, hole)
                 remove!(solver, path, c.rule)
                 deductions += 1
-                track!(solver, "LocalUnique deduction ($(deductions))")
+                track!(solver, "LocalUnique deduction")
             end
         end
     end
@@ -75,4 +84,26 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
         end
     end
     return count
+end
+
+"""
+    function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
+
+Counts the occurences of the `rule` in the cached list of `holes`.
+
+!!! warning: 
+    Stops counting if the rule occurs more than once. 
+    Counting beyond 2 is not needed for LocalUnique. 
+"""
+function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
+    count = 0
+    for hole ∈ holes
+        if isfilled(hole) && get_rule(hole) == rule
+            count += 1
+            if count >= 2
+                break
+            end
+        end
+    end
+    count
 end

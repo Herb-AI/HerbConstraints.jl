@@ -82,18 +82,18 @@ using HerbGrammar
     @testset "partition" begin
         #partion groups the rules by childtypes
         g = @csgrammar begin
-            A = 1           #1
-            A = 1           #2
-            A = A           #3
-            A = A           #4
-            A = (A, A)      #5
-            A = (A, A)      #6
-            A = (A, B)      #7
-            A = (A, B)      #8
-            B = 1           #9
-            B = 1           #10
-            B = (A, B)      #11
-            B = (A, B)      #12
+            A = (1)
+            A = (2)
+            A = (3, A)
+            A = (4, A)
+            A = (5, A, A)
+            A = (6, A, A)
+            A = (7, A, B)
+            A = (8, A, B)
+            B = (9)
+            B = (10)
+            B = (11, A, B)
+            B = (12, A, B)
         end
         domains = partition(Hole(get_domain(g, :A)), g)
         @test length(domains) == 4

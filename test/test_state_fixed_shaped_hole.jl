@@ -66,4 +66,25 @@
         hole = HerbConstraints.StateHole(HerbConstraints.StateManager(), UniformHole(BitVector((0, 0, 0)), []))
         @test isfilled(hole) == false
     end
+
+    @testset "(==)" begin
+        sm = HerbConstraints.StateManager()
+        node = RuleNode(3, [
+            RuleNode(2),
+            RuleNode(1)
+        ])
+        statehole = StateHole(sm, node)
+        @test node == statehole
+        @test statehole == node
+        @test statehole == StateHole(sm, node)
+
+        node2 = RuleNode(3, [
+            RuleNode(1),
+            RuleNode(1)
+        ])
+        statehole2 = StateHole(sm, node2)
+        @test node != statehole2
+        @test statehole2 != node
+        @test statehole != statehole2
+    end
 end

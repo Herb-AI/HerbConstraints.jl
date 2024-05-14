@@ -18,9 +18,7 @@ abstract type AbstractGrammarConstraint <: AbstractConstraint end
     abstract type AbstractLocalConstraint <: AbstractConstraint
 
 Abstract type representing all local constraints.
-Local constraints correspond to a specific (partial) [`AbstractRuleNode`](@ref) tree.
-Each local constraint contains a `path` that points to a specific location in the tree.
-The constraint is propagated on any tree manipulation at or below that `path`.
+Each local constraint contains a `path` that points to a specific location in the tree at which the constraint applies.
 
 Each local constraint should implement a [`propagate!`](@ref)-function.
 Inside the [`propagate!`](@ref) function, the constraint can use the following solver functions:
@@ -28,13 +26,19 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 - `deactivate!`: Prevent repropagation. Call this as soon as the constraint is satisfied.
 - `set_infeasible!`: Report a non-trivial inconsistency. Call this if the constraint can never be satisfied. An empty domain is considered a trivial inconsistency, such inconsistencies are already handled by tree manipulations.
 - `isfeasible`: Check if the current tree is still feasible. Return from the propagate function, as soon as infeasibility is detected.
-
-!!! warning
-    By default, [`AbstractLocalConstraint`](@ref)s are only propagated once.
-    Constraints that have to be propagated more frequently should subscribe to an event. This part of the solver is still WIP.
-    Currently, the solver supports only one type of subscription: `propagate_on_tree_manipulation!`.
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
+
+
+"""
+    function get_priority(::AbstractLocalConstraint)
+
+Used to determine which constraint to propagate first in [`fix_point!`](@ref).
+Constraints with fast propagators and/or strong inference should be propagated first.
+"""
+function get_priority(::AbstractLocalConstraint)
+    return 0
+end
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -57,16 +61,19 @@ include("solver/domainutils.jl")
 
 include("patternmatch.jl")
 include("lessthanorequal.jl")
+include("makeequal.jl")
 
 include("localconstraints/local_forbidden.jl")
 include("localconstraints/local_ordered.jl")
 include("localconstraints/local_contains.jl")
+include("localconstraints/local_contains_subtree.jl")
 include("localconstraints/local_forbidden_sequence.jl")
 include("localconstraints/local_unique.jl")
 
 include("grammarconstraints/forbidden.jl")
 include("grammarconstraints/ordered.jl")
 include("grammarconstraints/contains.jl")
+include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
@@ -83,6 +90,7 @@ export
     Forbidden,
     Ordered,
     Contains,
+    ContainsSubtree,
     ForbiddenSequence,
     Unique,
 
@@ -90,6 +98,7 @@ export
     LocalForbidden,
     LocalOrdered,
     LocalContains,
+    LocalContainsSubtree,
     LocalForbiddenSequence,
     LocalUnique,
 

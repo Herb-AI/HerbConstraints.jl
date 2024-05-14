@@ -31,7 +31,7 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
-        ::Bool => with_statistics ? SolverStatistics("UniformSolver") : nothing
+        ::Bool => with_statistics ? SolverStatistics() : nothing
         ::Nothing => nothing
     end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
@@ -94,6 +94,16 @@ end
 
 
 """
+    get_nodes(solver)
+
+Return an iterator over all nodes in the tree
+"""
+function get_nodes(solver)
+    return keys(solver.node_to_path)
+end
+
+
+"""
     function get_grammar(solver::UniformSolver)::AbstractGrammar
 
 Get the grammar.
@@ -146,7 +156,10 @@ Converts the constraint to a state constraint and schedules it for propagation.
 function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
     # initial propagation of the new constraint
+    temp = solver.fix_point_running
+    solver.fix_point_running = true
     propagate!(solver, constraint)
+    solver.fix_point_running = temp
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
         track!(solver, "cancel post (2/2)")

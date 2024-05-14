@@ -32,6 +32,7 @@ function fix_point!(solver::Solver)
     while !isempty(solver.schedule)
         if !isfeasible(solver)
             #an inconsistency was found, stop propagating constraints and return
+            track!(solver, "inconsistency")
             empty!(solver.schedule)
             break
         end
@@ -51,7 +52,7 @@ function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
         track!(solver, "schedule!")
-        enqueue!(solver.schedule, constraint, 99)
+        enqueue!(solver.schedule, constraint, get_priority(constraint))
     end
 end
 

@@ -98,8 +98,6 @@ function make_less_than_or_equal!(
     guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
-    path1 = get_path(get_tree(solver), hole1)
-    path2 = get_path(get_tree(solver), hole2)
     @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin
             #(RuleNode, RuleNode)
@@ -119,6 +117,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSoftFail(hole2)
                 end
             end
+            path2 = get_path(solver, hole2)
             remove_below!(solver, path2, get_rule(hole1))
             if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
@@ -151,6 +150,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSoftFail(hole1)
                 end
             end
+            path1 = get_path(solver, hole1)
             remove_above!(solver, path1, get_rule(hole2))
             if !isfeasible(solver)
                 return LessThanOrEqualHardFail()
@@ -183,6 +183,8 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSoftFail(hole1, hole2)
                 end
             end
+            path1 = get_path(solver, hole1)
+            path2 = get_path(solver, hole2)
             # Example:
             # Before: {2, 3, 5} <= {1, 3, 4}
             # After:  {2, 3} <= {3, 4}
@@ -249,7 +251,7 @@ function make_less_than_or_equal!(
                     return result
                 elseif length(guards) == 1
                     # a single guard is involved, preventing equality on the guard prevents the hardfail on the tiebreak
-                    path = get_path(get_tree(solver), guards[1][1])
+                    path = get_path(solver, guards[1][1])
                     remove!(solver, path, guards[1][2])
                     return LessThanOrEqualSuccessLessThan()
                 else

@@ -109,7 +109,10 @@ function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
+    temp = solver.fix_point_running
+    solver.fix_point_running = true
     propagate!(solver, constraint)
+    solver.fix_point_running = temp
 end
 
 
@@ -254,6 +257,15 @@ function isfeasible(solver::GenericSolver)
     return get_state(solver).isfeasible
 end
 
+
+"""
+    get_path(solver::GenericSolver, node::AbstractRuleNode)
+
+Get the path at which the `node` is located.
+"""
+function HerbCore.get_path(solver::GenericSolver, node::AbstractRuleNode)::Vector{Int}
+    return get_path(get_tree(solver), node)
+end
 
 """
     HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
