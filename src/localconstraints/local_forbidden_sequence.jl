@@ -51,9 +51,11 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
                         rules = [r for r ∈ findall(node.domain) if r ∉ c.ignore_if]
                         if !isempty(rules)
                             push!(forbidden_assignments, (path_idx, rules))
-                            i -= 1
+                            break
                         end
-                        break
+                        deactivate!(solver, c)
+                        track!(solver, "LocalForbiddenSequence deactivate by ignore_if")
+                        return
                     end
                 end
             end
