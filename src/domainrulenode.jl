@@ -13,5 +13,15 @@ struct DomainRuleNode <: AbstractRuleNode
     children::Vector{AbstractRuleNode}
 end
 
+function DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}, children::Vector{<:AbstractRuleNode})
+    domain = falses(length(grammar.rules))
+    for r ∈ rules
+        domain[r] = true
+    end
+    return DomainRuleNode(domain, children)
+end
+
+DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}) = DomainRuleNode(grammar, rules, Vector{AbstractRuleNode}())
+
 #DomainRuleNode(get_domain(grammar, sym), [])
 DomainRuleNode(domain::BitVector) = DomainRuleNode(domain, [])
