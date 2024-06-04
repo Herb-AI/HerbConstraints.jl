@@ -50,11 +50,11 @@ get_name(::UniformSolver) = "UniformSolver"
 Notify all grammar constraints about the new `node` and its (grand)children
 """
 function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
+    solver.path_to_node[path] = node
+    solver.node_to_path[node] = path
     for (i, childnode) ∈ enumerate(get_children(node))
         notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
-    solver.path_to_node[path] = node
-    solver.node_to_path[node] = path
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, path)
     end
