@@ -280,5 +280,18 @@
                 @test domain_leaf_target[rule] == tree.children[1].domain[rule]
             end
         end
+
+        @testset "HardFail" begin
+            grammar = @csgrammar begin
+                S = 1
+                S = 2
+                S = 3
+                S = 4
+            end
+            addconstraint!(grammar, ContainsSubtree(DomainRuleNode(grammar, [1, 2])))
+
+            @test !isfeasible(UniformSolver(grammar, RuleNode(3)))
+            @test !isfeasible(UniformSolver(grammar, UniformHole(BitVector((0, 0, 1, 1)), [])))
+        end
     end
 end
