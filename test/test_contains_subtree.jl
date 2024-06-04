@@ -208,4 +208,77 @@
             end
         end
     end
+
+    @testset "DomainRuleNode" begin
+        tests = [
+            (
+                "SoftFail large domain",
+                BitVector((0, 0, 0, 1, 1, 1)), # domain_root
+                BitVector((0, 0, 0, 1, 1, 1)), # domain_root_target
+
+                BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf
+                BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf_target
+            ),
+            (
+                "SoftFail small domain",
+                BitVector((0, 0, 0, 1, 1, 0)), # domain_root
+                BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
+
+                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
+                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
+            ),
+            (
+                "Deduction in Root",
+                BitVector((0, 0, 0, 1, 0, 1)), # domain_root
+                BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
+
+                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
+                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
+            ),
+            (
+                "Deduction in Leaf",
+                BitVector((0, 0, 0, 1, 1, 0)), # domain_root
+                BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
+
+                BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
+                BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
+            ),
+            (
+                "Deduction in Root and Leaf",
+                BitVector((0, 0, 0, 1, 0, 1)), # domain_root
+                BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
+
+                BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
+                BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
+            )
+        ]
+
+        @testset "$name" for (name, domain_root, domain_root_target, domain_leaf, domain_leaf_target) ∈ tests
+            grammar = @csgrammar begin
+                S = 1
+                S = 2
+                S = 3
+                S = 4, S
+                S = 5, S
+                S = 6, S
+            end
+    
+            # must contain at least rule 4 or 5 in the root.
+            # must contain at least rule 1 or 2 in the leaf. 
+            addconstraint!(grammar, ContainsSubtree(DomainRuleNode(grammar, [4, 5], [
+                DomainRuleNode(grammar, [1, 2])
+            ])))
+
+            tree = UniformHole(domain_root, [
+                UniformHole(domain_leaf, [])
+            ])
+            solver = UniformSolver(grammar, tree)
+            tree = get_tree(solver)
+
+            for rule ∈ 1:6
+                @test domain_root_target[rule] == tree.domain[rule]
+                @test domain_leaf_target[rule] == tree.children[1].domain[rule]
+            end
+        end
+    end
 end
