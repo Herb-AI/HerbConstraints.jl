@@ -100,15 +100,17 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
             elseif (rule == forbidden_rule)
                 i -= 1
             end
-        elseif isnothing(forbidden_assignment)
+        else
             for r ∈ c.ignore_if
                 if node.domain[r]
                     #softfail (ignore if)
                     return
                 end
             end
-            forbidden_assignment = (path_idx, forbidden_rule)
-            i -= 1
+            if isnothing(forbidden_assignment)
+                forbidden_assignment = (path_idx, forbidden_rule)
+                i -= 1
+            end
         end
         if i == 0
             break
