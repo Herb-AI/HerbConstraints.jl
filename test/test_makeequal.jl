@@ -128,4 +128,63 @@ using HerbCore, HerbGrammar
         @test HerbConstraints.make_equal!(solver, node, varnode) isa HerbConstraints.MakeEqualSuccess
         @test node == RuleNode(4, [RuleNode(1), RuleNode(1)])
     end
+
+    @testset "MakeEqualSuccess, 1 RuleNode and a DomainRuleNode" begin
+        node = RuleNode(4, [
+            RuleNode(1), 
+            RuleNode(2)
+        ])
+        domainrulenode = DomainRuleNode(BitVector([0, 0, 1, 1]), [
+            RuleNode(1), 
+            RuleNode(2)
+        ])
+        solver, node, _ = create_dummy_solver(node, RuleNode(1))
+        
+        @test HerbConstraints.make_equal!(solver, node, domainrulenode) isa HerbConstraints.MakeEqualSuccess
+        @test node == RuleNode(4, [RuleNode(1), RuleNode(2)])
+    end
+
+    @testset "MakeEqualHardFail, 1 RuleNode and a DomainRuleNode" begin
+        node = RuleNode(4, [
+            RuleNode(1), 
+            RuleNode(2)
+        ])
+        domainrulenode = DomainRuleNode(BitVector([0, 1, 0, 0]), [
+            RuleNode(1), 
+            RuleNode(1)
+        ])
+        solver, node, _ = create_dummy_solver(node, RuleNode(1))
+        
+        @test HerbConstraints.make_equal!(solver, node, domainrulenode) isa HerbConstraints.MakeEqualHardFail
+        @test node != domainrulenode
+    end
+
+    @testset "MakeEqualHardFail, 1 AbstractHole and a DomainRuleNode" begin
+        hole = UniformHole(BitVector([1, 0, 0, 0]), [])
+        domainrulenode = DomainRuleNode(BitVector([0, 1, 0, 0]), [
+            RuleNode(1), 
+            RuleNode(1)
+        ])
+
+        solver, hole, _ = create_dummy_solver(hole, RuleNode(1))
+
+        @test HerbConstraints.make_equal!(solver, hole, domainrulenode) isa HerbConstraints.MakeEqualHardFail
+        @test hole != domainrulenode
+    end
+
+    @testset "MakeEqualSoftFail, DomainRuleNode's with VarNodes" begin
+        node = RuleNode(4, [
+            UniformHole(BitVector([1, 1, 0, 0]), []),
+            UniformHole(BitVector([1, 1, 0, 0]), [])
+        ])
+        vardomainrulenode = DomainRuleNode(BitVector([0, 0, 0, 1]), [
+            VarNode(:a), 
+            VarNode(:a)
+        ])
+
+        solver, node, _ = create_dummy_solver(node, RuleNode(1))
+
+        @test HerbConstraints.make_equal!(solver, node, vardomainrulenode) isa HerbConstraints.MakeEqualSoftFail
+        @test node != vardomainrulenode
+    end
 end
