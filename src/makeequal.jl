@@ -41,7 +41,7 @@ Tree manipulation that enforces `node1` == `node2` if unambiguous.
 function make_equal!(
     solver::Solver, 
     hole1::Union{RuleNode, AbstractHole},
-    hole2::Union{RuleNode, AbstractHole}
+    hole2::Union{RuleNode, AbstractHole, DomainRuleNode}
 )::MakeEqualResult
     make_equal!(solver, hole1, hole2, Dict{Symbol, AbstractRuleNode}())
 end
@@ -128,9 +128,41 @@ function make_equal!(
 end
 
 function make_equal!(
-    ::Solver, 
-    ::Union{RuleNode, AbstractHole},
-    ::DomainRuleNode
+    solver::Solver, 
+    node::Union{RuleNode, AbstractHole},
+    domainrulenode::DomainRuleNode,
+    vars::Dict{Symbol, AbstractRuleNode}
 )::MakeEqualResult
-    throw("NotImplementedException: DomainRuleNodes are not yet support in make_equal!")
+    softfailed = false 
+    if isfilled(node)
+        #(RuleNode, DomainRuleNode)
+        if !domainrulenode.domain[get_rule(node)]
+            set_infeasible!(solver)
+            return MakeEqualHardFail()
+        end
+    else
+        #(AbstractHole, DomainRuleNode)
+        rules = get_intersection(node.domain, domainrulenode.domain)
+        if length(rules) == 0
+            return MakeEqualHardFail()
+        elseif length(rules) == 1
+            path = get_path(solver, node)
+            remove_all_but!(solver, path, rules[1])
+            node = get_node_at_location(solver, path)
+        else
+            softfailed = true
+        end
+    end
+
+    for (child1, child2) ∈ zip(get_children(node), get_children(domainrulenode))
+        result = make_equal!(solver, child1, child2, vars)
+        @match result begin
+            ::MakeEqualSuccess => ();
+            ::MakeEqualHardFail => return result;
+            ::MakeEqualSoftFail => begin
+                softfailed = true
+            end
+        end
+    end
+    return softfailed ? MakeEqualSoftFail() : MakeEqualSuccess()
 end
