@@ -64,6 +64,6 @@ end
 
 Checks whether the `value` is in the `stack`.
 """
-function Base.in(stack::StateStack, value)::Bool
+function Base.in(stack::StateStack{T}, value::T)::Bool where T
     return value ∈ stack.vec[1:size(stack)]
 end

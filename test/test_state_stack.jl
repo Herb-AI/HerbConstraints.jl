@@ -9,6 +9,28 @@
         @test size(stack) == 0
     end
 
+    @testset "membership" begin
+        sm = HerbConstraints.StateManager()
+        stack = HerbConstraints.StateStack{Int}(sm)
+        push!(stack, 10)
+        push!(stack, 20)
+        push!(stack, 30)
+        @test in(stack, 10)
+        @test in(stack, 20)
+        @test in(stack, 30)
+        @test !in(stack, 40)
+
+        sm = HerbConstraints.StateManager()
+        stack = HerbConstraints.StateStack{String}(sm)
+        push!(stack, "A")
+        push!(stack, "B")
+        push!(stack, "C")
+        @test in(stack, "A")
+        @test in(stack, "B")
+        @test in(stack, "C")
+        @test !in(stack, "D")
+    end
+
     @testset "from vector" begin
         sm = HerbConstraints.StateManager()
         stack = HerbConstraints.StateStack{Int}(sm, [10, 20, 30])
