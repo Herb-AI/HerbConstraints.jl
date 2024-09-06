@@ -20,14 +20,15 @@ Each solver should implement at least:
 """
 abstract type Solver end
 
-
 """
     fix_point!(solver::Solver)
 
 Propagate constraints in the current state until no further dedecutions can be made
 """
 function fix_point!(solver::Solver)
-    if solver.fix_point_running return end
+    if solver.fix_point_running
+        return
+    end
     solver.fix_point_running = true
     while !isempty(solver.schedule)
         if !isfeasible(solver)
@@ -36,12 +37,11 @@ function fix_point!(solver::Solver)
             empty!(solver.schedule)
             break
         end
-        constraint = dequeue!(solver.schedule) 
+        constraint = dequeue!(solver.schedule)
         propagate!(solver, constraint)
     end
     solver.fix_point_running = false
 end
-
 
 """
     schedule(solver::GenericSolver, constraint::AbstractLocalConstraint)
@@ -56,7 +56,6 @@ function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     end
 end
 
-
 """
     shouldschedule(solver::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
 
@@ -65,7 +64,8 @@ Returns true if the `constraint` should be scheduled for propagation.
 
 Default behavior: return true iff the manipulation happened at or below the constraint path.
 """
-function shouldschedule(::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
-    return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
+function shouldschedule(
+        ::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
+    return (length(path) >= length(constraint.path)) &&
+           (path[1:length(constraint.path)] == constraint.path)
 end
-

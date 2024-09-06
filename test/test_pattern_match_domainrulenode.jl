@@ -21,7 +21,9 @@ using HerbGrammar
 
     @testset "PatternMatchSuccess, RuleNode, multiple DomainRuleNodes" begin
         node = RuleNode(4, [RuleNode(1), RuleNode(1)])
-        drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), []), DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])])
+        drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)),
+            [DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), []),
+                DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])])
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchSuccess
     end
 
@@ -38,12 +40,16 @@ using HerbGrammar
 
     @testset "PatternMatchSuccess, UniformHole subsets, but children fail" begin
         # The root UniformHole match the DomainRuleNode, but the children do not match
-        hole_hardfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
-        hole_successwhen = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
-        hole_softfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
+        hole_hardfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)),
+            [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
+        hole_successwhen = UniformHole(BitVector((0, 0, 0, 1, 1, 0)),
+            [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
+        hole_softfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)),
+            [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         @test pattern_match(hole_hardfail, drn) isa HerbConstraints.PatternMatchHardFail
-        @test pattern_match(hole_successwhen, drn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
+        @test pattern_match(hole_successwhen, drn) isa
+              HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
         @test pattern_match(hole_softfail, drn) isa HerbConstraints.PatternMatchSoftFail
     end
 
@@ -107,7 +113,8 @@ using HerbGrammar
 
         # at the second child
         node = RuleNode(4, [RuleNode(1), UniformHole(BitVector((1, 1, 0, 0, 0, 0)), [])])
-        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), DomainRuleNode(BitVector((0, 0, 1, 1, 0, 0)), [])])
+        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)),
+            [RuleNode(1), DomainRuleNode(BitVector((0, 0, 1, 1, 0, 0)), [])])
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchHardFail
     end
 
@@ -119,7 +126,8 @@ using HerbGrammar
 
         # at the second child
         node = RuleNode(4, [RuleNode(1), RuleNode(1)])
-        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [RuleNode(1), DomainRuleNode(BitVector((0, 0, 1, 1, 0, 0)), [])])
+        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)),
+            [RuleNode(1), DomainRuleNode(BitVector((0, 0, 1, 1, 0, 0)), [])])
         @test pattern_match(node, drn) isa HerbConstraints.PatternMatchHardFail
     end
 
@@ -130,12 +138,17 @@ using HerbGrammar
     end
 
     @testset "PatternMatchSoftFail, 2 PatternMatchSuccessWhenHoleAssignedTo" begin
-        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)), [DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), []), DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])])
+        drn = DomainRuleNode(BitVector((0, 0, 0, 0, 1, 1)),
+            [DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), []),
+                DomainRuleNode(BitVector((1, 1, 0, 0, 0, 0)), [])])
 
-        node_roothole = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
-        node_childhole = RuleNode(6, [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
-        node_2holes = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
-        
+        node_roothole = UniformHole(
+            BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
+        node_childhole = RuleNode(
+            6, [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
+        node_2holes = UniformHole(BitVector((0, 0, 0, 1, 1, 1)),
+            [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
+
         match_roothole = pattern_match(node_roothole, drn)
         match_childhole = pattern_match(node_childhole, drn)
         match_2holes = pattern_match(node_2holes, drn)

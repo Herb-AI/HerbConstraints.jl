@@ -1,6 +1,5 @@
 using HerbGrammar
 @testset verbose=false "Domain Utils" begin
-
     @testset "is_subdomain (BitVector and StateSparseSet)" begin
         #The domain represents a set of rules. In this case the domain represents the set {1, 3, 4, 5, 8}.
         #is_subdomain checks if the two provided domains form a subset relation.
@@ -16,65 +15,92 @@ using HerbGrammar
         @test is_subdomain(BitVector((1, 1, 1, 1, 1, 1, 1, 1)), domain) == false
 
         #(StateSparseSet, BitVector)
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((0, 0, 0, 0, 0, 0, 0, 0))), domain) == true
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((0, 0, 0, 1, 0, 0, 0, 0))), domain) == true
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 0, 1, 0, 0, 0, 0))), domain) == true
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1, 1, 1, 0, 0, 1))), domain) == true
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((0, 1, 0, 0, 0, 0, 0, 0))), domain) == false
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((0, 1, 1, 0, 1, 0, 0, 1))), domain) == false
-        @test is_subdomain(HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 1, 1, 1, 1, 1, 1, 1))), domain) == false
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((0, 0, 0, 0, 0, 0, 0, 0))),
+            domain) == true
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((0, 0, 0, 1, 0, 0, 0, 0))),
+            domain) == true
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((1, 0, 0, 1, 0, 0, 0, 0))),
+            domain) == true
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((1, 0, 1, 1, 1, 0, 0, 1))),
+            domain) == true
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((0, 1, 0, 0, 0, 0, 0, 0))),
+            domain) == false
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((0, 1, 1, 0, 1, 0, 0, 1))),
+            domain) == false
+        @test is_subdomain(
+            HerbConstraints.StateSparseSet(
+                HerbConstraints.StateManager(), BitVector((1, 1, 1, 1, 1, 1, 1, 1))),
+            domain) == false
     end
 
     @testset "is_subdomain true (AbstractRuleNode)" begin
         #is_subdomain for rulenodes checks if a specific tree can be obtained by repeatedly filling in holes from the general_tree
         @test is_subdomain(RuleNode(1), Hole(BitVector((1, 1, 1))))
-        @test is_subdomain(UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((1, 1, 1))))
-        @test is_subdomain(UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((1, 1, 1))))
+        @test is_subdomain(
+            UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((1, 1, 1))))
+        @test is_subdomain(
+            UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((1, 1, 1))))
         @test is_subdomain(Hole(BitVector((1, 1, 1))), Hole(BitVector((1, 1, 1))))
 
-        specific_tree = RuleNode(3, [
-            UniformHole(BitVector((1, 1, 0)), []),
-            RuleNode(3, [
-                Hole(BitVector((1, 1, 1))),
-                RuleNode(1)
+        specific_tree = RuleNode(3,
+            [
+                UniformHole(BitVector((1, 1, 0)), []),
+                RuleNode(3, [
+                    Hole(BitVector((1, 1, 1))),
+                    RuleNode(1)
+                ])
             ])
-        ])
-        general_tree = UniformHole(BitVector((0, 1, 1)), [
-            Hole(BitVector((1, 1, 1))),
-            Hole(BitVector((1, 0, 1)))
-        ])
+        general_tree = UniformHole(
+            BitVector((0, 1, 1)), [
+                Hole(BitVector((1, 1, 1))),
+                Hole(BitVector((1, 0, 1)))
+            ])
         @test is_subdomain(specific_tree, general_tree)
     end
 
     @testset "is_subdomain false (AbstractRuleNode)" begin
         @test is_subdomain(RuleNode(1), Hole(BitVector((0, 1, 1)))) == false
-        @test is_subdomain(UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((0, 1, 1)))) == false
-        @test is_subdomain(UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((0, 1, 1)))) == false
+        @test is_subdomain(
+            UniformHole(BitVector((1, 1, 0)), []), Hole(BitVector((0, 1, 1)))) == false
+        @test is_subdomain(
+            UniformHole(BitVector((1, 1, 1)), []), Hole(BitVector((0, 1, 1)))) == false
         @test is_subdomain(Hole(BitVector((1, 1, 1))), Hole(BitVector((0, 1, 1)))) == false
 
-        specific_tree = RuleNode(3, [
-            UniformHole(BitVector((1, 1, 0)), []),
-            RuleNode(2, [ # The specific_tree has a RuleNode(2) at the second child
-                Hole(BitVector((1, 1, 1))),
-                RuleNode(1)
+        specific_tree = RuleNode(3,
+            [
+                UniformHole(BitVector((1, 1, 0)), []),
+                RuleNode(2, [ # The specific_tree has a RuleNode(2) at the second child
+                    Hole(BitVector((1, 1, 1))),
+                    RuleNode(1)
+                ])
             ])
-        ])
-        general_tree = UniformHole(BitVector((0, 1, 1)), [
-            Hole(BitVector((1, 1, 1))),
-            Hole(BitVector((1, 0, 1))) # RuleNode(2) is not part of this domain
-        ])
+        general_tree = UniformHole(
+            BitVector((0, 1, 1)), [
+                Hole(BitVector((1, 1, 1))),
+                Hole(BitVector((1, 0, 1))) # RuleNode(2) is not part of this domain
+            ])
         @test is_subdomain(specific_tree, general_tree) == false
     end
 
     @testset "is_subdomain false (AbstractRuleNode, no holes)" begin
         #the specific_tree is larger than the general_tree
-        specific_tree = RuleNode(8, [
-            RuleNode(5)
-            RuleNode(7, [
-                RuleNode(4),
-                RuleNode(5)
-            ])
-        ])
+        specific_tree = RuleNode(8, [RuleNode(5)
+                                     RuleNode(7, [
+                                         RuleNode(4),
+                                         RuleNode(5)
+                                     ])])
         general_tree = RuleNode(9)
         @test is_subdomain(specific_tree, general_tree) == false
     end
@@ -124,11 +150,14 @@ using HerbGrammar
 
     @testset "get_intersection" begin
         #(BitVector, BitVector)
-        @test get_intersection(BitVector((1, 1, 1, 1)), BitVector((1, 1, 1, 1))) == [1, 2, 3, 4]
-        @test get_intersection(BitVector((1, 0, 0, 0)), BitVector((0, 1, 1, 1))) == Vector{Int}()
+        @test get_intersection(BitVector((1, 1, 1, 1)), BitVector((1, 1, 1, 1))) ==
+              [1, 2, 3, 4]
+        @test get_intersection(BitVector((1, 0, 0, 0)), BitVector((0, 1, 1, 1))) ==
+              Vector{Int}()
         @test get_intersection(BitVector((1, 1, 1, 0)), BitVector((0, 0, 1, 1))) == [3]
         @test get_intersection(BitVector((1, 1, 1, 1)), BitVector((0, 0, 0, 1))) == [4]
-        @test get_intersection(BitVector((1, 1, 1, 1)), BitVector((0, 0, 0, 0))) == Vector{Int}()
+        @test get_intersection(BitVector((1, 1, 1, 1)), BitVector((0, 0, 0, 0))) ==
+              Vector{Int}()
 
         #(BitVector, StateSparseSet). same cases, but now one of the domains is implemented with a StateSparseSet
         sss = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 4)

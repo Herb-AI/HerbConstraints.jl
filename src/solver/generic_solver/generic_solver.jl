@@ -24,33 +24,34 @@ mutable struct GenericSolver <: Solver
     max_depth::Int
 end
 
-
 """
     GenericSolver(grammar::AbstractGrammar, sym::Symbol)
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics = false,
+        use_uniformsolver = true, max_size = typemax(Int), max_depth = typemax(Int))
     init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_uniformsolver=use_uniformsolver, max_size = max_size, max_depth = max_depth)
+    GenericSolver(grammar, init_node, with_statistics = with_statistics,
+        use_uniformsolver = use_uniformsolver, max_size = max_size, max_depth = max_depth)
 end
-
 
 """
     GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode)
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
+function GenericSolver(
+        grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics = false,
+        use_uniformsolver = true, max_size = typemax(Int), max_depth = typemax(Int))
     stats = with_statistics ? SolverStatistics() : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, max_size, max_depth)
+    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(),
+        stats, use_uniformsolver, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
 
-
 get_name(::GenericSolver) = "GenericSolver"
-
 
 """
     deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
@@ -95,7 +96,6 @@ function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     delete!(get_state(solver).active_constraints, constraint)
 end
 
-
 """
     post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
 
@@ -104,7 +104,9 @@ By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
 function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     track!(solver, "post! $(typeof(constraint))")
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
@@ -114,7 +116,6 @@ function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     propagate!(solver, constraint)
     solver.fix_point_running = temp
 end
-
 
 """
     new_state!(solver::GenericSolver, tree::AbstractRuleNode)
@@ -129,7 +130,7 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
         if (node isa AbstractHole)
             simplify_hole!(solver, path)
         end
-        for (i, childnode) ∈ enumerate(get_children(node))
+        for (i, childnode) in enumerate(get_children(node))
             _dfs_simplify(childnode, push!(copy(path), i))
         end
     end
@@ -138,7 +139,6 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
     fix_point!(solver)
 end
-
 
 """
     save_state!(solver::GenericSolver)
@@ -150,7 +150,6 @@ function save_state!(solver::GenericSolver)::SolverState
     return copy(get_state(solver))
 end
 
-
 """
     load_state!(solver::GenericSolver, state::SolverState)
 
@@ -161,7 +160,6 @@ function load_state!(solver::GenericSolver, state::SolverState)
     solver.state = state
 end
 
-
 """
     function get_tree_size(solver::GenericSolver)::Int
 
@@ -171,7 +169,6 @@ function get_tree_size(solver::GenericSolver)::Int
     return length(get_tree(solver))
 end
 
-
 """
     function get_tree(solver::GenericSolver)::AbstractRuleNode
 
@@ -180,7 +177,6 @@ Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
 function get_tree(solver::GenericSolver)::AbstractRuleNode
     return solver.state.tree
 end
-
 
 """
     function get_grammar(solver::GenericSolver)::AbstractGrammar
@@ -198,11 +194,10 @@ Get the symbol from the solver.
 """
 function get_starting_symbol(solver::GenericSolver)::Symbol
     root = get_tree(solver)
-    rule = isfilled(root) ?  get_rule(root) : findfirst(root.domain)
+    rule = isfilled(root) ? get_rule(root) : findfirst(root.domain)
     grammar = get_grammar(solver)
     return grammar.types[rule]
 end
-
 
 """
     function get_state(solver::GenericSolver)::SolverState
@@ -213,7 +208,6 @@ function get_state(solver::GenericSolver)::SolverState
     return solver.state
 end
 
-
 """
     function get_max_depth(solver::GenericSolver)::SolverState
 
@@ -223,7 +217,6 @@ function get_max_depth(solver::GenericSolver)
     return solver.max_depth
 end
 
-
 """
     function get_max_depth(solver::GenericSolver)::SolverState
 
@@ -232,7 +225,6 @@ Get the maximum number of [`AbstractRuleNode`](@ref)s allowed inside the tree.
 function get_max_size(solver::GenericSolver)
     return solver.max_size
 end
-
 
 """
     set_infeasible!(solver::GenericSolver)
@@ -257,7 +249,6 @@ function isfeasible(solver::GenericSolver)
     return get_state(solver).isfeasible
 end
 
-
 """
     get_path(solver::GenericSolver, node::AbstractRuleNode)
 
@@ -272,7 +263,8 @@ end
 
 Get the node at path `location`.
 """
-function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
+function HerbCore.get_node_at_location(
+        solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
     # dispatches the function on type `AbstractRuleNode` (defined in rulenode_operator.jl in HerbGrammar.jl)
     node = get_node_at_location(get_tree(solver), location)
     @assert !isnothing(node) "No node exists at location $location in the current state of the solver"
@@ -290,22 +282,22 @@ function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::Abs
     return hole
 end
 
-
 """
     notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     active_constraints = get_state(solver).active_constraints
-    for c ∈ active_constraints
+    for c in active_constraints
         if shouldschedule(solver, c, event_path)
             schedule!(solver, c)
         end
     end
 end
-
 
 """
     notify_new_node(solver::GenericSolver, event_path::Vector{Int})
@@ -315,12 +307,13 @@ Notify all constraints that a new node has appeared at the `event_path` by calli
     This does not notify the solver about nodes below the `event_path`. In that case, call [`notify_new_nodes`](@ref) instead.
 """
 function notify_new_node(solver::GenericSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
-    for c ∈ get_grammar(solver).constraints
+    if !isfeasible(solver)
+        return
+    end
+    for c in get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
     end
 end
-
 
 """
     notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
@@ -329,7 +322,7 @@ Notify all grammar constraints about the new `node` and its (grand)children
 """
 function notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
     notify_new_node(solver, path)
-    for (i, childnode) ∈ enumerate(get_children(node))
+    for (i, childnode) in enumerate(get_children(node))
         notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
 end

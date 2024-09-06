@@ -29,7 +29,6 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
-
 """
     function get_priority(::AbstractLocalConstraint)
 
@@ -78,77 +77,75 @@ include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
 export
-    AbstractGrammarConstraint,
-    AbstractLocalConstraint,
+       AbstractGrammarConstraint,
+       AbstractLocalConstraint, DomainRuleNode,
+       VarNode,
+       pattern_match,
+       check_tree,
 
-    DomainRuleNode,
-    VarNode,
-    pattern_match,
-    check_tree,
-    
-    #grammar constraints
-    Forbidden,
-    Ordered,
-    Contains,
-    ContainsSubtree,
-    ForbiddenSequence,
-    Unique,
+#grammar constraints
+       Forbidden,
+       Ordered,
+       Contains,
+       ContainsSubtree,
+       ForbiddenSequence,
+       Unique,
 
-    #local constraints
-    LocalForbidden,
-    LocalOrdered,
-    LocalContains,
-    LocalContainsSubtree,
-    LocalForbiddenSequence,
-    LocalUnique,
+#local constraints
+       LocalForbidden,
+       LocalOrdered,
+       LocalContains,
+       LocalContainsSubtree,
+       LocalForbiddenSequence,
+       LocalUnique,
 
-    #public solver functions
-    GenericSolver,
-    Solver,
-    SolverState,
-    new_state!,
-    save_state!,
-    load_state!,
-    isfeasible,
-    get_state,
-    get_tree,
-    get_grammar,
-    get_starting_symbol,
-    get_state,
-    get_node_at_location,
-    get_hole_at_location,
-    get_max_depth,
-    get_max_size,
-    get_tree_size,
+#public solver functions
+       GenericSolver,
+       Solver,
+       SolverState,
+       new_state!,
+       save_state!,
+       load_state!,
+       isfeasible,
+       get_state,
+       get_tree,
+       get_grammar,
+       get_starting_symbol,
+       get_state,
+       get_node_at_location,
+       get_hole_at_location,
+       get_max_depth,
+       get_max_size,
+       get_tree_size,
 
-    #tree manipulations
-    remove!,
-    remove_all_but!,
-    substitute!,
-    remove_node!,
+#tree manipulations
+       remove!,
+       remove_all_but!,
+       substitute!,
+       remove_node!,
 
-    #domainutils
-    is_subdomain,
-    partition,
-    are_disjoint,
-    get_intersection,
+#domainutils
+       is_subdomain,
+       partition,
+       are_disjoint,
+       get_intersection,
 
-    #solverstatistics
-    track!,
+#solverstatistics
+       track!,
 
-    #functions related to stateful objects
-    restore!,
-    StateInt,
-    get_value,
-    set_value!,
-    increment!,
-    decrement!,
+#functions related to stateful objects
+       restore!,
+       StateInt,
+       get_value,
+       set_value!,
+       increment!,
+       decrement!,
 
-    #uniform solver
-    UniformSolver,
+#uniform solver
+       UniformSolver,
 
-    #state fixed shaped hole
-    StateHole,
-    freeze_state
+#state fixed shaped hole
+       StateHole,
+       freeze_state
 
 end # module HerbConstraints

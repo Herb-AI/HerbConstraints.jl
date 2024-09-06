@@ -8,7 +8,7 @@ function is_subdomain(subdomain::BitVector, domain::BitVector)
     return all(.!subdomain .| domain)
 end
 function is_subdomain(subdomain::StateSparseSet, domain::BitVector)
-    for v ∈ subdomain
+    for v in subdomain
         if !domain[v]
             return false
         end
@@ -29,9 +29,9 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
                 return false
             end
         end
-        
+
         #(RuleNode, AbstractHole), the rule must be inside the domain of the general_tree
-        (true, false) => begin 
+        (true, false) => begin
             if !general_tree.domain[get_rule(specific_tree)]
                 return false
             end
@@ -41,7 +41,7 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
         (false, true) => return false
 
         #(AbstractHole, AbstractHole), dispatch to the is_subdomain for domains
-        (false, false) => begin 
+        (false, false) => begin
             if !is_subdomain(specific_tree.domain, general_tree.domain)
                 return false
             end
@@ -58,7 +58,8 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
     @assert isuniform(general_tree)
     @assert isuniform(specific_tree) "The specific_tree cannot be a non-uniform Hole at this point."
     @assert length(get_children(specific_tree)) == length(get_children(general_tree))
-    for (specific_child, general_child) ∈ zip(get_children(specific_tree), get_children(general_tree))
+    for (specific_child, general_child) in zip(
+        get_children(specific_tree), get_children(general_tree))
         if !is_subdomain(specific_child, general_child)
             return false
         end
@@ -96,7 +97,7 @@ function are_disjoint(domain1::BitVector, domain2::BitVector)::Bool
 end
 are_disjoint(bitvector::BitVector, sss::StateSparseSet)::Bool = are_disjoint(sss, bitvector)
 function are_disjoint(sss::StateSparseSet, bitvector::BitVector)
-    for v ∈ sss
+    for v in sss
         if bitvector[v]
             return false
         end
@@ -112,13 +113,14 @@ Returns all the values that are in both `domain1` and `domain2`
 function get_intersection(domain1::BitVector, domain2::BitVector)::Vector{Int}
     return findall(domain1 .& domain2)
 end
-function get_intersection(sss::Union{BitVector, StateSparseSet}, domain2::Union{BitVector, StateSparseSet})::Vector{Int}
-    if !(sss isa StateSparseSet) 
+function get_intersection(sss::Union{BitVector, StateSparseSet},
+        domain2::Union{BitVector, StateSparseSet})::Vector{Int}
+    if !(sss isa StateSparseSet)
         sss, domain2 = domain2, sss
         @assert sss isa StateSparseSet
     end
     intersection = Vector{Int}()
-    for v ∈ sss
+    for v in sss
         if domain2[v]
             push!(intersection, v)
         end

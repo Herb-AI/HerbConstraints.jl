@@ -22,5 +22,5 @@ function check_tree(c::Contains, tree::AbstractRuleNode)::Bool
     if get_rule(tree) == c.rule
         return true
     end
-    return any(check_tree(c, child) for child ∈ get_children(tree))
+    return any(check_tree(c, child) for child in get_children(tree))
 end

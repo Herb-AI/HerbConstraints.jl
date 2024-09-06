@@ -24,9 +24,8 @@ mutable struct StateInt
 end
 
 function StateInt(sm, val)
-    return StateInt(sm, val, sm.current_state_id-1)
+    return StateInt(sm, val, sm.current_state_id - 1)
 end
-
 
 """
 Get the value of the stateful integer
@@ -34,7 +33,6 @@ Get the value of the stateful integer
 function get_value(int::StateInt)
     return int.val
 end
-
 
 """
 Set the value of the integer to the given `val`
@@ -46,7 +44,6 @@ function set_value!(int::StateInt, val::Int)
     end
 end
 
-
 """
 Increase the value of the integer by 1
 """
@@ -54,7 +51,6 @@ function increment!(int::StateInt)
     backup!(int)
     int.val += 1
 end
-
 
 """
 Decrease the value of the integer by 1
@@ -64,7 +60,6 @@ function decrement!(int::StateInt)
     int.val -= 1
 end
 
-
 """
 Backup entry for the given [`StateInt`](@ref)
 """
@@ -72,7 +67,6 @@ struct StateIntBackup
     state_int::StateInt
     original_val::Int
 end
-
 
 """
 Should be called whenever the state of a `StateInt` is modified.
@@ -95,7 +89,6 @@ function backup!(int::StateInt)
         push!(int.sm.current_backups, StateIntBackup(int, int.val))
     end
 end
-
 
 """
 Restores the `StateInt` stored in the `StateIntBackup` to its original value
@@ -128,7 +121,6 @@ function StateManager()
     return StateManager(prior_backups, current_backups, current_state_id)
 end
 
-
 """
 Make a backup of the current state. Return to this state by calling `restore!`.
 """
@@ -137,7 +129,6 @@ function save_state!(sm::StateManager)
     sm.current_backups = Vector{StateIntBackup}()
     sm.current_state_id += 1
 end
-
 
 """
 Reverts all the backups since the last `save_state!`.

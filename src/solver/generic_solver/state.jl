@@ -17,11 +17,12 @@ mutable struct SolverState
     isfeasible::Bool
 end
 
-SolverState(tree::AbstractRuleNode) = SolverState(tree, Set{AbstractLocalConstraint}(), true)
+function SolverState(tree::AbstractRuleNode)
+    SolverState(tree, Set{AbstractLocalConstraint}(), true)
+end
 
-function Base.copy(state::SolverState) 
+function Base.copy(state::SolverState)
     tree = deepcopy(state.tree)
     active_constraints = copy(state.active_constraints) # constraints are stateless, so the constraints can be shallow copied
     SolverState(tree, active_constraints, state.isfeasible)
 end
-

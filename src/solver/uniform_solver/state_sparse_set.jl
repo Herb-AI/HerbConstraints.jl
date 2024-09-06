@@ -34,12 +34,11 @@ function StateSparseSet(sm::StateManager, domain::BitVector)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
     set = StateSparseSet(values, indices, size, min, max, n)
-    for v ∈ findall(.!domain)
+    for v in findall(.!domain)
         remove!(set, v)
     end
     return set
 end
-
 
 """
 Pretty print the `StateSparseSet`.
@@ -48,7 +47,7 @@ function Base.show(io::IO, set::StateSparseSet)
     print(io, "{")
     size = get_value(set.size)
     if size > 0
-        for i ∈ 1:size-1
+        for i in 1:(size - 1)
             print(io, set.values[i])
             print(io, ", ")
         end
@@ -105,7 +104,6 @@ function Base.getindex(set::StateSparseSet, val::Int)
     return val ∈ set
 end
 
-
 """
 Returns the maximum value in the set.
 This function name is used instead of `min` to allow code reuse for domains of type `BitVector` and `StateSparseSet`.
@@ -132,23 +130,23 @@ function Base.in(val::Int, set::StateSparseSet)
     return set.indices[val] <= get_value(set.size)
 end
 
-
 Base.eltype(::StateSparseSet) = Int
-
 
 function Base.iterate(set::StateSparseSet)
     index = 1
-    if index > get_value(set.size) return nothing end
+    if index > get_value(set.size)
+        return nothing
+    end
     return set.values[index], index
 end
-
 
 function Base.iterate(set::StateSparseSet, index::Int)
     index += 1
-    if index > get_value(set.size) return nothing end
+    if index > get_value(set.size)
+        return nothing
+    end
     return set.values[index], index
 end
-
 
 """
     remove!(set::StateSparseSet, val::Int)
@@ -157,14 +155,13 @@ Removes value `val` from StateSparseSet `set`. Returns true if `val` was in `set
 """
 function remove!(set::StateSparseSet, val::Int)::Bool
     if val ∉ set
-        return false;
+        return false
     end
-    _exchange_positions!(set, val, set.values[get_value(set.size)]);
-    decrement!(set.size);
-    _update_bounds_val_removed!(set, val);
-    return true;
+    _exchange_positions!(set, val, set.values[get_value(set.size)])
+    decrement!(set.size)
+    _update_bounds_val_removed!(set, val)
+    return true
 end
-
 
 """
     remove_all_but!(set::StateSparseSet, val::Int)::Bool
@@ -188,7 +185,6 @@ function remove_all_but!(set::StateSparseSet, val::Int)::Bool
     return true
 end
 
-
 """
 Remove all the values less than `val` from the `set`
 """
@@ -198,7 +194,7 @@ function remove_below!(set::StateSparseSet, val::Int)::Bool
     elseif get_value(set.max) < val
         Base.empty!(set)
     else
-        for v ∈ get_value(set.min):val-1
+        for v in get_value(set.min):(val - 1)
             remove!(set, v)
         end
     end
@@ -214,7 +210,7 @@ function remove_above!(set::StateSparseSet, val::Int)::Bool
     elseif get_value(set.min) > val
         Base.empty!(set)
     else
-        for v ∈ val+1:get_value(set.max)
+        for v in (val + 1):get_value(set.max)
             remove!(set, v)
         end
     end
@@ -252,7 +248,7 @@ The maximum value of the set will be updated to the actual maximum of the set.
 function _update_max_val_removed!(set::StateSparseSet, val::Int)
     max = get_value(set.max)
     if !isempty(set) && max == val
-        for v ∈ max-1:-1:1
+        for v in (max - 1):-1:1
             if v ∈ set
                 set_value!(set.max, v)
                 return
@@ -268,7 +264,7 @@ The minimum value of the set will be updated to the actual minimum of the set.
 function _update_min_val_removed!(set::StateSparseSet, val::Int)
     min = get_value(set.min)
     if !isempty(set) && min == val
-        for v ∈ min+1:set.n
+        for v in (min + 1):(set.n)
             if v ∈ set
                 set_value!(set.min, v)
                 return
@@ -277,14 +273,13 @@ function _update_min_val_removed!(set::StateSparseSet, val::Int)
     end
 end
 
-
 """
     are_disjoint(set1::StateSparseSet, set2::StateSparseSet)
 
 Returns true if there is no overlap in values between `set1` and `set2`
 """
 function are_disjoint(set1::StateSparseSet, set2::StateSparseSet)
-    for v ∈ set1
+    for v in set1
         if v ∈ set2
             return false
         end

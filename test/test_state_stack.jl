@@ -51,15 +51,22 @@
         sm = HerbConstraints.StateManager()
         stack = HerbConstraints.StateStack{Int}(sm)
 
-        push!(stack, 10);   @test size(stack) == 1
-        push!(stack, 20);   @test size(stack) == 2
+        push!(stack, 10)
+        @test size(stack) == 1
+        push!(stack, 20)
+        @test size(stack) == 2
 
-        save_state!(sm);    @test size(stack) == 2
-        push!(stack, 30);   @test size(stack) == 3
-        push!(stack, 40);   @test size(stack) == 4
+        save_state!(sm)
+        @test size(stack) == 2
+        push!(stack, 30)
+        @test size(stack) == 3
+        push!(stack, 40)
+        @test size(stack) == 4
 
-        restore!(sm);       @test size(stack) == 2
-        push!(stack, 50);   @test size(stack) == 3 #overwrites "30" with "50"
+        restore!(sm)
+        @test size(stack) == 2
+        push!(stack, 50)
+        @test size(stack) == 3 #overwrites "30" with "50"
 
         values = collect(stack)
         @test values[1] == 10
@@ -71,22 +78,34 @@
         sm = HerbConstraints.StateManager()
         stack = HerbConstraints.StateStack{Int}(sm)
 
-        push!(stack, 10);   @test size(stack) == 1 #[10]
-        push!(stack, 20);   @test size(stack) == 2 #[10, 20]
+        push!(stack, 10)
+        @test size(stack) == 1 #[10]
+        push!(stack, 20)
+        @test size(stack) == 2 #[10, 20]
 
-        save_state!(sm);    @test size(stack) == 2 #[10, 20]
-        push!(stack, 30);   @test size(stack) == 3 #[10, 20, 30]
-        push!(stack, 40);   @test size(stack) == 4 #[10, 20, 30, 40]
+        save_state!(sm)
+        @test size(stack) == 2 #[10, 20]
+        push!(stack, 30)
+        @test size(stack) == 3 #[10, 20, 30]
+        push!(stack, 40)
+        @test size(stack) == 4 #[10, 20, 30, 40]
 
-        save_state!(sm);    @test size(stack) == 4 #[10, 20, 30, 40]
-        push!(stack, 50);   @test size(stack) == 5 #[10, 20, 30, 40, 50]
-        push!(stack, 60);   @test size(stack) == 6 #[10, 20, 30, 40, 50, 60]
+        save_state!(sm)
+        @test size(stack) == 4 #[10, 20, 30, 40]
+        push!(stack, 50)
+        @test size(stack) == 5 #[10, 20, 30, 40, 50]
+        push!(stack, 60)
+        @test size(stack) == 6 #[10, 20, 30, 40, 50, 60]
 
-        restore!(sm);       @test size(stack) == 4 #[10, 20, 30, 40]
-        push!(stack, 70);   @test size(stack) == 5 #[10, 20, 30, 40, 70]
+        restore!(sm)
+        @test size(stack) == 4 #[10, 20, 30, 40]
+        push!(stack, 70)
+        @test size(stack) == 5 #[10, 20, 30, 40, 70]
 
-        restore!(sm);       @test size(stack) == 2 #[10, 20]
-        push!(stack, 80);   @test size(stack) == 3 #[10, 20, 80]
+        restore!(sm)
+        @test size(stack) == 2 #[10, 20]
+        push!(stack, 80)
+        @test size(stack) == 3 #[10, 20, 80]
 
         values = collect(stack)
         @test values[1] == 10

@@ -39,18 +39,18 @@ struct MakeEqualSoftFail <: MakeEqualResult end
 Tree manipulation that enforces `node1` == `node2` if unambiguous.
 """
 function make_equal!(
-    solver::Solver, 
-    hole1::Union{RuleNode, AbstractHole},
-    hole2::Union{RuleNode, AbstractHole, DomainRuleNode}
+        solver::Solver,
+        hole1::Union{RuleNode, AbstractHole},
+        hole2::Union{RuleNode, AbstractHole, DomainRuleNode}
 )::MakeEqualResult
     make_equal!(solver, hole1, hole2, Dict{Symbol, AbstractRuleNode}())
 end
 
 function make_equal!(
-    solver::Solver, 
-    hole1::Union{RuleNode, AbstractHole},
-    hole2::Union{RuleNode, AbstractHole},
-    vars::Dict{Symbol, AbstractRuleNode}
+        solver::Solver,
+        hole1::Union{RuleNode, AbstractHole},
+        hole2::Union{RuleNode, AbstractHole},
+        vars::Dict{Symbol, AbstractRuleNode}
 )::MakeEqualResult
     @assert isfeasible(solver)
     @match (isfilled(hole1), isfilled(hole2)) begin
@@ -101,11 +101,11 @@ function make_equal!(
     end
 
     softfailed = false
-    for (child1, child2) ∈ zip(get_children(hole1), get_children(hole2))
+    for (child1, child2) in zip(get_children(hole1), get_children(hole2))
         result = make_equal!(solver, child1, child2, vars)
         @match result begin
-            ::MakeEqualSuccess => ();
-            ::MakeEqualHardFail => return result;
+            ::MakeEqualSuccess => ()
+            ::MakeEqualHardFail => return result
             ::MakeEqualSoftFail => begin
                 softfailed = true
             end
@@ -115,12 +115,12 @@ function make_equal!(
 end
 
 function make_equal!(
-    solver::Solver, 
-    node::Union{RuleNode, AbstractHole},
-    var::VarNode,
-    vars::Dict{Symbol, AbstractRuleNode}
+        solver::Solver,
+        node::Union{RuleNode, AbstractHole},
+        var::VarNode,
+        vars::Dict{Symbol, AbstractRuleNode}
 )::MakeEqualResult
-    if var.name ∈ keys(vars) 
+    if var.name ∈ keys(vars)
         return make_equal!(solver, node, vars[var.name], vars)
     end
     vars[var.name] = node
@@ -128,12 +128,12 @@ function make_equal!(
 end
 
 function make_equal!(
-    solver::Solver, 
-    node::Union{RuleNode, AbstractHole},
-    domainrulenode::DomainRuleNode,
-    vars::Dict{Symbol, AbstractRuleNode}
+        solver::Solver,
+        node::Union{RuleNode, AbstractHole},
+        domainrulenode::DomainRuleNode,
+        vars::Dict{Symbol, AbstractRuleNode}
 )::MakeEqualResult
-    softfailed = false 
+    softfailed = false
     if isfilled(node)
         #(RuleNode, DomainRuleNode)
         if !domainrulenode.domain[get_rule(node)]
@@ -154,11 +154,11 @@ function make_equal!(
         end
     end
 
-    for (child1, child2) ∈ zip(get_children(node), get_children(domainrulenode))
+    for (child1, child2) in zip(get_children(node), get_children(domainrulenode))
         result = make_equal!(solver, child1, child2, vars)
         @match result begin
-            ::MakeEqualSuccess => ();
-            ::MakeEqualHardFail => return result;
+            ::MakeEqualSuccess => ()
+            ::MakeEqualHardFail => return result
             ::MakeEqualSoftFail => begin
                 softfailed = true
             end

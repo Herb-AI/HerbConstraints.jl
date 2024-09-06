@@ -27,5 +27,5 @@ function check_tree(c::ContainsSubtree, tree::AbstractRuleNode)::Bool
     if pattern_match(c.tree, tree) isa PatternMatchSuccess
         return true
     end
-    return any(check_tree(c, child) for child ∈ get_children(tree))
+    return any(check_tree(c, child) for child in get_children(tree))
 end
