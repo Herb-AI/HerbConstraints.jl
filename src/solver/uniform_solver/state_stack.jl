@@ -12,7 +12,7 @@ end
 
 Create an empty StateStack supporting elements of type T
 """
-function StateStack{T}(sm::AbstractStateManager) where T
+function StateStack{T}(sm::AbstractStateManager) where {T}
     return StateStack{T}(Vector{T}(), StateInt(sm, 0))
 end
 
@@ -21,7 +21,7 @@ end
 
 Create a StateStack for the provided `vec`
 """
-function StateStack{T}(sm::AbstractStateManager, vec::Vector{T}) where T
+function StateStack{T}(sm::AbstractStateManager, vec::Vector{T}) where {T}
     return StateStack{T}(vec, StateInt(sm, length(vec)))
 end
 
@@ -64,6 +64,6 @@ end
 
 Checks whether the `value` is in the `stack`.
 """
-function Base.in(stack::StateStack{T}, value::T)::Bool where T
+function Base.in(stack::StateStack{T}, value::T)::Bool where {T}
     return value ∈ stack.vec[1:size(stack)]
 end

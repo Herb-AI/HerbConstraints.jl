@@ -1,4 +1,4 @@
-using HerbCore 
+using HerbCore
 using HerbConstraints
 using Test
 

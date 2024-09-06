@@ -6,7 +6,7 @@ Enforces that a given `rule` appears at or below the given `path` at most once.
 In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
 struct LocalUnique <: AbstractLocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     rule::Int
     holes::Vector{AbstractHole}
 end
@@ -34,11 +34,11 @@ function propagate!(solver::Solver, c::LocalUnique)
         set_infeasible!(solver)
         track!(solver, "LocalUnique inconsistency")
     elseif count == 1
-        if all(isuniform(hole) for hole ∈ c.holes)
+        if all(isuniform(hole) for hole in c.holes)
             track!(solver, "LocalUnique deactivate")
             deactivate!(solver, c)
-        end 
-        for hole ∈ c.holes
+        end
+        for hole in c.holes
             deductions = 0
             if (hole.domain[c.rule] == true) && !isfilled(hole)
                 path = get_path(solver, hole)
@@ -61,7 +61,8 @@ All holes that potentially can hold the target rule are stored in the `holes` ve
     Stops counting if the rule occurs more than once. 
     Counting beyond 2 is not needed for LocalUnique. 
 """
-function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
+function _count_occurrences!(
+        node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
     count = 0
     if isfilled(node)
         # if the rulenode is the second occurence of the rule, hardfail
@@ -77,7 +78,7 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
             push!(holes, node)
         end
     end
-    for child ∈ get_children(node)
+    for child in get_children(node)
         count += _count_occurrences!(child, rule, holes)
         if count > 1
             return count
@@ -97,7 +98,7 @@ Counts the occurences of the `rule` in the cached list of `holes`.
 """
 function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
     count = 0
-    for hole ∈ holes
+    for hole in holes
         if isfilled(hole) && get_rule(hole) == rule
             count += 1
             if count >= 2

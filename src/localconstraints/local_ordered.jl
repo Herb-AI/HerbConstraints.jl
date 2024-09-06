@@ -23,21 +23,21 @@ function propagate!(solver::Solver, c::LocalOrdered)
     track!(solver, "LocalOrdered propagation")
     vars = Dict{Symbol, AbstractRuleNode}()
     @match pattern_match(node, c.tree, vars) begin
-        ::PatternMatchHardFail => begin 
+        ::PatternMatchHardFail => begin
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
             track!(solver, "LocalOrdered match hardfail")
-        end;
-        ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
+        end
+        ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin
             # The constraint will re-propagated on any tree manipulation.
             track!(solver, "LocalOrdered match softfail")
             ()
         end
-        ::PatternMatchSuccess => begin 
+        ::PatternMatchSuccess => begin
             # The forbidden tree is exactly matched.
-            should_deactivate = true 
-            for (name1, name2) ∈ zip(c.order[1:end-1], c.order[2:end])
+            should_deactivate = true
+            for (name1, name2) in zip(c.order[1:(end - 1)], c.order[2:end])
                 # Removing rules is handled inside make_less_than_or_equal!
                 @match make_less_than_or_equal!(solver, vars[name1], vars[name2]) begin
                     ::LessThanOrEqualHardFail => begin

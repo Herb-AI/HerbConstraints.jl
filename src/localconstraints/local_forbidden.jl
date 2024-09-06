@@ -22,17 +22,17 @@ function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
     track!(solver, "LocalForbidden propagation")
     @match pattern_match(node, c.tree) begin
-        ::PatternMatchHardFail => begin 
+        ::PatternMatchHardFail => begin
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
             track!(solver, "LocalForbidden hardfail")
-        end;
-        match::PatternMatchSoftFail => begin 
+        end
+        match::PatternMatchSoftFail => begin
             # The constraint needs to be re-propagated
             track!(solver, "LocalForbidden softfail")
         end
-        ::PatternMatchSuccess => begin 
+        ::PatternMatchSuccess => begin
             # The forbidden tree is exactly matched. This means the state is infeasible.
             track!(solver, "LocalForbidden inconsistency")
             set_infeasible!(solver) #throw(InconsistencyException())

@@ -9,7 +9,7 @@ Enforces that a given `tree` appears at or below the given `path` at least once.
     The `indices` and `candidates` fields should not be set by the user.
 """
 mutable struct LocalContainsSubtree <: AbstractLocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     tree::AbstractRuleNode
     candidates::Union{Vector{AbstractRuleNode}, Nothing}
     indices::Union{StateSparseSet, Nothing}
@@ -24,7 +24,6 @@ function LocalContainsSubtree(path::Vector{Int}, tree::AbstractRuleNode)
     LocalContainsSubtree(path, tree, Vector{AbstractRuleNode}(), nothing)
 end
 
-
 """
     function propagate!(::GenericSolver, ::LocalContainsSubtree)
 
@@ -35,7 +34,6 @@ end
 function propagate!(::GenericSolver, ::LocalContainsSubtree)
     throw(ArgumentError("LocalContainsSubtree cannot be propagated by the GenericSolver"))
 end
-
 
 """
     function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
@@ -49,15 +47,16 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
     if isnothing(c.candidates)
         # Initial propagation: pattern match all nodes, only store the candidates for re-propagation
         c.candidates = Vector{AbstractRuleNode}()
-        for node ∈ get_nodes(solver)
+        for node in get_nodes(solver)
             @match pattern_match(c.tree, node) begin
                 ::PatternMatchHardFail => ()
                 ::PatternMatchSuccess => begin
                     track!(solver, "LocalContainsSubtree satisfied (initial propagation)")
-                    deactivate!(solver, c);
+                    deactivate!(solver, c)
                     return
                 end
-                ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => push!(c.candidates, node)
+                ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => push!(
+                    c.candidates, node)
             end
         end
         n = length(c.candidates)
@@ -69,16 +68,16 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
             @match make_equal!(solver, c.candidates[1], c.tree) begin
                 ::MakeEqualHardFail => begin
                     @assert false "pattern_match failed to detect a hardfail"
-                end 
-                ::MakeEqualSuccess => begin 
+                end
+                ::MakeEqualSuccess => begin
                     track!(solver, "LocalContainsSubtree deduction (initial)")
-                    deactivate!(solver, c);
+                    deactivate!(solver, c)
                     return
-                end 
+                end
                 ::MakeEqualSoftFail => begin
                     track!(solver, "LocalContainsSubtree softfail (1 candidate) (initial)")
                     return
-                end 
+                end
             end
         else
             track!(solver, "LocalContainsSubtree softfail (>=2 candidates) (initial)")
@@ -89,13 +88,13 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
         # Re-propagation
         if !isnothing(c.indices) && (size(c.indices) >= 2)
             # Update the candidates by pattern matching them again
-            for i ∈ c.indices
+            for i in c.indices
                 match = pattern_match(c.candidates[i], c.tree)
                 @match match begin
                     ::PatternMatchHardFail => remove!(c.indices, i)
                     ::PatternMatchSuccess => begin
                         track!(solver, "LocalContainsSubtree satisfied")
-                        deactivate!(solver, c);
+                        deactivate!(solver, c)
                         return
                     end
                     ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => ()
@@ -111,16 +110,16 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                     track!(solver, "LocalContainsSubtree inconsistency")
                     set_infeasible!(solver)
                     return
-                end 
-                ::MakeEqualSuccess => begin 
+                end
+                ::MakeEqualSuccess => begin
                     track!(solver, "LocalContainsSubtree deduction")
-                    deactivate!(solver, c);
+                    deactivate!(solver, c)
                     return
-                end 
+                end
                 ::MakeEqualSoftFail => begin
                     track!(solver, "LocalContainsSubtree softfail (1 candidate)")
                     return
-                end 
+                end
             end
         elseif n == 0
             track!(solver, "LocalContainsSubtree inconsistency")

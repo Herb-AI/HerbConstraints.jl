@@ -24,13 +24,19 @@ struct ForbiddenSequence <: AbstractGrammarConstraint
     ignore_if::Vector{Int}
 end
 
-ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) = ForbiddenSequence(sequence, ignore_if)
+function ForbiddenSequence(sequence::Vector{Int}; ignore_if = Vector{Int}())
+    ForbiddenSequence(sequence, ignore_if)
+end
 
 function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     @match get_node_at_location(solver, path) begin
-        hole::AbstractHole => if !hole.domain[c.sequence[end]] return end
-        node::RuleNode => if node.ind != c.sequence[end] return end
+        hole::AbstractHole => if !hole.domain[c.sequence[end]]
+            return
+        end
+        node::RuleNode => if node.ind != c.sequence[end]
+            return
+        end
     end
     post!(solver, LocalForbiddenSequence(path, c.sequence, c.ignore_if))
 end
@@ -40,18 +46,19 @@ end
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`ForbiddenSequence`](@ref) constraint.
 """
-function check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_started=false)::Bool
+function check_tree(
+        c::ForbiddenSequence, tree::AbstractRuleNode; sequence_started = false)::Bool
     @assert isfilled(tree) "check_tree does not support checking trees that contain holes. $(tree) is a hole."
 
     # attempt to start the sequence on the any node in the tree
     if !sequence_started
-        for child ∈ tree.children
-            if !check_tree(c, child, sequence_started=false)
+        for child in tree.children
+            if !check_tree(c, child, sequence_started = false)
                 return false
             end
         end
     end
-    
+
     # add the current node to the current sequence if possible
     if (get_rule(tree) == c.sequence[1])
         remaining_sequence = c.sequence[2:end]
@@ -64,17 +71,17 @@ function check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_start
     if isempty(remaining_sequence)
         return false
     end
-    
+
     if sequence_started
         # the sequence contains one of the `ignore_if` rules, and therefore is satisfied
         if get_rule(tree) ∈ c.ignore_if
             return true
         end
-        
+
         # continue the current sequence
         smaller_constraint = ForbiddenSequence(remaining_sequence, c.ignore_if)
-        for child ∈ tree.children
-            if !check_tree(smaller_constraint, child, sequence_started=true)
+        for child in tree.children
+            if !check_tree(smaller_constraint, child, sequence_started = true)
                 return false
             end
         end

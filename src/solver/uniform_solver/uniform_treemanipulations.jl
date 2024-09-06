@@ -26,7 +26,7 @@ function remove!(solver::UniformSolver, path::Vector{Int}, rules::Vector{Int})
     #remove the rule_index from the state sparse set of the hole
     hole = get_hole_at_location(solver, path)
     domain_updated = false
-    for rule_index ∈ rules
+    for rule_index in rules
         if remove!(hole.domain, rule_index)
             domain_updated = true
         end

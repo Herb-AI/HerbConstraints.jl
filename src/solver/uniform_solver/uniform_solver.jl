@@ -15,11 +15,11 @@ mutable struct UniformSolver <: Solver
     statistics::Union{SolverStatistics, Nothing}
 end
 
-
 """
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
-function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
+function UniformSolver(grammar::AbstractGrammar,
+        fixed_shaped_tree::AbstractRuleNode; with_statistics = false)
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
@@ -34,15 +34,14 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Bool => with_statistics ? SolverStatistics() : nothing
         ::Nothing => nothing
     end
-    solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
+    solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive,
+        canceledconstraints, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     return solver
 end
 
-
 get_name(::UniformSolver) = "UniformSolver"
-
 
 """
     notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
@@ -52,14 +51,13 @@ Notify all grammar constraints about the new `node` and its (grand)children
 function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
     solver.path_to_node[path] = node
     solver.node_to_path[node] = path
-    for (i, childnode) ∈ enumerate(get_children(node))
+    for (i, childnode) in enumerate(get_children(node))
         notify_new_nodes(solver, childnode, push!(copy(path), i))
     end
-    for c ∈ get_grammar(solver).constraints
+    for c in get_grammar(solver).constraints
         on_new_node(solver, c, path)
     end
 end
-
 
 """
     get_path(solver::UniformSolver, node::AbstractRuleNode)
@@ -70,7 +68,6 @@ function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vecto
     return solver.node_to_path[node]
 end
 
-
 """
     get_node_at_location(solver::UniformSolver, path::Vector{Int})
 
@@ -79,7 +76,6 @@ Get the node that is located at the provided `path`.
 function HerbCore.get_node_at_location(solver::UniformSolver, path::Vector{Int})
     return solver.path_to_node[path]
 end
-
 
 """
     get_hole_at_location(solver::UniformSolver, path::Vector{Int})
@@ -92,7 +88,6 @@ function get_hole_at_location(solver::UniformSolver, path::Vector{Int})
     return hole
 end
 
-
 """
     get_nodes(solver)
 
@@ -101,7 +96,6 @@ Return an iterator over all nodes in the tree
 function get_nodes(solver)
     return keys(solver.node_to_path)
 end
-
 
 """
     function get_grammar(solver::UniformSolver)::AbstractGrammar
@@ -112,7 +106,6 @@ function get_grammar(solver::UniformSolver)::AbstractGrammar
     return solver.grammar
 end
 
-
 """
     function get_tree(solver::UniformSolver)::AbstractRuleNode
 
@@ -121,7 +114,6 @@ Get the root of the tree. This remains the same instance throughout the entire s
 function get_tree(solver::UniformSolver)::AbstractRuleNode
     return solver.tree
 end
-
 
 """
     deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
@@ -146,7 +138,6 @@ function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     push!(solver.canceledconstraints, constraint)
 end
 
-
 """
     post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
 
@@ -154,7 +145,9 @@ Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
 function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     # initial propagation of the new constraint
     temp = solver.fix_point_running
     solver.fix_point_running = true
@@ -168,13 +161,12 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     end
     #if the was not deactivated after initial propagation, it can be added to the list of constraints
     if (constraint ∈ keys(solver.isactive))
-        @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
+        @assert solver.isactive[constraint]==0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
     else
         solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
     end
     set_value!(solver.isactive[constraint], 1)
 end
-
 
 """
     notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
@@ -182,8 +174,10 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
-    for (constraint, isactive) ∈ solver.isactive
+    if !isfeasible(solver)
+        return
+    end
+    for (constraint, isactive) in solver.isactive
         if get_value(isactive) == 1
             if shouldschedule(solver, constraint, event_path)
                 schedule!(solver, constraint)
@@ -191,7 +185,6 @@ function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int}
         end
     end
 end
-
 
 """
     isfeasible(solver::UniformSolver)
@@ -202,7 +195,6 @@ function isfeasible(solver::UniformSolver)
     return solver.isfeasible
 end
 
-
 """
     set_infeasible!(solver::Solver)
 
@@ -211,7 +203,6 @@ Function to be called if any inconsistency has been detected
 function set_infeasible!(solver::UniformSolver)
     solver.isfeasible = false
 end
-
 
 """
 Save the current state of the solver, can restored using `restore!`
@@ -222,7 +213,6 @@ function save_state!(solver::UniformSolver)
     save_state!(solver.sm)
 end
 
-
 """
 Restore state of the solver until the last `save_state!`
 """
@@ -231,4 +221,3 @@ function restore!(solver::UniformSolver)
     restore!(solver.sm)
     solver.isfeasible = true
 end
-

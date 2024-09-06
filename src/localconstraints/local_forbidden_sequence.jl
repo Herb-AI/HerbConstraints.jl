@@ -15,8 +15,10 @@ end
 
 Return true iff the manipulation happened at or above the constraint path.
 """
-function shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
-    return (length(constraint.path) >= length(path)) && (path== constraint.path[1:length(path)] )
+function shouldschedule(
+        ::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
+    return (length(constraint.path) >= length(path)) &&
+           (path == constraint.path[1:length(path)])
 end
 
 """
@@ -30,7 +32,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     # Smallest match
     forbidden_assignments = Vector{Tuple{Int, Any}}()
     i = length(c.sequence)
-    for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
+    for (path_idx, node) in Iterators.reverse(enumerate(nodes))
         forbidden_rule = c.sequence[i]
         if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
@@ -46,9 +48,9 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
                 push!(forbidden_assignments, (path_idx, forbidden_rule))
                 i -= 1
             else
-                for r ∈ c.ignore_if
+                for r in c.ignore_if
                     if node.domain[r]
-                        rules = [r for r ∈ findall(node.domain) if r ∉ c.ignore_if]
+                        rules = [r for r in findall(node.domain) if r ∉ c.ignore_if]
                         if !isempty(rules)
                             push!(forbidden_assignments, (path_idx, rules))
                             break
@@ -83,14 +85,14 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         if path_idx > length(c.path)
             deactivate!(solver, c)
         end
-        remove!(solver, c.path[1:path_idx-1], rule)
+        remove!(solver, c.path[1:(path_idx - 1)], rule)
         return
     end
 
     # Smallest match with a maximum of 1 hole (Optional, slightly stronger inference without making all possible matches) 
     i = length(c.sequence)
     forbidden_assignment = nothing
-    for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
+    for (path_idx, node) in Iterators.reverse(enumerate(nodes))
         forbidden_rule = c.sequence[i]
         if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
@@ -101,7 +103,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
                 i -= 1
             end
         else
-            for r ∈ c.ignore_if
+            for r in c.ignore_if
                 if node.domain[r]
                     #softfail (ignore if)
                     return
@@ -129,19 +131,19 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     if path_idx > length(c.path)
         deactivate!(solver, c)
     end
-    remove!(solver, c.path[1:path_idx-1], rule)
+    remove!(solver, c.path[1:(path_idx - 1)], rule)
 end
-
 
 """
     function get_nodes_on_path(root::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
 
 Gets a list of nodes on the `path`, starting (and including) the `root`.
 """
-function get_nodes_on_path(node::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
+function get_nodes_on_path(
+        node::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
     nodes = Vector{AbstractRuleNode}()
     push!(nodes, node)
-    for i ∈ path
+    for i in path
         node = node.children[i]
         push!(nodes, node)
     end

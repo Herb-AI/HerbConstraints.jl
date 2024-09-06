@@ -1,7 +1,6 @@
 using HerbCore, HerbGrammar
 
 @testset verbose=false "Tree Manipulations (GenericSolver)" begin
-
     function create_dummy_solver()
         grammar = @csgrammar begin
             Number = x | 1
@@ -15,12 +14,12 @@ using HerbCore, HerbGrammar
         solver = create_dummy_solver()
         new_state!(solver, Hole(BitVector((0, 0, 1, 1))))
         #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
-        
+
         tree = get_tree(solver)
         @test tree isa UniformHole
         @test tree.domain == BitVector((0, 0, 1, 1))
         @test length(tree.children) == 2
-        for child ∈ tree.children
+        for child in tree.children
             @test child isa Hole
             @test child.domain == BitVector((1, 1, 1, 1))
         end
@@ -30,12 +29,12 @@ using HerbCore, HerbGrammar
         solver = create_dummy_solver()
         new_state!(solver, Hole(BitVector((0, 0, 0, 1))))
         #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
-        
+
         tree = get_tree(solver)
         @test tree isa RuleNode
         @test tree.ind == 4
         @test length(tree.children) == 2
-        for child ∈ tree.children
+        for child in tree.children
             @test child isa Hole
             @test child.domain == BitVector((1, 1, 1, 1))
         end
@@ -45,12 +44,12 @@ using HerbCore, HerbGrammar
         solver = create_dummy_solver()
         new_state!(solver, UniformHole(BitVector((0, 0, 0, 1)), [RuleNode(1), RuleNode(1)]))
         #HerbConstraints.simplify_hole!(solver, Vector{Int}()) this will be done inside `new_state!`
-        
+
         tree = get_tree(solver)
         @test tree isa RuleNode
         @test tree.ind == 4
         @test length(tree.children) == 2
-        for child ∈ tree.children
+        for child in tree.children
             @test child isa RuleNode
             @test child.ind == 1
         end
@@ -58,13 +57,14 @@ using HerbCore, HerbGrammar
 
     @testset "remove_node!" begin
         solver = create_dummy_solver()
-        new_state!(solver, RuleNode(1, [
-            RuleNode(1, [     #  | This node will be 'removed'. It will be replaced with a hole
-                RuleNode(3),  #  |
-                RuleNode(3)   #  |
-            ]),               # _|
-            RuleNode(2)
-        ]))
+        new_state!(
+            solver, RuleNode(1, [
+                RuleNode(1, [     #  | This node will be 'removed'. It will be replaced with a hole
+                    RuleNode(3),  #  |
+                    RuleNode(3)   #  |
+                ]),               # _|
+                RuleNode(2)
+            ]))
         remove_node!(solver, [1])
         tree = get_tree(solver)
         @test tree.children[1] isa Hole
@@ -74,6 +74,4 @@ using HerbCore, HerbGrammar
         @test tree.children[1].domain[4] == true
         @test tree.children[2] == RuleNode(2)
     end
-
 end
-

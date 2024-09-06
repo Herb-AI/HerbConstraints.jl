@@ -5,7 +5,7 @@ LocalContains
 Enforces that a given `rule` appears at or below the given `path` at least once.
 """
 struct LocalContains <: AbstractLocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     rule::Int
 end
 
@@ -20,11 +20,11 @@ function propagate!(solver::Solver, c::LocalContains)
     node = get_node_at_location(solver, c.path)
     track!(solver, "LocalContains propagation")
     @match _contains(node, c.rule) begin
-        true => begin 
+        true => begin
             track!(solver, "LocalContains satisfied")
             deactivate!(solver, c)
         end
-        false => begin 
+        false => begin
             track!(solver, "LocalContains inconsistency")
             set_infeasible!(solver)
         end
@@ -63,7 +63,8 @@ function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{AbstractHole
     return _contains(node, rule, Vector{AbstractHole}())
 end
 
-function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
+function _contains(node::AbstractRuleNode, rule::Int,
+        holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     if !isuniform(node)
         # the rule might appear underneath this non-uniform hole
         push!(holes, node)
@@ -81,8 +82,9 @@ function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole
     return _contains(get_children(node), rule, holes)
 end
 
-function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
-    for child ∈ children
+function _contains(children::Vector{AbstractRuleNode}, rule::Int,
+        holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
+    for child in children
         if _contains(child, rule, holes) == true
             return true
         end

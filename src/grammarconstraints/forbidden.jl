@@ -27,8 +27,12 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
         @match get_node_at_location(solver, path) begin
-            hole::AbstractHole => if !hole.domain[c.tree.ind] return end
-            node::RuleNode => if node.ind != c.tree.ind return end
+            hole::AbstractHole => if !hole.domain[c.tree.ind]
+                return
+            end
+            node::RuleNode => if node.ind != c.tree.ind
+                return
+            end
         end
     end
     post!(solver, LocalForbidden(path, c.tree))
@@ -41,10 +45,10 @@ Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@re
 """
 function check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
     @match pattern_match(tree, c.tree) begin
-      ::PatternMatchHardFail => ()
-      ::PatternMatchSoftFail => ()
-      ::PatternMatchSuccess => return false
-      ::PatternMatchSuccessWhenHoleAssignedTo => ()
+        ::PatternMatchHardFail => ()
+        ::PatternMatchSoftFail => ()
+        ::PatternMatchSuccess => return false
+        ::PatternMatchSuccessWhenHoleAssignedTo => ()
     end
-    return all(check_tree(c, child) for child ∈ tree.children)
+    return all(check_tree(c, child) for child in tree.children)
 end

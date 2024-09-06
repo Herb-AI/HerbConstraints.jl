@@ -31,7 +31,7 @@
         remove!(set, 2)
         remove!(set, 3)
         @test findlast(set) == 10
-        
+
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 10)
         remove!(set, 10)
         @test findlast(set) == 9
@@ -48,14 +48,14 @@
 
     @testset "in" begin
         n = 5
-        for remaining_value ∈ 1:n
+        for remaining_value in 1:n
             set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), n)
-            for i ∈ 1:n
+            for i in 1:n
                 if i != remaining_value
                     remove!(set, i)
                 end
             end
-            for i ∈ 1:10
+            for i in 1:10
                 if i == remaining_value
                     @test i ∈ set
                 else
@@ -114,10 +114,10 @@
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 10)
         HerbConstraints.remove_below!(set, 5)
         @test size(set) == 6
-        for i ∈ 1:4
+        for i in 1:4
             @test i ∉ set
         end
-        for i ∈ 5:10
+        for i in 5:10
             @test i ∈ set
         end
     end
@@ -126,10 +126,10 @@
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 10)
         HerbConstraints.remove_above!(set, 4)
         @test size(set) == 4
-        for i ∈ 1:4
+        for i in 1:4
             @test i ∈ set
         end
-        for i ∈ 5:10
+        for i in 5:10
             @test i ∉ set
         end
     end
@@ -157,7 +157,7 @@
         HerbConstraints.remove!(set, 4)
         HerbConstraints.remove!(set, 1)
         vec = Vector{Int}()
-        for value ∈ set
+        for value in set
             push!(vec, value)
         end
         @test length(vec) == 3
@@ -186,7 +186,8 @@
     end
 
     @testset "findall" begin
-        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        set = HerbConstraints.StateSparseSet(
+            HerbConstraints.StateManager(), BitVector((1, 0, 1)))
         @test findall(set) == [1, 3]
     end
 end

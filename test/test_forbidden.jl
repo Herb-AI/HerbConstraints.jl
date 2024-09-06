@@ -21,16 +21,17 @@
             RuleNode(2),
             RuleNode(2)
         ])
-        tree_large_true = RuleNode(3, [
-            RuleNode(4, [
-                RuleNode(2),
-                RuleNode(3, [
+        tree_large_true = RuleNode(3,
+            [
+                RuleNode(4, [
                     RuleNode(2),
-                    RuleNode(2)
-                ])
-            ]),
-            RuleNode(2)
-        ])
+                    RuleNode(3, [
+                        RuleNode(2),
+                        RuleNode(2)
+                    ])
+                ]),
+                RuleNode(2)
+            ])
         @test check_tree(forbidden, tree11) == false
         @test check_tree(forbidden, tree12) == true
         @test check_tree(forbidden, tree21) == true
@@ -43,19 +44,21 @@
             RuleNode(2),
             RuleNode(2)
         ])
-        tree_large_false = RuleNode(3, [
-            RuleNode(4, [
-                RuleNode(3, [
-                    RuleNode(2),
-                    RuleNode(2)
-                ]),
-                RuleNode(3, [
-                    RuleNode(2),
-                    RuleNode(2)
-                ])
-            ]),
-            RuleNode(2)
-        ])
+        tree_large_false = RuleNode(3,
+            [
+                RuleNode(4,
+                    [
+                        RuleNode(3, [
+                            RuleNode(2),
+                            RuleNode(2)
+                        ]),
+                        RuleNode(3, [
+                            RuleNode(2),
+                            RuleNode(2)
+                        ])
+                    ]),
+                RuleNode(2)
+            ])
         @test check_tree(forbidden, tree22) == false
         @test check_tree(forbidden, tree_large_false) == false
     end

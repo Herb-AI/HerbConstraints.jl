@@ -8,7 +8,6 @@ A result of the `less_than_or_equal` function. Can be one of 3 cases:
 """
 abstract type LessThanOrEqualResult end
 
-
 """
     abstract type LessThanOrEqualSuccess <: LessThanOrEqualResult
 
@@ -20,7 +19,6 @@ The strictness of a LessThanOrEqualSuccess is specified by 1 of 2 concrete cases
 """
 abstract type LessThanOrEqualSuccess <: LessThanOrEqualResult end
 
-
 """
     struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
 
@@ -28,14 +26,12 @@ abstract type LessThanOrEqualSuccess <: LessThanOrEqualResult end
 """
 struct LessThanOrEqualSuccessLessThan <: LessThanOrEqualSuccess end
 
-
 """
     struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
 
 `node1` == `node2` is guaranteed under all possible assignments of the holes involved.
 """
 struct LessThanOrEqualSuccessEquality <: LessThanOrEqualSuccess end
-
 
 """
     struct LessThanOrEqualSuccessWithHoles <: LessThanOrEqualSuccess end
@@ -45,14 +41,12 @@ Because of the holes involved, it is not possible to specify '<' or '=='.
 """
 struct LessThanOrEqualSuccessWithHoles <: LessThanOrEqualSuccess end
 
-
 """
     struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
 
 `node1` > `node2` is guaranteed under all possible assignments of the holes involved.
 """
 struct LessThanOrEqualHardFail <: LessThanOrEqualResult end
-
 
 """
     struct LessThanOrEqualSoftFail <: LessThanOrEqualResult
@@ -69,7 +63,6 @@ end
 
 LessThanOrEqualSoftFail(hole) = LessThanOrEqualSoftFail(hole, nothing)
 
-
 """
     function make_less_than_or_equal!(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole})::LessThanOrEqualResult
 
@@ -79,9 +72,9 @@ Ensures that n1<=n2 by removing impossible values from holes. Returns one of the
 - [`LessThanOrEqualSoftFail`](@ref). When no further deductions can be made, but [n1<=n2] and [n1>n2] are still possible.
 """
 function make_less_than_or_equal!(
-    solver::Solver, 
-    hole1::Union{RuleNode, AbstractHole}, 
-    hole2::Union{RuleNode, AbstractHole}
+        solver::Solver,
+        hole1::Union{RuleNode, AbstractHole},
+        hole2::Union{RuleNode, AbstractHole}
 )::LessThanOrEqualResult
     make_less_than_or_equal!(solver, hole1, hole2, Vector{Tuple{AbstractHole, Int}}())
 end
@@ -92,10 +85,10 @@ end
 Helper function that keeps track of the guards
 """
 function make_less_than_or_equal!(
-    solver::Solver, 
-    hole1::Union{RuleNode, AbstractHole}, 
-    hole2::Union{RuleNode, AbstractHole},
-    guards::Vector{Tuple{AbstractHole, Int}}
+        solver::Solver,
+        hole1::Union{RuleNode, AbstractHole},
+        hole2::Union{RuleNode, AbstractHole},
+        guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
     @match (isfilled(hole1), isfilled(hole2)) begin
@@ -136,7 +129,8 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(
+                    solver, hole1.children, hole2.children, guards)
             else
                 return LessThanOrEqualSoftFail(hole2)
             end
@@ -169,7 +163,8 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(
+                    solver, hole1.children, hole2.children, guards)
             else
                 return LessThanOrEqualSoftFail(hole1)
             end
@@ -213,7 +208,8 @@ function make_less_than_or_equal!(
                     # {2, 3} <= {3, 4}, try to tiebreak on the children
                     push!(guards, (hole1, 0))
                     push!(guards, (hole2, 0))
-                    return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                    return make_less_than_or_equal!(
+                        solver, hole1.children, hole2.children, guards)
                 elseif left_highest_ind < right_lowest_ind
                     # {2, 3} < {7, 8}, success
                     return LessThanOrEqualSuccessLessThan()
@@ -234,19 +230,19 @@ end
 Helper function that tiebreaks on children.
 """
 function make_less_than_or_equal!(
-    solver::Solver,
-    nodes1::Vector{AbstractRuleNode},
-    nodes2::Vector{AbstractRuleNode},
-    guards::Vector{Tuple{AbstractHole, Int}}
+        solver::Solver,
+        nodes1::Vector{AbstractRuleNode},
+        nodes2::Vector{AbstractRuleNode},
+        guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
-    for (node1, node2) ∈ zip(nodes1, nodes2)
+    for (node1, node2) in zip(nodes1, nodes2)
         result = make_less_than_or_equal!(solver, node1, node2, guards)
         @match result begin
-            ::LessThanOrEqualSuccessWithHoles => ();
-            ::LessThanOrEqualSuccessEquality => ();
-            ::LessThanOrEqualSuccessLessThan => return result;
-            ::LessThanOrEqualSoftFail => return result;
-            ::LessThanOrEqualHardFail => begin 
+            ::LessThanOrEqualSuccessWithHoles => ()
+            ::LessThanOrEqualSuccessEquality => ()
+            ::LessThanOrEqualSuccessLessThan => return result
+            ::LessThanOrEqualSoftFail => return result
+            ::LessThanOrEqualHardFail => begin
                 if length(guards) == 0
                     return result
                 elseif length(guards) == 1
@@ -261,5 +257,6 @@ function make_less_than_or_equal!(
             end
         end
     end
-    return isnothing(guards) ? LessThanOrEqualSuccessEquality() : LessThanOrEqualSuccessWithHoles()
+    return isnothing(guards) ? LessThanOrEqualSuccessEquality() :
+           LessThanOrEqualSuccessWithHoles()
 end

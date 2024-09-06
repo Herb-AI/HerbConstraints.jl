@@ -56,7 +56,8 @@ end
 Generic fallback function for commutativity. Swaps arguments 1 and 2, then dispatches to a more specific signature.
 If this gets stuck in an infinite loop, the implementation of an AbstractRuleNode type pair is missing.
 """
-function pattern_match(mn::AbstractRuleNode, rn::AbstractRuleNode, vars::Dict{Symbol, AbstractRuleNode})
+function pattern_match(
+        mn::AbstractRuleNode, rn::AbstractRuleNode, vars::Dict{Symbol, AbstractRuleNode})
     pattern_match(rn, mn, vars)
 end
 
@@ -66,7 +67,8 @@ end
 Pairwise tries to match two ordered lists of [AbstractRuleNode](@ref)s. 
 Typically, this function is used to pattern match the children two AbstractRuleNodes.
 """
-function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNode}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNode},
+        vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
     # Currently, invalid arities are not supported.
     # Suppose rule 3 = "S -> -S"
     # Consider two equivalent constraints: 
@@ -79,19 +81,19 @@ function pattern_match(rns::Vector{AbstractRuleNode}, mns::Vector{AbstractRuleNo
     # if (length(rns) == 0 || length(mns) == 0)
     #     return PatternMatchSuccess()
     # end
-    @assert length(rns) == length(mns) "Unable to pattern match rulenodes with different arities"
+    @assert length(rns)==length(mns) "Unable to pattern match rulenodes with different arities"
     match_result = PatternMatchSuccess()
-    for (n1, n2) ∈ zip(rns, mns)
+    for (n1, n2) in zip(rns, mns)
         child_match_result = pattern_match(n1, n2, vars)
         @match child_match_result begin
-            ::PatternMatchHardFail => return child_match_result;
-            ::PatternMatchSoftFail => (match_result = child_match_result); #continue searching for a hardfail
-            ::PatternMatchSuccess => (); #continue searching for a hardfail
+            ::PatternMatchHardFail => return child_match_result
+            ::PatternMatchSoftFail => (match_result = child_match_result) #continue searching for a hardfail
+            ::PatternMatchSuccess => () #continue searching for a hardfail
             ::PatternMatchSuccessWhenHoleAssignedTo => begin
                 if !(match_result isa PatternMatchSuccess)
                     return PatternMatchSoftFail(child_match_result.hole)
                 end
-                match_result = child_match_result;
+                match_result = child_match_result
             end
         end
     end
@@ -103,8 +105,9 @@ end
 
 Comparing any [`AbstractRuleNode`](@ref) with a named [`VarNode`](@ref)
 """
-function pattern_match(rn::AbstractRuleNode, var::VarNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
-    if var.name ∈ keys(vars) 
+function pattern_match(rn::AbstractRuleNode, var::VarNode,
+        vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+    if var.name ∈ keys(vars)
         return pattern_match(rn, vars[var.name])
     end
     vars[var.name] = rn
@@ -116,7 +119,8 @@ end
 
 Comparing any [`AbstractRuleNode`](@ref) with a [`DomainRuleNode`](@ref)
 """
-function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode,
+        vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
     if isfilled(node)
         #(RuleNode, DomainRuleNode)
         if !domainrulenode.domain[get_rule(node)]
@@ -132,10 +136,11 @@ function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, v
             #a large hole is involved
             return PatternMatchSoftFail(node)
         end
-        children_match_result = pattern_match(get_children(node), get_children(domainrulenode), vars)
+        children_match_result = pattern_match(
+            get_children(node), get_children(domainrulenode), vars)
         @match children_match_result begin
-            ::PatternMatchHardFail => return children_match_result;
-            ::PatternMatchSoftFail => return children_match_result;
+            ::PatternMatchHardFail => return children_match_result
+            ::PatternMatchSoftFail => return children_match_result
             ::PatternMatchSuccess => begin
                 if is_subdomain(node.domain, domainrulenode.domain)
                     return children_match_result
@@ -147,13 +152,13 @@ function pattern_match(node::AbstractRuleNode, domainrulenode::DomainRuleNode, v
                     return PatternMatchSuccessWhenHoleAssignedTo(node, intersection[1]) #exactly this value
                 end
                 return PatternMatchSuccessWhenHoleAssignedTo(node, intersection) #one of multiple values
-            end 
+            end
             ::PatternMatchSuccessWhenHoleAssignedTo => begin
                 if is_subdomain(node.domain, domainrulenode.domain)
                     return children_match_result
                 end
                 return PatternMatchSoftFail(children_match_result.hole)
-            end 
+            end
         end
     end
 end
@@ -166,7 +171,9 @@ It is important to note that some `AbstractHole`s are already filled and should 
 This is why this function is dispatched on `(isfilled(h1), isfilled(h2))`.
 The '(RuleNode, AbstractHole)' case could still include two nodes of type `AbstractHole`, but one of them should be treated as a rulenode.
 """
-function pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
+function pattern_match(
+        h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole},
+        vars::Dict{Symbol, AbstractRuleNode})::PatternMatchResult
     @match (isfilled(h1), isfilled(h2)) begin
         #(RuleNode, RuleNode)
         (true, true) => begin
@@ -182,12 +189,14 @@ function pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, Ab
                 return PatternMatchHardFail()
             end
             if isuniform(h2)
-                children_match_result = pattern_match(get_children(h1), get_children(h2), vars)
+                children_match_result = pattern_match(
+                    get_children(h1), get_children(h2), vars)
                 @match children_match_result begin
-                    ::PatternMatchHardFail => return children_match_result;
-                    ::PatternMatchSoftFail => return children_match_result;
-                    ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(h2, get_rule(h1));
-                    ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(children_match_result.hole);
+                    ::PatternMatchHardFail => return children_match_result
+                    ::PatternMatchSoftFail => return children_match_result
+                    ::PatternMatchSuccess => return PatternMatchSuccessWhenHoleAssignedTo(
+                        h2, get_rule(h1))
+                    ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(children_match_result.hole)
                 end
             end
             if !h2.domain[get_rule(h1)]
@@ -209,12 +218,13 @@ function pattern_match(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, Ab
                 return PatternMatchHardFail()
             end
             if isuniform(h1) && isuniform(h2)
-                children_match_result = pattern_match(get_children(h1), get_children(h2), vars)
+                children_match_result = pattern_match(
+                    get_children(h1), get_children(h2), vars)
                 @match children_match_result begin
-                    ::PatternMatchHardFail => return children_match_result;
-                    ::PatternMatchSoftFail => return children_match_result;
-                    ::PatternMatchSuccess => return PatternMatchSoftFail(h1);
-                    ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(children_match_result.hole);
+                    ::PatternMatchHardFail => return children_match_result
+                    ::PatternMatchSoftFail => return children_match_result
+                    ::PatternMatchSuccess => return PatternMatchSoftFail(h1)
+                    ::PatternMatchSuccessWhenHoleAssignedTo => return PatternMatchSoftFail(children_match_result.hole)
                 end
             end
             return PatternMatchSoftFail(isuniform(h1) ? h2 : h1)

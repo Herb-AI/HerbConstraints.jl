@@ -1,7 +1,6 @@
 @testset verbose=false "ContainsSubtree" begin
-
     function has_active_constraints(solver::UniformSolver)::Bool
-        for c ∈ keys(solver.isactive)
+        for c in keys(solver.isactive)
             if get_value(solver.isactive[c]) == 1
                 return true
             end
@@ -9,12 +8,12 @@
         return false
     end
 
-    @testset "check_tree$with_varnode" for with_varnode ∈ ["", " (with VarNode)"]
+    @testset "check_tree$with_varnode" for with_varnode in ["", " (with VarNode)"]
         contains_subtree = ContainsSubtree(
             RuleNode(3, [
-                RuleNode(1),
-                isempty(with_varnode) ? RuleNode(2) : VarNode(:a)
-            ])
+            RuleNode(1),
+            isempty(with_varnode) ? RuleNode(2) : VarNode(:a)
+        ])
         )
 
         tree_true = RuleNode(3, [
@@ -40,32 +39,34 @@
     @testset "check_tree, 2 VarNodes" begin
         contains_subtree = ContainsSubtree(
             RuleNode(3, [
-                VarNode(:a),
-                VarNode(:a)
-            ])
+            VarNode(:a),
+            VarNode(:a)
+        ])
         )
 
-        tree_true = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-        ])
+        tree_true = RuleNode(3,
+            [
+                RuleNode(3, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),
+                RuleNode(3, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ])
+            ])
 
-        tree_false = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(4, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-        ])
+        tree_false = RuleNode(3,
+            [
+                RuleNode(3, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),
+                RuleNode(4, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ])
+            ])
 
         @test check_tree(contains_subtree, tree_true) == true
         @test check_tree(contains_subtree, tree_false) == false
@@ -87,13 +88,15 @@
             @testset "0 candidates" begin
                 # 3{1, :a} is never contained in the tree
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    RuleNode(2),
-                    RuleNode(4, [
-                        UniformHole(BitVector((1, 1, 0, 0)), []),
-                        UniformHole(BitVector((1, 1, 0, 0)), [])
+                tree = UniformHole(BitVector((0, 0, 1, 1)),
+                    [
+                        RuleNode(2),
+                        RuleNode(4,
+                            [
+                                UniformHole(BitVector((1, 1, 0, 0)), []),
+                                UniformHole(BitVector((1, 1, 0, 0)), [])
+                            ])
                     ])
-                ])
 
                 solver = UniformSolver(grammar, tree)
                 @test !isfeasible(solver)
@@ -102,13 +105,15 @@
             @testset "1 candidate" begin
                 # 3{1, :a} can only appear at the root
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    RuleNode(1),
-                    RuleNode(4, [
-                        UniformHole(BitVector((1, 1, 0, 0)), []),
-                        UniformHole(BitVector((1, 1, 0, 0)), [])
+                tree = UniformHole(BitVector((0, 0, 1, 1)),
+                    [
+                        RuleNode(1),
+                        RuleNode(4,
+                            [
+                                UniformHole(BitVector((1, 1, 0, 0)), []),
+                                UniformHole(BitVector((1, 1, 0, 0)), [])
+                            ])
                     ])
-                ])
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -122,13 +127,15 @@
             @testset "2 candidates" begin
                 # 3{1, :a} can appear at path=[] and path=[2].
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    RuleNode(1),
-                    RuleNode(3, [
-                        UniformHole(BitVector((1, 1, 0, 0)), []),
-                        UniformHole(BitVector((1, 1, 0, 0)), [])
+                tree = UniformHole(BitVector((0, 0, 1, 1)),
+                    [
+                        RuleNode(1),
+                        RuleNode(3,
+                            [
+                                UniformHole(BitVector((1, 1, 0, 0)), []),
+                                UniformHole(BitVector((1, 1, 0, 0)), [])
+                            ])
                     ])
-                ])
 
                 #initial propagation: softfail, all holes remain unfilled
                 solver = UniformSolver(grammar, tree)
@@ -165,10 +172,11 @@
                 # the first hole can be filled with a 3
                 # filling the other two holes is ambiguous
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    UniformHole(BitVector((1, 1, 0, 0)), []),
-                    UniformHole(BitVector((1, 1, 0, 0)), [])
-                ])
+                tree = UniformHole(BitVector((0, 0, 1, 1)),
+                    [
+                        UniformHole(BitVector((1, 1, 0, 0)), []),
+                        UniformHole(BitVector((1, 1, 0, 0)), [])
+                    ])
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -188,16 +196,15 @@
                 # - 4{4{1, 1}, 4{1, 1}} INVALID
                 # no deductions can be made at this point.
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    UniformHole(BitVector((0, 0, 1, 1)), [
-                        RuleNode(1),
-                        RuleNode(1)
-                    ])
-                    RuleNode(4, [
-                        RuleNode(1),
-                        RuleNode(1)
-                    ])
-                ])
+                tree = UniformHole(BitVector((0, 0, 1, 1)),
+                    [UniformHole(BitVector((0, 0, 1, 1)), [
+                         RuleNode(1),
+                         RuleNode(1)
+                     ])
+                     RuleNode(4, [
+                         RuleNode(1),
+                         RuleNode(1)
+                     ])])
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -215,45 +222,41 @@
                 "SoftFail large domain",
                 BitVector((0, 0, 0, 1, 1, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 1)), # domain_root_target
-
                 BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf
-                BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf_target
+                BitVector((1, 1, 1, 0, 0, 0)) # domain_leaf_target
             ),
             (
                 "SoftFail small domain",
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
-
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
-                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
+                BitVector((1, 1, 0, 0, 0, 0)) # domain_leaf_target
             ),
             (
                 "Deduction in Root",
                 BitVector((0, 0, 0, 1, 0, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
-
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
-                BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
+                BitVector((1, 1, 0, 0, 0, 0)) # domain_leaf_target
             ),
             (
                 "Deduction in Leaf",
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
-
                 BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
-                BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
+                BitVector((0, 1, 0, 0, 0, 0)) # domain_leaf_target
             ),
             (
                 "Deduction in Root and Leaf",
                 BitVector((0, 0, 0, 1, 0, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
-
                 BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
-                BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
+                BitVector((0, 1, 0, 0, 0, 0)) # domain_leaf_target
             )
         ]
 
-        @testset "$name" for (name, domain_root, domain_root_target, domain_leaf, domain_leaf_target) ∈ tests
+        @testset "$name" for (
+        name, domain_root, domain_root_target, domain_leaf, domain_leaf_target) in tests
             grammar = @csgrammar begin
                 S = 1
                 S = 2
@@ -262,12 +265,14 @@
                 S = 5, S
                 S = 6, S
             end
-    
+
             # must contain at least rule 4 or 5 in the root.
             # must contain at least rule 1 or 2 in the leaf. 
-            addconstraint!(grammar, ContainsSubtree(DomainRuleNode(grammar, [4, 5], [
-                DomainRuleNode(grammar, [1, 2])
-            ])))
+            addconstraint!(grammar,
+                ContainsSubtree(DomainRuleNode(
+                    grammar, [4, 5], [
+                        DomainRuleNode(grammar, [1, 2])
+                    ])))
 
             tree = UniformHole(domain_root, [
                 UniformHole(domain_leaf, [])
@@ -275,7 +280,7 @@
             solver = UniformSolver(grammar, tree)
             tree = get_tree(solver)
 
-            for rule ∈ 1:6
+            for rule in 1:6
                 @test domain_root_target[rule] == tree.domain[rule]
                 @test domain_leaf_target[rule] == tree.children[1].domain[rule]
             end
@@ -291,7 +296,8 @@
             addconstraint!(grammar, ContainsSubtree(DomainRuleNode(grammar, [1, 2])))
 
             @test !isfeasible(UniformSolver(grammar, RuleNode(3)))
-            @test !isfeasible(UniformSolver(grammar, UniformHole(BitVector((0, 0, 1, 1)), [])))
+            @test !isfeasible(UniformSolver(
+                grammar, UniformHole(BitVector((0, 0, 1, 1)), [])))
         end
     end
 end

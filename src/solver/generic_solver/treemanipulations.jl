@@ -25,7 +25,7 @@ It is assumed the path points to a hole, otherwise an exception will be thrown.
 function remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
     hole = get_hole_at_location(solver, path)
     domain_updated = false
-    for rule_index ∈ rules
+    for rule_index in rules
         if hole.domain[rule_index]
             domain_updated = true
             hole.domain[rule_index] = false
@@ -47,7 +47,9 @@ It is assumed new_domain ⊆ domain. For example: [1, 0, 1, 0] ⊆ [1, 0, 1, 1]
 """
 function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::BitVector)
     hole = get_hole_at_location(solver, path)
-    if hole.domain == new_domain @warn "'remove_all_but' was called with trivial arguments" return end
+    if hole.domain == new_domain
+        @warn "'remove_all_but' was called with trivial arguments" return
+    end
     @assert is_subdomain(new_domain, hole.domain) "($new_domain) ⊈ ($(hole.domain)) The remaining rules are required to be a subdomain of the hole to remove from"
     hole.domain = new_domain
     simplify_hole!(solver, path)
@@ -71,7 +73,7 @@ function remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
         # The tree manipulation won't have any effect, ignore the tree manipulation
         return
     end
-    for r ∈ rule_index+1:length(hole.domain)
+    for r in (rule_index + 1):length(hole.domain)
         hole.domain[r] = false
     end
     simplify_hole!(solver, path)
@@ -95,7 +97,7 @@ function remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
         # The tree manipulation won't have any effect, ignore the tree manipulation
         return
     end
-    for r ∈ 1:rule_index-1
+    for r in 1:(rule_index - 1)
         hole.domain[r] = false
     end
     simplify_hole!(solver, path)
@@ -113,7 +115,8 @@ It is assumed rule_index ∈ hole.domain.
 !!! warning: If the `hole` is known to be in the current tree, the hole can be passed directly.
     The caller has to make sure that the hole instance is actually present at the provided `path`.
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole, Nothing}=nothing)
+function remove_all_but!(solver::GenericSolver, path::Vector{Int},
+        rule_index::Int; hole::Union{Hole, Nothing} = nothing)
     if isnothing(hole)
         hole = get_hole_at_location(solver, path)
     end
@@ -121,7 +124,7 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
     if isuniform(hole)
         # no new children appear underneath
         new_node = RuleNode(rule_index, get_children(hole))
-        substitute!(solver, path, new_node, is_domain_increasing=false)
+        substitute!(solver, path, new_node, is_domain_increasing = false)
     else
         # reduce the domain of the non-uniform hole and let `simplify_hole!` take care of instantiating the children correctly
         # throw("WARNING: attempted to fill a non-uniform hole (untested behavior).")
@@ -130,14 +133,13 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::I
         # If this is also the case for a newly added constraint, make sure to add an `if isuniform(hole) end` check to your propagator.
         # Before you delete this error, make sure that the caller, typically a `propagate!` function, is actually working as intended.
         # If you are sure that filling in a non-uniform hole is fine, this error can safely be deleted."
-        for r ∈ 1:length(hole.domain)
+        for r in 1:length(hole.domain)
             hole.domain[r] = false
         end
         hole.domain[rule_index] = true
         simplify_hole!(solver, path)
     end
 end
-
 
 """
     substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
@@ -148,7 +150,8 @@ Domain increasing substitutions are substitutions that cannot be achieved by rep
 Example of an domain increasing event: `hole[{3, 4, 5}] -> hole[{1, 2}]`.
 Example of an domain decreasing event: `hole[{3, 4, 5}] -> rulenode(4, [hole[{1, 2}], rulenode(1)])`.
 """
-function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
+function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode;
+        is_domain_increasing::Union{Nothing, Bool} = nothing)
     if isempty(path)
         #replace the root
         old_node = solver.state.tree
@@ -156,19 +159,20 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     else
         #replace a node in the middle of the tree
         parent = get_tree(solver)
-        for i ∈ path[1:end-1]
+        for i in path[1:(end - 1)]
             parent = parent.children[i]
         end
         old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
-    
-    if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
+
+    if (get_tree_size(solver) > get_max_size(solver)) ||
+       (length(path) + depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
         set_infeasible!(solver)
         return
     end
-    
+
     if isnothing(is_domain_increasing)
         #automatically decide if the event is domain increasing
         track!(solver, "substitute! checks is_domain_increasing")
@@ -192,7 +196,6 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     end
 end
 
-
 """
     function remove_node!(solver::GenericSolver, path::Vector{Int})
 
@@ -205,9 +208,8 @@ function remove_node!(solver::GenericSolver, path::Vector{Int})
     grammar = get_grammar(solver)
     type = grammar.types[get_rule(node)]
     domain = copy(grammar.domains[type]) #must be copied, otherwise we are mutating the grammar
-    substitute!(solver, path, Hole(domain), is_domain_increasing=true)
+    substitute!(solver, path, Hole(domain), is_domain_increasing = true)
 end
-
 
 """
     simplify_hole!(solver::GenericSolver, path::Vector{Int})
@@ -216,7 +218,9 @@ Takes a [Hole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleN
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     hole = get_hole_at_location(solver, path)
     grammar = get_grammar(solver)
     new_node = nothing
@@ -241,8 +245,8 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
     #the hole will be simplified and replaced with a `new_node`
     if !isnothing(new_node)
-        substitute!(solver, path, new_node, is_domain_increasing=false)
-        for i ∈ 1:length(new_node.children)
+        substitute!(solver, path, new_node, is_domain_increasing = false)
+        for i in 1:length(new_node.children)
             # try to simplify the new children
             child_path = push!(copy(path), i)
             if (new_node.children[i] isa AbstractHole)
