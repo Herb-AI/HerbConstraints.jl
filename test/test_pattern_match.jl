@@ -219,6 +219,13 @@ using HerbGrammar
         @test pattern_match(rn2, mn) isa HerbConstraints.PatternMatchSoftFail
     end
 
+    @testset "PatternMatchSoftFail, 1 hole with a domain of 1, matching rulenode" begin
+        rn = Hole([0, 0, 0, 1])
+        mn = RuleNode(4, [VarNode(:a), VarNode(:a)])
+        @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchSoftFail
+        @test pattern_match(mn, rn) isa HerbConstraints.PatternMatchSoftFail
+    end
+
     @testset "PatternMatchSoftFail, 2 holes with valid domains" begin
         rn = RuleNode(4, [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
         mn = RuleNode(4, [RuleNode(1), RuleNode(1)])

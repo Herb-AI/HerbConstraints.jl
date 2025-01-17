@@ -121,6 +121,40 @@ using HerbCore, HerbGrammar
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
     end
 
+    @testset "left hole softfails chemistry grammar" begin
+        grammar = @csgrammar begin
+            Species = "A" #1
+            Species = "B" #2
+        
+            SpeciesList = Species #3
+            SpeciesList = SpeciesList + SpeciesList #4
+            Reaction = SpeciesList --> SpeciesList #5
+        
+            ReactionList = Reaction #6
+            ReactionList = ReactionList + ReactionList #7
+        end
+
+        left = Hole(BitVector((0, 0, 0, 0, 1, 0, 0)))
+        right = Hole(BitVector((0, 0, 0, 0, 1, 0, 0)))
+
+        solver = GenericSolver(grammar, :ReactionList)
+        tree = RuleNode(7, [
+            RuleNode(6, [
+               left 
+            ]),
+            RuleNode(6, [right])
+        ])
+        
+        leftpath = get_path(tree, left)
+        rightpath = get_path(tree, right)
+        new_state!(solver, tree)
+        left = get_node_at_location(solver, leftpath) #leftnode might have been simplified by `new_state!`
+        left = get_node_at_location(solver, rightpath) #rightnode might have been simplified by `new_state!`
+
+        @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
+        @test HerbConstraints.make_less_than_or_equal!(solver, right, left) isa HerbConstraints.LessThanOrEqualSoftFail
+    end
+
     @testset "left hole gets filled once, two holes remain" begin
         left = Hole(BitVector((0, 0, 1, 1)))
         right = RuleNode(3, [RuleNode(2), RuleNode(2)])
