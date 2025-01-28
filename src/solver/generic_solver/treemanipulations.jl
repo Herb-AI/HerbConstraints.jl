@@ -247,6 +247,9 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
 
     #the hole will be simplified and replaced with a `new_node`
     if !isnothing(new_node)
+        # Ideally, we should try to simplify holes with domain size of 1 here
+        # before substituting. This would remove some duplicated logic when calling
+        # pattern_match and lessthanorequal
         substitute!(solver, path, new_node, is_domain_increasing=false)
         for i ∈ 1:length(new_node.children)
             # try to simplify the new children

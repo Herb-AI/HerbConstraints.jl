@@ -100,13 +100,25 @@ function make_less_than_or_equal!(
     @assert isfeasible(solver)
     @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin
-            #(RuleNode, RuleNode)
+            #(RuleNode | Hole [domain size == 1], RuleNode | Hole [domain size == 1])
             if get_rule(hole1) < get_rule(hole2)
                 return LessThanOrEqualSuccessLessThan()
             elseif get_rule(hole1) > get_rule(hole2)
                 return LessThanOrEqualHardFail()
             end
-            return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+
+            # domain of hole must have been 1 because it `isfilled`
+            # but still has no children, so there's nothing more that
+            # can be deduced before the hole is simplified
+            # ideally, these holes should be simplified before making
+            # it to the lessthanorequal step.
+            if hole1 isa Hole && !isempty(get_children(hole2))
+                return LessThanOrEqualSoftFail(hole1)
+            elseif hole2 isa Hole && !isempty(get_children(hole1))
+                return LessThanOrEqualSoftFail(hole2)
+            end
+
+            return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
         end
         (true, false) => begin
             #(RuleNode, AbstractHole)
