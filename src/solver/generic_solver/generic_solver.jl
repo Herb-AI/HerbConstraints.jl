@@ -18,7 +18,6 @@ mutable struct GenericSolver <: Solver
     state::Union{SolverState, Nothing}
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
     statistics::Union{SolverStatistics, Nothing}
-    use_uniformsolver::Bool
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
@@ -30,9 +29,9 @@ end
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
     init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics, use_uniformsolver=use_uniformsolver, max_size = max_size, max_depth = max_depth)
+    GenericSolver(grammar, init_node, with_statistics=with_statistics, max_size = max_size, max_depth = max_depth)
 end
 
 
@@ -41,9 +40,9 @@ end
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, use_uniformsolver=true, max_size = typemax(Int), max_depth = typemax(Int))
+function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
     stats = with_statistics ? SolverStatistics() : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, use_uniformsolver, false, max_size, max_depth)
+    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
