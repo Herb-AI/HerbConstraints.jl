@@ -87,4 +87,13 @@
         @test statehole2 != node
         @test statehole != statehole2
     end
+
+    @testset "Base.show" begin
+        sm = HerbConstraints.StateManager()
+        sh = StateHole(sm, UniformHole(BitVector((1, 1, 0)), []))
+
+        io = IOBuffer()
+        Base.show(io, sh)
+        @test String(take!(io)) == "statehole[{1, 2}]"
+    end
 end
