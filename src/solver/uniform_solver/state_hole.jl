@@ -68,16 +68,17 @@ function HerbCore.contains_hole(hole::StateHole)::Bool
 end
 
 
-function Base.show(io::IO, node::StateHole; separator=",", last_child::Bool=false)
+function Base.show(io::IO, node::StateHole; separator=",")
 	print(io, "statehole[$(node.domain)]")
 	if !isempty(node.children)
 	    print(io, "{")
 	    for (i,c) in enumerate(node.children)
-			show(io, c, separator=separator, last_child=(i == length(node.children)))
+			show(io, c, separator=separator)
+			if i != length(node.children)
+				print(io, separator)
+			end
 	    end
 	    print(io, "}")
-	elseif !last_child
-	    print(io, separator)
 	end
 end
 
