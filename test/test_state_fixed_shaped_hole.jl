@@ -96,11 +96,11 @@ using HerbCore
 
         io = IOBuffer()
         Base.show(io, sh)
-        @test String(take!(io)) == "statehole[{1,2}]{1,2}"
+        @test String(take!(io)) == "statehole[{1, 2}]{1,2}"
 
         sh = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [])) 
         
         Base.show(io, sh)
-        @test String(take!(io)) == "statehole[{1,2}]"
+        @test String(take!(io)) == "statehole[{1, 2}]"
     end
 end
