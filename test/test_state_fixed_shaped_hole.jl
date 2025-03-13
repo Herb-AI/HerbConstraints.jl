@@ -1,3 +1,5 @@
+using HerbCore
+
 @testset verbose=false "StateHole" begin
     @testset "convert, isfilled and get_rule" begin
         root_stateless = UniformHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
@@ -86,5 +88,19 @@
         @test node != statehole2
         @test statehole2 != node
         @test statehole != statehole2
+    end
+
+    @testset "Base.show" begin
+        sm = HerbConstraints.StateManager()
+        sh = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [RuleNode(1), RuleNode(2)]))
+
+        io = IOBuffer()
+        Base.show(io, sh)
+        @test String(take!(io)) == "statehole[{1, 2}]{1,2}"
+
+        sh = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [])) 
+        
+        Base.show(io, sh)
+        @test String(take!(io)) == "statehole[{1, 2}]"
     end
 end
