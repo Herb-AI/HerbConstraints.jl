@@ -1,6 +1,6 @@
-struct StateSparseSet
-    values::Vector{Integer}
-    indices::Vector{Integer}
+struct StateSparseSet{T<:Integer}
+    values::Vector{T}
+    indices::Vector{T}
     size::StateInt
     min::StateInt
     max::StateInt
@@ -11,14 +11,13 @@ end
 Create a new `StateSparseSet` with values [1, 2, ..., n]
 """
 function StateSparseSet(sm::StateManager, n::Integer)
-    IntType = HerbCore.smallest_Int_type(n)
-    values = Vector{IntType}(collect(1:n))
-    indices = Vector{IntType}(collect(1:n))   
+    values = Vector{UInt8}(collect(1:n))
+    indices = Vector{UInt8}(collect(1:n))   
 
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
-    return StateSparseSet(values, indices, size, min, max, n)
+    return StateSparseSet{UInt8}(values, indices, size, min, max, n)
 end
 
 """
@@ -31,14 +30,12 @@ set = StateSparseSet(sm, BitVector((1, 1, 0, 0, 1, 0, 0))) #{1, 2, 5}
 function StateSparseSet(sm::StateManager, domain::BitVector)
     n = length(domain)
 
-    IntType = HerbCore.smallest_Int_type(n)
-
-    values = Vector{IntType}(collect(1:n))
-    indices = Vector{IntType}(collect(1:n))
+    values = Vector{UInt8}(collect(1:n))
+    indices = Vector{UInt8}(collect(1:n))
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
-    set = StateSparseSet(values, indices, size, min, max, n)
+    set = StateSparseSet{UInt8}(values, indices, size, min, max, n)
     for v ∈ findall(.!domain)
         remove!(set, v)
     end

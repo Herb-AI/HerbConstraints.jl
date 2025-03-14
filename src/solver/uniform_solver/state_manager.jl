@@ -17,14 +17,13 @@ Supports the following functions:
 - `increment!`
 - `decrement!`
 """
-mutable struct StateInt
+mutable struct StateInt{T<:Integer}
     sm::AbstractStateManager
-    val::Integer
+    val::T
     last_state_id::Integer
 
     function StateInt(sm::AbstractStateManager, val::Integer, last_state_id::Integer)
-        IntType = HerbCore.smallest_Int_type(val)
-        new(sm, IntType(val), last_state_id)
+        new{UInt8}(sm, UInt8(val), last_state_id)
     end
 end
 
