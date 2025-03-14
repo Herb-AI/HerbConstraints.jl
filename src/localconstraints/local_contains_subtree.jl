@@ -9,18 +9,18 @@ Enforces that a given `tree` appears at or below the given `path` at least once.
     The `indices` and `candidates` fields should not be set by the user.
 """
 mutable struct LocalContainsSubtree <: AbstractLocalConstraint
-	path::Vector{Int}
+	path::Vector{Integer}
     tree::AbstractRuleNode
     candidates::Union{Vector{AbstractRuleNode}, Nothing}
     indices::Union{StateSparseSet, Nothing}
 end
 
 """
-    LocalContainsSubtree(path::Vector{Int}, tree::AbstractRuleNode)
+    LocalContainsSubtree(path::Vector{<:Integer}, tree::AbstractRuleNode)
 
 Enforces that a given `tree` appears at or below the given `path` at least once.
 """
-function LocalContainsSubtree(path::Vector{Int}, tree::AbstractRuleNode)
+function LocalContainsSubtree(path::Vector{<:Integer}, tree::AbstractRuleNode)
     LocalContainsSubtree(path, tree, Vector{AbstractRuleNode}(), nothing)
 end
 

@@ -3,10 +3,10 @@ Contains <: AbstractGrammarConstraint
 This [`AbstractGrammarConstraint`] enforces that a given `rule` appears in the program tree at least once.
 """
 struct Contains <: AbstractGrammarConstraint
-    rule::Int
+    rule::Integer
 end
 
-function on_new_node(solver::Solver, c::Contains, path::Vector{Int})
+function on_new_node(solver::Solver, c::Contains, path::Vector{<:Integer})
     if length(path) == 0
         #only post a local constraint at the root
         post!(solver, LocalContains(path, c.rule))

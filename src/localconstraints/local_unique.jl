@@ -6,12 +6,12 @@ Enforces that a given `rule` appears at or below the given `path` at most once.
 In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
 struct LocalUnique <: AbstractLocalConstraint
-	path::Vector{Int}
-    rule::Int
+	path::Vector{Integer}
+    rule::Integer
     holes::Vector{AbstractHole}
 end
 
-LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
+LocalUnique(path::Vector{<:Integer}, rule::Integer) = LocalUnique(path, rule, Vector{AbstractHole}())
 
 """
     function propagate!(solver::Solver, c::LocalUnique)
@@ -51,7 +51,7 @@ function propagate!(solver::Solver, c::LocalUnique)
 end
 
 """
-    function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
+    function _count_occurrences!(node::AbstractRuleNode, rule::Integer, holes::Vector{AbstractHole})::Integer
 
 Recursive helper function for the LocalUnique constraint.
 Returns the number of certain occurrences of the rule in the tree.
@@ -61,7 +61,7 @@ All holes that potentially can hold the target rule are stored in the `holes` ve
     Stops counting if the rule occurs more than once. 
     Counting beyond 2 is not needed for LocalUnique. 
 """
-function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
+function _count_occurrences!(node::AbstractRuleNode, rule::Integer, holes::Vector{AbstractHole})::Integer
     count = 0
     if isfilled(node)
         # if the rulenode is the second occurence of the rule, hardfail
@@ -87,7 +87,7 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
 end
 
 """
-    function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
+    function _count_occurrences(holes::Vector{AbstractHole}, rule::Integer)
 
 Counts the occurences of the `rule` in the cached list of `holes`.
 
@@ -95,7 +95,7 @@ Counts the occurences of the `rule` in the cached list of `holes`.
     Stops counting if the rule occurs more than once. 
     Counting beyond 2 is not needed for LocalUnique. 
 """
-function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
+function _count_occurrences(holes::Vector{AbstractHole}, rule::Integer)
     count = 0
     for hole ∈ holes
         if isfilled(hole) && get_rule(hole) == rule

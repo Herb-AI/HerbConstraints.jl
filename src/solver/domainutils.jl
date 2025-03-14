@@ -110,15 +110,15 @@ end
 
 Returns all the values that are in both `domain1` and `domain2`
 """
-function get_intersection(domain1::BitVector, domain2::BitVector)::Vector{Int}
+function get_intersection(domain1::BitVector, domain2::BitVector)::Vector{<:Integer}
     return findall(domain1 .& domain2)
 end
-function get_intersection(sss::Union{BitVector, StateSparseSet}, domain2::Union{BitVector, StateSparseSet})::Vector{Int}
+function get_intersection(sss::Union{BitVector, StateSparseSet}, domain2::Union{BitVector, StateSparseSet})::Vector{<:Integer}
     if !(sss isa StateSparseSet) 
         sss, domain2 = domain2, sss
         @assert sss isa StateSparseSet
     end
-    intersection = Vector{Int}()
+    intersection = Vector{Integer}()
     for v ∈ sss
         if domain2[v]
             push!(intersection, v)

@@ -1,10 +1,10 @@
 """
-    remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+    remove!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Remove `rule_index` from the domain of the hole located at the `path`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 """
-function remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+function remove!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     if !hole.domain[rule_index]
         # The rule is not present in the domain, ignore the tree manipulation
@@ -17,12 +17,12 @@ function remove!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 end
 
 """
-    remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
+    remove!(solver::GenericSolver, path::Vector{<:Integer}, rules::Vector{<:Integer})
 
 Remove all `rules` from the domain of the hole located at the `path`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 """
-function remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
+function remove!(solver::GenericSolver, path::Vector{<:Integer}, rules::Vector{<:Integer})
     hole = get_hole_at_location(solver, path)
     domain_updated = false
     for rule_index ∈ rules
@@ -39,13 +39,13 @@ function remove!(solver::GenericSolver, path::Vector{Int}, rules::Vector{Int})
 end
 
 """
-    remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::BitVector)
+    remove_all_but!(solver::GenericSolver, path::Vector{<:Integer}, new_domain::BitVector)
 
 Reduce the domain of the hole located at the `path`, to the `new_domain`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 It is assumed new_domain ⊆ domain. For example: [1, 0, 1, 0] ⊆ [1, 0, 1, 1]
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::BitVector)
+function remove_all_but!(solver::GenericSolver, path::Vector{<:Integer}, new_domain::BitVector)
     hole = get_hole_at_location(solver, path)
     if hole.domain == new_domain @warn "'remove_all_but' was called with trivial arguments" return end
     @assert is_subdomain(new_domain, hole.domain) "($new_domain) ⊈ ($(hole.domain)) The remaining rules are required to be a subdomain of the hole to remove from"
@@ -56,14 +56,14 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::B
 end
 
 """
-    remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+    remove_above!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
 Example:
 `rule_index` = 2. 
 `hole` with domain [1, 1, 0, 1] gets reduced to [1, 0, 0, 0] and gets simplified to a `RuleNode`
 """
-function remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+function remove_above!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     highest_ind = findlast(hole.domain)
     if highest_ind <= rule_index
@@ -80,14 +80,14 @@ function remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
 end
 
 """
-    remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+    remove_below!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices below `rule_index`
 Example:
 `rule_index` = 2. 
 `hole` with domain [1, 1, 0, 1] gets reduced to [0, 1, 0, 1]
 """
-function remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+function remove_below!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     lowest_ind = findfirst(hole.domain)
     if lowest_ind >= rule_index
@@ -104,7 +104,7 @@ function remove_below!(solver::GenericSolver, path::Vector{Int}, rule_index::Int
 end
 
 """
-    remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
+    remove_all_but!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Fill in the hole located at the `path` with rule `rule_index`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
@@ -113,7 +113,7 @@ It is assumed rule_index ∈ hole.domain.
 !!! warning: If the `hole` is known to be in the current tree, the hole can be passed directly.
     The caller has to make sure that the hole instance is actually present at the provided `path`.
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole, Nothing}=nothing)
+function remove_all_but!(solver::GenericSolver, path::Vector{<:Integer}, rule_index::Integer; hole::Union{Hole, Nothing}=nothing)
     if isnothing(hole)
         hole = get_hole_at_location(solver, path)
     end
@@ -140,7 +140,7 @@ end
 
 
 """
-    substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
+    substitute!(solver::GenericSolver, path::Vector{<:Integer}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
 
 Substitute the node at the `path`, with a `new_node`.
 * `is_domain_increasing`: indicates if all grammar constraints should be repropagated from the ground up.
@@ -148,7 +148,7 @@ Domain increasing substitutions are substitutions that cannot be achieved by rep
 Example of an domain increasing event: `hole[{3, 4, 5}] -> hole[{1, 2}]`.
 Example of an domain decreasing event: `hole[{3, 4, 5}] -> rulenode(4, [hole[{1, 2}], rulenode(1)])`.
 """
-function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
+function substitute!(solver::GenericSolver, path::Vector{<:Integer}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
     if isempty(path)
         #replace the root
         old_node = solver.state.tree
@@ -194,11 +194,11 @@ end
 
 
 """
-    function remove_node!(solver::GenericSolver, path::Vector{Int})
+    function remove_node!(solver::GenericSolver, path::Vector{<:Integer})
 
 Remove the node at the given `path` by substituting it with a hole of the same symbol.
 """
-function remove_node!(solver::GenericSolver, path::Vector{Int})
+function remove_node!(solver::GenericSolver, path::Vector{<:Integer})
     track!(solver, "remove_node!")
     node = get_node_at_location(solver, path)
     @assert !(node isa Hole)
@@ -210,12 +210,12 @@ end
 
 
 """
-    simplify_hole!(solver::GenericSolver, path::Vector{Int})
+    simplify_hole!(solver::GenericSolver, path::Vector{<:Integer})
 
 Takes a [Hole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleNode](@ref).
 If the domain of the hole is empty, the state will be marked as infeasible
 """
-function simplify_hole!(solver::GenericSolver, path::Vector{Int})
+function simplify_hole!(solver::GenericSolver, path::Vector{<:Integer})
     if !isfeasible(solver) return end
     hole = get_hole_at_location(solver, path)
     grammar = get_grammar(solver)
