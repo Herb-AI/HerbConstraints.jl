@@ -29,7 +29,7 @@ struct Ordered <: AbstractGrammarConstraint
     order::Vector{Symbol}
 end
 
-function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
+function on_new_node(solver::Solver, c::Ordered, path::Vector{<:Integer})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
         @match get_node_at_location(solver, path) begin

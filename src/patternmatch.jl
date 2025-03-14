@@ -20,7 +20,7 @@ The pattern can be matched when the `hole` is filled with any of the given `ind`
 """
 struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
     hole::AbstractHole
-    ind::Union{Int, Vector{Int}}
+    ind::Union{Integer, Vector{<:Integer}}
 end
 
 """

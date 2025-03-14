@@ -5,7 +5,7 @@ Abstract constraint solver.
 Each solver should have at least the following fields:
 - `statistics::SolverStatistics`
 - `fix_point_running::Bool`
-- `schedule::PriorityQueue{AbstractLocalConstraint, Int}`
+- `schedule::PriorityQueue{AbstractLocalConstraint, Integer}`
 
 Each solver should implement at least:
 - `post!`
@@ -58,14 +58,14 @@ end
 
 
 """
-    shouldschedule(solver::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
+    shouldschedule(solver::Solver, constraint::AbstractLocalConstraint, path::Vector{<:Integer})::Bool
 
 Function that is called when a tree manipulation occured at the `path`.
 Returns true if the `constraint` should be scheduled for propagation.
 
 Default behavior: return true iff the manipulation happened at or below the constraint path.
 """
-function shouldschedule(::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
+function shouldschedule(::Solver, constraint::AbstractLocalConstraint, path::Vector{<:Integer})::Bool
     return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
 end
 

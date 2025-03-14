@@ -34,11 +34,11 @@ HerbCore.isuniform(::StateHole) = true
 
 
 """
-	get_rule(hole::StateHole)::Int
+	get_rule(hole::StateHole)::Integer
 
 Assuming the hole has domain size 1, get the rule it is currently assigned to.
 """
-function HerbCore.get_rule(hole::StateHole)::Int
+function HerbCore.get_rule(hole::StateHole)::Integer
 	@assert isfilled(hole) "$(hole) has not been filled yet, unable to get the rule"
 	return findfirst(hole.domain)
 end

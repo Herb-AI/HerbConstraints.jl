@@ -44,7 +44,7 @@ end
 
 Get the current size of the `stack`.
 """
-function Base.size(stack::StateStack)::Int
+function Base.size(stack::StateStack)::Integer
     return get_value(stack.size)
 end
 

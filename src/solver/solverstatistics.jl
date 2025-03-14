@@ -2,10 +2,10 @@
 Temporary struct to `track!` the number of several function calls centered around the [`Solver`](@ref)
 """
 struct SolverStatistics
-    dict::Dict{String, Int}
+    dict::Dict{String, Integer}
 end
 
-SolverStatistics() = SolverStatistics(Dict{String, Int}())
+SolverStatistics() = SolverStatistics(Dict{String, Integer}())
 
 function track!(solver::Solver, key::String)
     if !isnothing(solver.statistics)

@@ -1,10 +1,10 @@
 """
-    remove!(solver::Solver, path::Vector{Int}, rule_index::Int)
+    remove!(solver::Solver, path::Vector{<:Integer}, rule_index::Integer)
 
 Remove `rule_index` from the domain of the hole located at the `path`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 """
-function remove!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+function remove!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
     #remove the rule_index from the state sparse set of the hole
     hole = get_hole_at_location(solver, path)
     if remove!(hole.domain, rule_index)
@@ -17,12 +17,12 @@ function remove!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
 end
 
 """
-    remove!(solver::UniformSolver, path::Vector{Int}, rules::Vector{Int})
+    remove!(solver::UniformSolver, path::Vector{<:Integer}, rules::Vector{<:Integer})
 
 Remove all `rules` from the domain of the hole located at the `path`.
 It is assumed the path points to a hole, otherwise an exception will be thrown.
 """
-function remove!(solver::UniformSolver, path::Vector{Int}, rules::Vector{Int})
+function remove!(solver::UniformSolver, path::Vector{<:Integer}, rules::Vector{<:Integer})
     #remove the rule_index from the state sparse set of the hole
     hole = get_hole_at_location(solver, path)
     domain_updated = false
@@ -41,14 +41,14 @@ function remove!(solver::UniformSolver, path::Vector{Int}, rules::Vector{Int})
 end
 
 """
-    remove_above!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+    remove_above!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
 Example:
 `rule_index` = 2. 
 `hole` with domain {1, 2, 4} gets reduced to {1}
 """
-function remove_above!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+function remove_above!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     if remove_above!(hole.domain, rule_index)
         if isempty(hole.domain)
@@ -60,14 +60,14 @@ function remove_above!(solver::UniformSolver, path::Vector{Int}, rule_index::Int
 end
 
 """
-    remove_below!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+    remove_below!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices below `rule_index`
 Example:
 `rule_index` = 2. 
 `hole` with domain {1, 2, 4} gets reduced to {2, 4}
 """
-function remove_below!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+function remove_below!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     if remove_below!(hole.domain, rule_index)
         if isempty(hole.domain)
@@ -79,11 +79,11 @@ function remove_below!(solver::UniformSolver, path::Vector{Int}, rule_index::Int
 end
 
 """
-    remove_all_but!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+    remove_all_but!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
 
 Fill in the hole located at the `path` with rule `rule_index`.
 """
-function remove_all_but!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+function remove_all_but!(solver::UniformSolver, path::Vector{<:Integer}, rule_index::Integer)
     hole = get_hole_at_location(solver, path)
     if remove_all_but!(hole.domain, rule_index)
         if isempty(hole.domain)

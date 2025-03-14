@@ -4,11 +4,11 @@
 This [`AbstractGrammarConstraint`] enforces that a given `rule` appears in the program tree at most once.
 """
 struct Unique <: AbstractGrammarConstraint
-    rule::Int
+    rule::Integer
 end
 
 
-function on_new_node(solver::Solver, c::Unique, path::Vector{Int})
+function on_new_node(solver::Solver, c::Unique, path::Vector{<:Integer})
     if length(path) == 0
         #only post a local constraint at the root
         post!(solver, LocalUnique(path, c.rule))
@@ -17,11 +17,11 @@ end
 
 
 """
-    function _count_occurrences(rule::Int, node::AbstractRuleNode)::Int
+    function _count_occurrences(rule::Integer, node::AbstractRuleNode)::Integer
 
 Recursively counts the number of occurrences of the `rule` in the `node`.
 """
-function _count_occurrences(node::AbstractRuleNode, rule::Int)::Int
+function _count_occurrences(node::AbstractRuleNode, rule::Integer)::Integer
     @assert isfilled(node)
     count = (get_rule(node) == rule) ? 1 : 0
     for child ∈ get_children(node)
