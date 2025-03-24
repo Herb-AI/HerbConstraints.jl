@@ -5,8 +5,8 @@ mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateHole}
-    path_to_node::Dict{Vector{Integer}, AbstractRuleNode}
-    node_to_path::Dict{AbstractRuleNode, Vector{Integer}}
+    path_to_node::Dict{Vector{Integer}, StateHole}
+    node_to_path::Dict{StateHole, Vector{Integer}}
     isactive::Dict{AbstractLocalConstraint, StateInt}
     canceledconstraints::Set{AbstractLocalConstraint}
     isfeasible::Bool
@@ -22,9 +22,9 @@ end
 function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
-    tree = StateHole(sm, fixed_shaped_tree)
-    path_to_node = Dict{Vector{Integer}, AbstractRuleNode}()
-    node_to_path = Dict{AbstractRuleNode, Vector{Integer}}()
+    tree = StateHole(sm, fixed_shaped_tree, length(grammar.rules))
+    path_to_node = Dict{Vector{Integer}, StateHole}()
+    node_to_path = Dict{StateHole, Vector{Integer}}()
     isactive = Dict{AbstractLocalConstraint, StateInt}()
     canceledconstraints = Set{AbstractLocalConstraint}()
     schedule = PriorityQueue{AbstractLocalConstraint, Integer}()
@@ -49,11 +49,15 @@ get_name(::UniformSolver) = "UniformSolver"
 
 Notify all grammar constraints about the new `node` and its (grand)children
 """
-function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{<:Integer})
+function notify_new_nodes(solver::UniformSolver, node::StateHole, path::Vector{<:Integer})
     solver.path_to_node[path] = node
     solver.node_to_path[node] = path
     for (i, childnode) ∈ enumerate(get_children(node))
-        notify_new_nodes(solver, childnode, push!(copy(path), i))
+        newnode = childnode
+        if childnode isa RuleNode
+            newnode = StateHole(solver.sm, childnode, length(get_grammar(solver).rules))
+        end
+        notify_new_nodes(solver, newnode, push!(copy(path), i))
     end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, path)
@@ -66,7 +70,7 @@ end
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vector{Integer}
+function HerbCore.get_path(solver::UniformSolver, node::StateHole)::Vector{Integer}
     return solver.node_to_path[node]
 end
 
@@ -88,7 +92,6 @@ Get the hole that is located at the provided `path`.
 """
 function get_hole_at_location(solver::UniformSolver, path::Vector{<:Integer})
     hole = solver.path_to_node[path]
-    @assert hole isa StateHole
     return hole
 end
 
