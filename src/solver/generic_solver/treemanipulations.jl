@@ -160,6 +160,9 @@ function substitute!(solver::GenericSolver, path::Vector{<:Integer}, new_node::A
             parent = parent.children[i]
         end
         old_node = parent.children[path[end]]
+        println("path: \t $path\t$(typeof(path[end]))")
+        println("old_node:\t$old_node")
+        println("new_node:\t$new_node")
         parent.children[path[end]] = new_node
     end
     

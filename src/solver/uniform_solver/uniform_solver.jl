@@ -5,12 +5,12 @@ mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateHole}
-    path_to_node::Dict{Vector{Integer}, AbstractRuleNode}
-    node_to_path::Dict{AbstractRuleNode, Vector{Integer}}
+    path_to_node::Dict{Vector{Int}, AbstractRuleNode}
+    node_to_path::Dict{AbstractRuleNode, Vector{Int}}
     isactive::Dict{AbstractLocalConstraint, StateInt}
     canceledconstraints::Set{AbstractLocalConstraint}
     isfeasible::Bool
-    schedule::PriorityQueue{AbstractLocalConstraint, Integer}
+    schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
     statistics::Union{SolverStatistics, Nothing}
 end
@@ -23,11 +23,11 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
-    path_to_node = Dict{Vector{Integer}, AbstractRuleNode}()
-    node_to_path = Dict{AbstractRuleNode, Vector{Integer}}()
+    path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
+    node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
     isactive = Dict{AbstractLocalConstraint, StateInt}()
     canceledconstraints = Set{AbstractLocalConstraint}()
-    schedule = PriorityQueue{AbstractLocalConstraint, Integer}()
+    schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::SolverStatistics => with_statistics
@@ -35,14 +35,12 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
         ::Nothing => nothing
     end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
-    notify_new_nodes(solver, tree, Vector{Integer}())
+    notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     return solver
 end
 
-
 get_name(::UniformSolver) = "UniformSolver"
-
 
 """
     notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{<:Integer})

@@ -16,11 +16,11 @@ Each [`SolverState`](@ref) holds an independent propagation program. Program ite
 mutable struct GenericSolver <: Solver
     grammar::AbstractGrammar
     state::Union{SolverState, Nothing}
-    schedule::PriorityQueue{AbstractLocalConstraint, Integer}
+    schedule::PriorityQueue{AbstractLocalConstraint, Int}
     statistics::Union{SolverStatistics, Nothing}
     fix_point_running::Bool
-    max_size::Integer
-    max_depth::Integer
+    max_size::Int
+    max_depth::Int
 end
 
 
@@ -42,7 +42,7 @@ Constructs a new solver, with an initial state of the provided [`AbstractRuleNod
 """
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
     stats = with_statistics ? SolverStatistics() : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Integer}(), stats, false, max_size, max_depth)
+    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
@@ -132,9 +132,9 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
             _dfs_simplify(childnode, push!(copy(path), i))
         end
     end
-    _dfs_simplify(tree, Vector{Integer}()) #try to simplify all holes in the new state. 
+    _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state. 
     tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
-    notify_new_nodes(solver, tree, Vector{Integer}()) #notify the grammar constraints about all nodes in the new state
+    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
     fix_point!(solver)
 end
 

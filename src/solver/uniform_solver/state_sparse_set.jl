@@ -11,8 +11,8 @@ end
 Create a new `StateSparseSet` with values [1, 2, ..., n]
 """
 function StateSparseSet(sm::StateManager, n::Integer)
-    values = Vector{UInt8}(collect(1:n))
-    indices = Vector{UInt8}(collect(1:n))   
+    values = collect(UnitRange{UInt8}(1,n))
+    indices = collect(UnitRange{UInt8}(1,n))
 
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
@@ -30,8 +30,9 @@ set = StateSparseSet(sm, BitVector((1, 1, 0, 0, 1, 0, 0))) #{1, 2, 5}
 function StateSparseSet(sm::StateManager, domain::BitVector)
     n = length(domain)
 
-    values = Vector{UInt8}(collect(1:n))
-    indices = Vector{UInt8}(collect(1:n))
+    values = collect(UnitRange{UInt8}(1,n))
+    indices = collect(UnitRange{UInt8}(1,n))
+
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)

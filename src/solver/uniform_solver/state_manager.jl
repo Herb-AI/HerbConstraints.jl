@@ -17,7 +17,7 @@ Supports the following functions:
 - `increment!`
 - `decrement!`
 """
-mutable struct StateInt{T<:Integer}
+mutable struct StateInt{T <: Integer}
     sm::AbstractStateManager
     val::T
     last_state_id::Integer
@@ -46,7 +46,7 @@ Set the value of the integer to the given `val`
 function set_value!(int::StateInt, val::Integer)
     if int.val != val
         backup!(int)
-        int.val = HerbCore.smallest_Int_type(val)(val)
+        int.val = val
     end
 end
 
