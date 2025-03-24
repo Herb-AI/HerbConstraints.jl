@@ -32,12 +32,14 @@ using HerbCore
         @test get_rule(node) == 4
 
         node = root.children[1].children[2]
-        @test node isa RuleNode
-        @test node.ind == 4
+        @test node isa StateHole
+        @test node.domain[4] == true
+        @test isfilled(node)
 
         node = root.children[2]
-        @test node isa RuleNode
-        @test node.ind == 5
+        @test node isa StateHole
+        @test node.domain[5] == true
+        @test isfilled(node)
 
         node = root.children[2].children[1]
         @test size(node.domain) == 2
@@ -75,16 +77,16 @@ using HerbCore
             RuleNode(2),
             RuleNode(1)
         ])
-        statehole = StateHole(sm, node)
+        statehole = StateHole(sm, node, 3)
         @test node == statehole
         @test statehole == node
-        @test statehole == StateHole(sm, node)
+        @test statehole == StateHole(sm, node, 3)
 
         node2 = RuleNode(3, [
             RuleNode(1),
             RuleNode(1)
         ])
-        statehole2 = StateHole(sm, node2)
+        statehole2 = StateHole(sm, node2, 3)
         @test node != statehole2
         @test statehole2 != node
         @test statehole != statehole2
@@ -96,7 +98,7 @@ using HerbCore
 
         io = IOBuffer()
         Base.show(io, sh)
-        @test String(take!(io)) == "statehole[{1, 2}]{1,2}"
+        @test String(take!(io)) == "statehole[{1, 2}]{statehole[{1}],statehole[{2}]}"
 
         sh = StateHole(sm, UniformHole(BitVector((1, 1, 0)), [])) 
         
