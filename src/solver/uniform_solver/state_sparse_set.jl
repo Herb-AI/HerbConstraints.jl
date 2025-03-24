@@ -4,7 +4,7 @@ struct StateSparseSet{T<:Integer}
     size::StateInt
     min::StateInt
     max::StateInt
-    n::Integer
+    n::Int
 end
 
 """
