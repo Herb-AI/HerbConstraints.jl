@@ -148,6 +148,9 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
+                if hole1 isa Hole && !isempty(get_children(hole2))
+                    return LessThanOrEqualSoftFail(hole1)
+                end
                 return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
             else
                 return LessThanOrEqualSoftFail(hole2)
@@ -181,6 +184,9 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
+                if hole2 isa Hole && !isempty(get_children(hole1))
+                    return LessThanOrEqualSoftFail(hole2)
+                end
                 return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
             else
                 return LessThanOrEqualSoftFail(hole1)
