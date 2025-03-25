@@ -98,24 +98,15 @@ function make_less_than_or_equal!(
     guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
-    @match (isfilled(hole1), isfilled(hole2)) begin
+    # must test both `isfilled` and `isa Hole` because a `Hole` may be `isfilled` (domain size == 1)
+    # but it still does not have children (`Hole`s cannot have children, only `<:AbstractUniformHole`s can)
+    @match (isfilled(hole1) && !(hole1 isa Hole), isfilled(hole2) && !(hole2 isa Hole)) begin
         (true, true) => begin
             #(RuleNode | Hole [domain size == 1], RuleNode | Hole [domain size == 1])
             if get_rule(hole1) < get_rule(hole2)
                 return LessThanOrEqualSuccessLessThan()
             elseif get_rule(hole1) > get_rule(hole2)
                 return LessThanOrEqualHardFail()
-            end
-
-            # domain of hole must have been 1 because it `isfilled`
-            # but still has no children, so there's nothing more that
-            # can be deduced before the hole is simplified
-            # ideally, these holes should be simplified before making
-            # it to the lessthanorequal step.
-            if hole1 isa Hole && !isempty(get_children(hole2))
-                return LessThanOrEqualSoftFail(hole1)
-            elseif hole2 isa Hole && !isempty(get_children(hole1))
-                return LessThanOrEqualSoftFail(hole2)
             end
 
             return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
@@ -148,10 +139,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                if hole1 isa Hole && !isempty(get_children(hole2))
-                    return LessThanOrEqualSoftFail(hole1)
-                end
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
             else
                 return LessThanOrEqualSoftFail(hole2)
             end
@@ -184,10 +172,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                if hole2 isa Hole && !isempty(get_children(hole1))
-                    return LessThanOrEqualSoftFail(hole2)
-                end
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
             else
                 return LessThanOrEqualSoftFail(hole1)
             end
@@ -231,7 +216,7 @@ function make_less_than_or_equal!(
                     # {2, 3} <= {3, 4}, try to tiebreak on the children
                     push!(guards, (hole1, 0))
                     push!(guards, (hole2, 0))
-                    return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                    return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
                 elseif left_highest_ind < right_lowest_ind
                     # {2, 3} < {7, 8}, success
                     return LessThanOrEqualSuccessLessThan()
