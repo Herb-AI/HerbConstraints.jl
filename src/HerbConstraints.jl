@@ -4,6 +4,7 @@ using HerbCore
 using HerbGrammar
 using DataStructures
 using MLStyle
+using StaticArrays
 
 """
     abstract type AbstractGrammarConstraint <: AbstractConstraint

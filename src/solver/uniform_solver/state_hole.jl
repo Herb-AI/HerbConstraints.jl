@@ -7,7 +7,7 @@
 """
 mutable struct StateHole <: AbstractUniformHole
 	domain::StateSparseSet
-	children::Vector{AbstractRuleNode}
+	children::SizedArray{StateHole}
 end
 
 
