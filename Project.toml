@@ -1,7 +1,7 @@
 name = "HerbConstraints"
 uuid = "1fa96474-3206-4513-b4fa-23913f296dfc"
 authors = ["Jaap de Jong <jaapdejong15@gmail.com>"]
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -14,7 +14,7 @@ DataStructures = "0.17,0.18"
 HerbCore = "^0.3.0"
 HerbGrammar = "0.5"
 MLStyle = "^0.4.17"
-julia = "^1.8"
+julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
