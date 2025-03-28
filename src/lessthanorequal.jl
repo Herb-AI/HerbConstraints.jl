@@ -83,11 +83,11 @@ function make_less_than_or_equal!(
     hole1::Union{RuleNode, AbstractHole}, 
     hole2::Union{RuleNode, AbstractHole}
 )::LessThanOrEqualResult
-    make_less_than_or_equal!(solver, hole1, hole2, Vector{Tuple{AbstractHole, Int}}())
+    make_less_than_or_equal!(solver, hole1, hole2, Vector{Tuple{AbstractHole, Integer}}())
 end
 
 """
-    function make_less_than_or_equal!(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, guards::Vector{Tuple{AbstractHole, Int}})::LessThanOrEqualResult
+    function make_less_than_or_equal!(h1::Union{RuleNode, AbstractHole}, h2::Union{RuleNode, AbstractHole}, guards::Vector{Tuple{AbstractHole, Integer}})::LessThanOrEqualResult
 
 Helper function that keeps track of the guards
 """
@@ -95,7 +95,7 @@ function make_less_than_or_equal!(
     solver::Solver, 
     hole1::Union{RuleNode, AbstractHole}, 
     hole2::Union{RuleNode, AbstractHole},
-    guards::Vector{Tuple{AbstractHole, Int}}
+    guards::Vector{Tuple{AbstractHole, Integer}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
     @match (isfilled(hole1), isfilled(hole2)) begin
@@ -241,7 +241,7 @@ function make_less_than_or_equal!(
 end
 
 """
-    function make_less_than_or_equal!(solver::Solver, nodes1::Vector{AbstractRuleNode}, nodes2::Vector{AbstractRuleNode}, guards::Vector{Tuple{AbstractHole, Int}})::LessThanOrEqualResult
+    function make_less_than_or_equal!(solver::Solver, nodes1::Vector{AbstractRuleNode}, nodes2::Vector{AbstractRuleNode}, guards::Vector{Tuple{AbstractHole, Integer}})::LessThanOrEqualResult
 
 Helper function that tiebreaks on children.
 """
@@ -249,7 +249,7 @@ function make_less_than_or_equal!(
     solver::Solver,
     nodes1::Vector{AbstractRuleNode},
     nodes2::Vector{AbstractRuleNode},
-    guards::Vector{Tuple{AbstractHole, Int}}
+    guards::Vector{Tuple{AbstractHole, Integer}}
 )::LessThanOrEqualResult
     for (node1, node2) ∈ zip(nodes1, nodes2)
         result = make_less_than_or_equal!(solver, node1, node2, guards)

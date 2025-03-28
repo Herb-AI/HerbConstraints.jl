@@ -40,16 +40,14 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     return solver
 end
 
-
 get_name(::UniformSolver) = "UniformSolver"
 
-
 """
-    notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
+    notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{<:Integer})
 
 Notify all grammar constraints about the new `node` and its (grand)children
 """
-function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{Int})
+function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::Vector{<:Integer})
     solver.path_to_node[path] = node
     solver.node_to_path[node] = path
     for (i, childnode) ∈ enumerate(get_children(node))
@@ -66,27 +64,27 @@ end
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vector{Int}
+function HerbCore.get_path(solver::UniformSolver, node::AbstractRuleNode)::Vector{Integer}
     return solver.node_to_path[node]
 end
 
 
 """
-    get_node_at_location(solver::UniformSolver, path::Vector{Int})
+    get_node_at_location(solver::UniformSolver, path::Vector{<:Integer})
 
 Get the node that is located at the provided `path`.
 """
-function HerbCore.get_node_at_location(solver::UniformSolver, path::Vector{Int})
+function HerbCore.get_node_at_location(solver::UniformSolver, path::Vector{<:Integer})
     return solver.path_to_node[path]
 end
 
 
 """
-    get_hole_at_location(solver::UniformSolver, path::Vector{Int})
+    get_hole_at_location(solver::UniformSolver, path::Vector{<:Integer})
 
 Get the hole that is located at the provided `path`.
 """
-function get_hole_at_location(solver::UniformSolver, path::Vector{Int})
+function get_hole_at_location(solver::UniformSolver, path::Vector{<:Integer})
     hole = solver.path_to_node[path]
     @assert hole isa StateHole
     return hole
@@ -177,11 +175,11 @@ end
 
 
 """
-    notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
+    notify_tree_manipulation(solver::UniformSolver, event_path::Vector{<:Integer})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
-function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
+function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{<:Integer})
     if !isfeasible(solver) return end
     for (constraint, isactive) ∈ solver.isactive
         if get_value(isactive) == 1

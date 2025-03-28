@@ -17,10 +17,14 @@ Supports the following functions:
 - `increment!`
 - `decrement!`
 """
-mutable struct StateInt
+mutable struct StateInt{T <: Integer}
     sm::AbstractStateManager
-    val::Int
-    last_state_id::Int
+    val::T
+    last_state_id::Integer
+
+    function StateInt(sm::AbstractStateManager, val::Integer, last_state_id::Integer)
+        new{UInt8}(sm, UInt8(val), last_state_id)
+    end
 end
 
 function StateInt(sm, val)
@@ -29,7 +33,7 @@ end
 
 
 """
-Get the value of the stateful integer
+Get the value of the stateful integer/
 """
 function get_value(int::StateInt)
     return int.val
@@ -39,7 +43,7 @@ end
 """
 Set the value of the integer to the given `val`
 """
-function set_value!(int::StateInt, val::Int)
+function set_value!(int::StateInt, val::Integer)
     if int.val != val
         backup!(int)
         int.val = val
@@ -70,7 +74,7 @@ Backup entry for the given [`StateInt`](@ref)
 """
 struct StateIntBackup
     state_int::StateInt
-    original_val::Int
+    original_val::Integer
 end
 
 
@@ -118,7 +122,7 @@ Manages all changes made to StateInts using StateIntBackups
 mutable struct StateManager <: AbstractStateManager
     prior_backups::Vector{Vector{StateIntBackup}}       # backups of previous save points
     current_backups::Vector{StateIntBackup}             # backups of changes made since the last save point
-    current_state_id::Int
+    current_state_id::Integer
 end
 
 function StateManager()

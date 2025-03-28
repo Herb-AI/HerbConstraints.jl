@@ -37,14 +37,14 @@ g₁ = @csgrammar_annotated begin
 end
 ```
 """
-macro csgrammar_annotated(expression)
+macro csgrammar_annotated(expression::Expr)
     # collect and remove labels
     labels = _get_labels!(expression)
 
     # parse rules, get constraints from annotations
     rules = Any[]
     types = Symbol[]
-    bytype = Dict{Symbol,Vector{Int}}()
+    bytype = Dict{Symbol,Vector{Integer}}()
     constraints = Vector{AbstractConstraint}()
 
     rule_index = 1
@@ -84,7 +84,7 @@ macro csgrammar_annotated(expression)
         for new_rule ∈ new_rules
             push!(rules, new_rule)
             push!(types, lhs)
-            bytype[lhs] = push!(get(bytype, lhs, Int[]), rule_index)
+            bytype[lhs] = push!(get(bytype, lhs, Integer[]), rule_index)
             
             rule_index += 1
         end
@@ -145,10 +145,10 @@ end
 Converts an annotation to a constraint.
 commutative: creates an Ordered constraint
 transitive: creates an (incorrect) Forbidden constraint
-forbidden_path(path::Vector{Union{Symbol, Int}}): creates a ForbiddenPath constraint with the original rule included
+forbidden_path(path::Vector{Union{Symbol, Integer}}): creates a ForbiddenPath constraint with the original rule included
 ... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
 """
-function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::AbstractConstraint
+function annotation2constraint(annotation::Any, rule_index::Integer, labels::Vector{String})::AbstractConstraint
     if annotation isa Expr
         # function-like annotations
         if annotation.head == :call
@@ -193,4 +193,4 @@ end
 
 
 # helper function for label lookup
-_get_rule_index(labels::Vector{String}, label::String)::Int = findfirst(isequal(label), labels)
+_get_rule_index(labels::Vector{String}, label::String)::Integer = findfirst(isequal(label), labels)

@@ -10,13 +10,13 @@ struct ContainsSubtree <: AbstractGrammarConstraint
     tree::AbstractRuleNode
 end
 
-function on_new_node(solver::UniformSolver, c::ContainsSubtree, path::Vector{Int})
+function on_new_node(solver::UniformSolver, c::ContainsSubtree, path::Vector{<:Integer})
     if length(path) == 0
         post!(solver, LocalContainsSubtree(path, c.tree, nothing, nothing))
     end
 end
 
-function on_new_node(::GenericSolver, ::ContainsSubtree, ::Vector{Int}) end
+function on_new_node(::GenericSolver, ::ContainsSubtree, ::Vector{<:Integer}) end
 
 """
     check_tree(c::ContainsSubtree, tree::AbstractRuleNode)::Bool

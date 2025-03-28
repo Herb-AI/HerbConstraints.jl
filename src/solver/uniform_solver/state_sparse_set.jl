@@ -1,6 +1,6 @@
-struct StateSparseSet
-    values::Vector{Int}
-    indices::Vector{Int}
+struct StateSparseSet{T<:Integer}
+    values::Vector{T}
+    indices::Vector{T}
     size::StateInt
     min::StateInt
     max::StateInt
@@ -10,13 +10,14 @@ end
 """
 Create a new `StateSparseSet` with values [1, 2, ..., n]
 """
-function StateSparseSet(sm::StateManager, n::Int)
-    values = collect(1:n)
-    indices = collect(1:n)
+function StateSparseSet(sm::StateManager, n::Integer)
+    values = collect(UnitRange{UInt8}(1,n))
+    indices = collect(UnitRange{UInt8}(1,n))
+
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
-    return StateSparseSet(values, indices, size, min, max, n)
+    return StateSparseSet{UInt8}(values, indices, size, min, max, n)
 end
 
 """
@@ -28,12 +29,14 @@ set = StateSparseSet(sm, BitVector((1, 1, 0, 0, 1, 0, 0))) #{1, 2, 5}
 """
 function StateSparseSet(sm::StateManager, domain::BitVector)
     n = length(domain)
-    values = collect(1:n)
-    indices = collect(1:n)
+
+    values = collect(UnitRange{UInt8}(1,n))
+    indices = collect(UnitRange{UInt8}(1,n))
+
     size = StateInt(sm, n)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
-    set = StateSparseSet(values, indices, size, min, max, n)
+    set = StateSparseSet{UInt8}(values, indices, size, min, max, n)
     for v ∈ findall(.!domain)
         remove!(set, v)
     end
@@ -101,7 +104,7 @@ Checks if value `val` is in StateSparseSet `s`.
 !!! warning:
     This allows a `StateSparseSet` to be used as if it were a `BitVector` representation of a set
 """
-function Base.getindex(set::StateSparseSet, val::Int)
+function Base.getindex(set::StateSparseSet, val::Integer)
     return val ∈ set
 end
 
@@ -125,7 +128,7 @@ end
 """
 Checks if value `val` is in StateSparseSet `s`.
 """
-function Base.in(val::Int, set::StateSparseSet)
+function Base.in(val::Integer, set::StateSparseSet)
     if val < 1 || val > set.n
         return false
     end
@@ -133,7 +136,7 @@ function Base.in(val::Int, set::StateSparseSet)
 end
 
 
-Base.eltype(::StateSparseSet) = Int
+Base.eltype(::StateSparseSet) = Integer
 
 
 function Base.iterate(set::StateSparseSet)
@@ -143,7 +146,7 @@ function Base.iterate(set::StateSparseSet)
 end
 
 
-function Base.iterate(set::StateSparseSet, index::Int)
+function Base.iterate(set::StateSparseSet, index::Integer)
     index += 1
     if index > get_value(set.size) return nothing end
     return set.values[index], index
@@ -151,11 +154,11 @@ end
 
 
 """
-    remove!(set::StateSparseSet, val::Int)
+    remove!(set::StateSparseSet, val::Integer)
 
 Removes value `val` from StateSparseSet `set`. Returns true if `val` was in `set`.
 """
-function remove!(set::StateSparseSet, val::Int)::Bool
+function remove!(set::StateSparseSet, val::Integer)::Bool
     if val ∉ set
         return false;
     end
@@ -167,11 +170,11 @@ end
 
 
 """
-    remove_all_but!(set::StateSparseSet, val::Int)::Bool
+    remove_all_but!(set::StateSparseSet, val::Integer)::Bool
 
 Removes all values from StateSparseSet `set`, except `val`
 """
-function remove_all_but!(set::StateSparseSet, val::Int)::Bool
+function remove_all_but!(set::StateSparseSet, val::Integer)::Bool
     @assert val ∈ set
     if get_value(set.size) <= 1
         return false
@@ -192,7 +195,7 @@ end
 """
 Remove all the values less than `val` from the `set`
 """
-function remove_below!(set::StateSparseSet, val::Int)::Bool
+function remove_below!(set::StateSparseSet, val::Integer)::Bool
     if get_value(set.min) >= val
         return false
     elseif get_value(set.max) < val
@@ -208,7 +211,7 @@ end
 """
 Remove all the values greater than `val` from the `set`
 """
-function remove_above!(set::StateSparseSet, val::Int)::Bool
+function remove_above!(set::StateSparseSet, val::Integer)::Bool
     if get_value(set.max) <= val
         return false
     elseif get_value(set.min) > val
@@ -224,7 +227,7 @@ end
 """
 Exchanges the positions in the internal representation of the StateSparseSet.
 """
-function _exchange_positions!(set::StateSparseSet, val1::Int, val2::Int)
+function _exchange_positions!(set::StateSparseSet, val1::Integer, val2::Integer)
     @assert (val1 >= 1) && (val2 >= 1) && (val1 <= set.n) && (val2 <= set.n)
     v1 = val1
     v2 = val2
@@ -240,7 +243,7 @@ end
 This function should be called whenever the minimum or maximum value from the set might have been removed.
 The minimum and maximum value of the set will be updated to the actual bounds of the set.
 """
-function _update_bounds_val_removed!(set::StateSparseSet, val::Int)
+function _update_bounds_val_removed!(set::StateSparseSet, val::Integer)
     _update_max_val_removed!(set, val)
     _update_min_val_removed!(set, val)
 end
@@ -249,7 +252,7 @@ end
 This function should be called whenever the maximum value from the set might have been removed.
 The maximum value of the set will be updated to the actual maximum of the set.
 """
-function _update_max_val_removed!(set::StateSparseSet, val::Int)
+function _update_max_val_removed!(set::StateSparseSet, val::Integer)
     max = get_value(set.max)
     if !isempty(set) && max == val
         for v ∈ max-1:-1:1
@@ -265,7 +268,7 @@ end
 This function should be called whenever the minimum value from the set might have been removed.
 The minimum value of the set will be updated to the actual minimum of the set.
 """
-function _update_min_val_removed!(set::StateSparseSet, val::Int)
+function _update_min_val_removed!(set::StateSparseSet, val::Integer)
     min = get_value(set.min)
     if !isempty(set) && min == val
         for v ∈ min+1:set.n

@@ -20,13 +20,13 @@ Consider the following paths from the root:
 - `[1, 99, 1, 2, 3]` is forbidden, as there is a subsequence that does not contain `99`
 """
 struct ForbiddenSequence <: AbstractGrammarConstraint
-    sequence::Vector{Int}
-    ignore_if::Vector{Int}
+    sequence::Vector{Integer}
+    ignore_if::Vector{Integer}
 end
 
-ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) = ForbiddenSequence(sequence, ignore_if)
+ForbiddenSequence(sequence::Vector{<:Integer}; ignore_if=Vector{Integer}()) = ForbiddenSequence(sequence, ignore_if)
 
-function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{Int})
+function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{<:Integer})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     @match get_node_at_location(solver, path) begin
         hole::AbstractHole => if !hole.domain[c.sequence[end]] return end

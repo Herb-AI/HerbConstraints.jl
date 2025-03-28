@@ -5,17 +5,17 @@ Forbids the given `sequence` of rule nodes ending at the node at the `path`.
 If any of the rules in `ignore_if` appears in the sequence, the constraint is ignored.
 """
 struct LocalForbiddenSequence <: AbstractLocalConstraint
-    path::Vector{Int}
-    sequence::Vector{Int}
-    ignore_if::Vector{Int}
+    path::Vector{Integer}
+    sequence::Vector{Integer}
+    ignore_if::Vector{Integer}
 end
 
 """
-    shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
+    shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{<:Integer})::Bool
 
 Return true iff the manipulation happened at or above the constraint path.
 """
-function shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
+function shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{<:Integer})::Bool
     return (length(constraint.path) >= length(path)) && (path== constraint.path[1:length(path)] )
 end
 
@@ -28,7 +28,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     track!(solver, "LocalForbiddenSequence propagation")
 
     # Smallest match
-    forbidden_assignments = Vector{Tuple{Int, Any}}()
+    forbidden_assignments = Vector{Tuple{Integer, Any}}()
     i = length(c.sequence)
     for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
         forbidden_rule = c.sequence[i]
@@ -75,7 +75,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         return
     elseif length(forbidden_assignments) == 1
         path_idx, rule = forbidden_assignments[1]
-        if rule isa Int
+        if rule isa Integer
             track!(solver, "LocalForbiddenSequence deduction")
         else
             track!(solver, "LocalForbiddenSequence deduction by ignore_if")
@@ -134,11 +134,11 @@ end
 
 
 """
-    function get_nodes_on_path(root::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
+    function get_nodes_on_path(root::AbstractRuleNode, path::Vector{<:Integer})::Vector{AbstractRuleNode}
 
 Gets a list of nodes on the `path`, starting (and including) the `root`.
 """
-function get_nodes_on_path(node::AbstractRuleNode, path::Vector{Int})::Vector{AbstractRuleNode}
+function get_nodes_on_path(node::AbstractRuleNode, path::Vector{<:Integer})::Vector{AbstractRuleNode}
     nodes = Vector{AbstractRuleNode}()
     push!(nodes, node)
     for i ∈ path

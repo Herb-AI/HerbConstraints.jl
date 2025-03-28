@@ -124,7 +124,7 @@ function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
     track!(solver, "new_state!")
     empty!(solver.schedule)
     solver.state = SolverState(tree)
-    function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
+    function _dfs_simplify(node::AbstractRuleNode, path::Vector{<:Integer})
         if (node isa AbstractHole)
             simplify_hole!(solver, path)
         end
@@ -162,11 +162,11 @@ end
 
 
 """
-    function get_tree_size(solver::GenericSolver)::Int
+    function get_tree_size(solver::GenericSolver)::Integer
 
 Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
 """
-function get_tree_size(solver::GenericSolver)::Int
+function get_tree_size(solver::GenericSolver)::Integer
     return length(get_tree(solver))
 end
 
@@ -262,16 +262,16 @@ end
 
 Get the path at which the `node` is located.
 """
-function HerbCore.get_path(solver::GenericSolver, node::AbstractRuleNode)::Vector{Int}
+function HerbCore.get_path(solver::GenericSolver, node::AbstractRuleNode)::Vector{Integer}
     return get_path(get_tree(solver), node)
 end
 
 """
-    HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
+    HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{<:Integer})::AbstractRuleNode
 
 Get the node at path `location`.
 """
-function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{Int})::AbstractRuleNode
+function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{<:Integer})::AbstractRuleNode
     # dispatches the function on type `AbstractRuleNode` (defined in rulenode_operator.jl in HerbGrammar.jl)
     node = get_node_at_location(get_tree(solver), location)
     @assert !isnothing(node) "No node exists at location $location in the current state of the solver"
@@ -279,11 +279,11 @@ function HerbCore.get_node_at_location(solver::GenericSolver, location::Vector{I
 end
 
 """
-    get_hole_at_location(solver::GenericSolver, location::Vector{Int})::AbstractHole
+    get_hole_at_location(solver::GenericSolver, location::Vector{<:Integer})::AbstractHole
 
 Get the node at path `location` and assert it is a [`AbstractHole`](@ref).
 """
-function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::AbstractHole
+function get_hole_at_location(solver::GenericSolver, location::Vector{<:Integer})::AbstractHole
     hole = get_node_at_location(get_tree(solver), location)
     @assert hole isa AbstractHole "AbstractHole $hole is of non-AbstractHole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
     return hole
@@ -291,11 +291,11 @@ end
 
 
 """
-    notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
+    notify_tree_manipulation(solver::GenericSolver, event_path::Vector{<:Integer})
 
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
-function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
+function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{<:Integer})
     if !isfeasible(solver) return end
     active_constraints = get_state(solver).active_constraints
     for c ∈ active_constraints
@@ -307,13 +307,13 @@ end
 
 
 """
-    notify_new_node(solver::GenericSolver, event_path::Vector{Int})
+    notify_new_node(solver::GenericSolver, event_path::Vector{<:Integer})
 
 Notify all constraints that a new node has appeared at the `event_path` by calling their respective `on_new_node` function.
 !!! warning
     This does not notify the solver about nodes below the `event_path`. In that case, call [`notify_new_nodes`](@ref) instead.
 """
-function notify_new_node(solver::GenericSolver, event_path::Vector{Int})
+function notify_new_node(solver::GenericSolver, event_path::Vector{<:Integer})
     if !isfeasible(solver) return end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
@@ -322,11 +322,11 @@ end
 
 
 """
-    notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
+    notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{<:Integer})
 
 Notify all grammar constraints about the new `node` and its (grand)children
 """
-function notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
+function notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::Vector{<:Integer})
     notify_new_node(solver, path)
     for (i, childnode) ∈ enumerate(get_children(node))
         notify_new_nodes(solver, childnode, push!(copy(path), i))

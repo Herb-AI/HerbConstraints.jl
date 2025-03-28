@@ -5,8 +5,8 @@ LocalContains
 Enforces that a given `rule` appears at or below the given `path` at least once.
 """
 struct LocalContains <: AbstractLocalConstraint
-	path::Vector{Int}
-    rule::Int
+	path::Vector{Integer}
+    rule::Integer
 end
 
 """
@@ -51,7 +51,7 @@ function propagate!(solver::Solver, c::LocalContains)
 end
 
 """
-    _contains(node::AbstractRuleNode, rule::Int)::Bool
+    _contains(node::AbstractRuleNode, rule::Integer)::Bool
 
 Recursive helper function for the LocalContains constraint
 Returns one of the following:
@@ -59,11 +59,11 @@ Returns one of the following:
 - `false`, if the `node` does not contain the `rule`
 - `Vector{AbstractHole}`, if the `node` contains the `rule` if one the `holes` gets filled with the target rule
 """
-function _contains(node::AbstractRuleNode, rule::Int)::Union{Vector{AbstractHole}, Bool}
+function _contains(node::AbstractRuleNode, rule::Integer)::Union{Vector{AbstractHole}, Bool}
     return _contains(node, rule, Vector{AbstractHole}())
 end
 
-function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
+function _contains(node::AbstractRuleNode, rule::Integer, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     if !isuniform(node)
         # the rule might appear underneath this non-uniform hole
         push!(holes, node)
@@ -81,7 +81,7 @@ function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole
     return _contains(get_children(node), rule, holes)
 end
 
-function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
+function _contains(children::Vector{AbstractRuleNode}, rule::Integer, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
     for child ∈ children
         if _contains(child, rule, holes) == true
             return true
