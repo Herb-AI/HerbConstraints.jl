@@ -59,11 +59,11 @@ Function that should be called whenever the constraint is already satisfied and 
 function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
-        track!(solver, "deactivate! removed from schedule")
+        @timeit_debug solver.statistics "deactivate! removed from schedule" begin end
         delete!(solver.schedule, constraint)
     end
     if constraint ∉ get_state(solver).active_constraints
-        track!(solver, "deactivate! (unnecessary)")
+        @timeit_debug solver.statistics "deactivate! (unnecessary)" begin end
         @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
         # This assertion error can occur if a `propagate!` function is called outside `fix_point!`
         # For example, assume that `propagate!` function is called from `post!`
@@ -104,7 +104,7 @@ Constraints can overload this method to add themselves to notify lists or trigge
 """
 function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     if !isfeasible(solver) return end
-    track!(solver, "post! $(typeof(constraint))")
+    @timeit_debug solver.statistics "post! $(typeof(constraint))" begin end
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
     # initial propagation of the new constraint
@@ -121,7 +121,7 @@ end
 Overwrites the current state and propagates constraints on the `tree` from the ground up
 """
 function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
-    track!(solver, "new_state!")
+    @timeit_debug solver.statistics "new_state!" begin end
     empty!(solver.schedule)
     solver.state = SolverState(tree)
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
@@ -145,7 +145,7 @@ end
 Returns a copy of the current state that can be restored by calling `load_state!(solver, state)`
 """
 function save_state!(solver::GenericSolver)::SolverState
-    track!(solver, "save_state!")
+    @timeit_debug solver.statistics "save_state!" begin end
     return copy(get_state(solver))
 end
 
