@@ -3,7 +3,7 @@
 
 Abstract constraint solver. 
 Each solver should have at least the following fields:
-- `statistics::SolverStatistics`
+- `statistics::TimerOutput`
 - `fix_point_running::Bool`
 - `schedule::PriorityQueue{AbstractLocalConstraint, Int}`
 

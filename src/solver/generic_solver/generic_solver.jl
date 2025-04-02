@@ -17,7 +17,7 @@ mutable struct GenericSolver <: Solver
     grammar::AbstractGrammar
     state::Union{SolverState, Nothing}
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
-    statistics::Union{SolverStatistics, Nothing}
+    statistics::Union{TimerOutput, Nothing}
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
@@ -41,7 +41,7 @@ end
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
-    stats = with_statistics ? SolverStatistics() : nothing
+    stats = with_statistics ? TimerOutput("Generic Solver") : nothing
     solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver

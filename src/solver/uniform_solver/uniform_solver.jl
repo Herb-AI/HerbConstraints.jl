@@ -12,7 +12,7 @@ mutable struct UniformSolver <: Solver
     isfeasible::Bool
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
-    statistics::Union{SolverStatistics, Nothing}
+    statistics::Union{TimerOutput, Nothing}
 end
 
 
@@ -30,8 +30,8 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
-        ::SolverStatistics => with_statistics
-        ::Bool => with_statistics ? SolverStatistics() : nothing
+        ::TimerOutput => with_statistics
+        ::Bool => with_statistics ? TimerOutput("Uniform Solver") : nothing
         ::Nothing => nothing
     end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
