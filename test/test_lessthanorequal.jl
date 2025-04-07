@@ -149,7 +149,7 @@ using HerbCore, HerbGrammar
         rightpath = get_path(tree, right)
         new_state!(solver, tree)
         left = get_node_at_location(solver, leftpath) #leftnode might have been simplified by `new_state!`
-        left = get_node_at_location(solver, rightpath) #rightnode might have been simplified by `new_state!`
+        right = get_node_at_location(solver, rightpath) #rightnode might have been simplified by `new_state!`
 
         @test HerbConstraints.make_less_than_or_equal!(solver, left, right) isa HerbConstraints.LessThanOrEqualSoftFail
         @test HerbConstraints.make_less_than_or_equal!(solver, right, left) isa HerbConstraints.LessThanOrEqualSoftFail
