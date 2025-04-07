@@ -18,33 +18,33 @@ If there is only a single hole that can potentially hold the target rule, that h
 """
 function propagate!(solver::Solver, c::LocalContains)
     node = get_node_at_location(solver, c.path)
-    track!(solver, "LocalContains propagation")
+    @timeit_debug solver.statistics "LocalContains propagation" begin end
     @match _contains(node, c.rule) begin
         true => begin 
-            track!(solver, "LocalContains satisfied")
+            @timeit_debug solver.statistics "LocalContains satisfied" begin end
             deactivate!(solver, c)
         end
         false => begin 
-            track!(solver, "LocalContains inconsistency")
+            @timeit_debug solver.statistics "LocalContains inconsistency" begin end
             set_infeasible!(solver)
         end
         holes::Vector{AbstractHole} => begin
             @assert length(holes) > 0
             if length(holes) == 1
                 if isuniform(holes[1])
-                    track!(solver, "LocalContains deduction")
+                    @timeit_debug solver.statistics "LocalContains deduction" begin end
                     path = vcat(c.path, get_path(node, holes[1]))
                     deactivate!(solver, c)
                     remove_all_but!(solver, path, c.rule)
                 else
                     # we cannot deduce anything yet, new holes can appear underneath this hole
                     # optimize this by checking if the target rule can appear as a child of the hole
-                    track!(solver, "LocalContains softfail (non-uniform hole)")
+                    @timeit_debug solver.statistics "LocalContains softfail (non-uniform hole)" begin end
                 end
             else
                 # multiple holes can be set to the target value, no deduction can be made as this point
                 # optimize by only repropagating if the number of holes involved is <= 2
-                track!(solver, "LocalContains softfail (>= 2 holes)")
+                @timeit_debug solver.statistics "LocalContains softfail (>= 2 holes)" begin end
             end
         end
     end

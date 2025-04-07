@@ -4,6 +4,7 @@ using HerbCore
 using HerbGrammar
 using DataStructures
 using MLStyle
+using TimerOutputs
 
 """
     abstract type AbstractGrammarConstraint <: AbstractConstraint
@@ -46,7 +47,6 @@ include("varnode.jl")
 include("domainrulenode.jl")
 
 include("solver/solver.jl")
-include("solver/solverstatistics.jl")
 include("solver/generic_solver/state.jl")
 include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
@@ -132,9 +132,6 @@ export
     partition,
     are_disjoint,
     get_intersection,
-
-    #solverstatistics
-    track!,
 
     #functions related to stateful objects
     restore!,

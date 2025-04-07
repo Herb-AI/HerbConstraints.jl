@@ -25,7 +25,7 @@ end
 """
 function propagate!(solver::Solver, c::LocalForbiddenSequence)
     nodes = get_nodes_on_path(get_tree(solver), c.path)
-    track!(solver, "LocalForbiddenSequence propagation")
+    @timeit_debug solver.statistics "LocalForbiddenSequence propagation" begin end
 
     # Smallest match
     forbidden_assignments = Vector{Tuple{Int, Any}}()
@@ -36,7 +36,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
                 deactivate!(solver, c)
-                track!(solver, "LocalForbiddenSequence deactivate by ignore_if")
+                @timeit_debug solver.statistics "LocalForbiddenSequence deactivate by ignore_if" begin end
                 return
             elseif (rule == forbidden_rule)
                 i -= 1
@@ -54,7 +54,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
                             break
                         end
                         deactivate!(solver, c)
-                        track!(solver, "LocalForbiddenSequence deactivate by ignore_if")
+                        @timeit_debug solver.statistics "LocalForbiddenSequence deactivate by ignore_if" begin end
                         return
                     end
                 end
@@ -65,20 +65,20 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         end
     end
     if i > 0
-        track!(solver, "LocalForbiddenSequence deactivate")
+        @timeit_debug solver.statistics "LocalForbiddenSequence deactivate" begin end
         deactivate!(solver, c)
         return
     end
     if length(forbidden_assignments) == 0
-        track!(solver, "LocalForbiddenSequence inconsistency")
+        @timeit_debug solver.statistics "LocalForbiddenSequence inconsistency" begin end
         set_infeasible!(solver)
         return
     elseif length(forbidden_assignments) == 1
         path_idx, rule = forbidden_assignments[1]
         if rule isa Int
-            track!(solver, "LocalForbiddenSequence deduction")
+            @timeit_debug solver.statistics "LocalForbiddenSequence deduction" begin end
         else
-            track!(solver, "LocalForbiddenSequence deduction by ignore_if")
+            @timeit_debug solver.statistics "LocalForbiddenSequence deduction by ignore_if" begin end
         end
         if path_idx > length(c.path)
             deactivate!(solver, c)
@@ -120,11 +120,11 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         return
     end
     if isnothing(forbidden_assignment)
-        track!(solver, "LocalForbiddenSequence inconsistency (method 2)")
+        @timeit_debug solver.statistics "LocalForbiddenSequence inconsistency (method 2)" begin end
         set_infeasible!(solver)
         return
     end
-    track!(solver, "LocalForbiddenSequence deduction (method 2)")
+    @timeit_debug solver.statistics "LocalForbiddenSequence deduction (method 2)" begin end
     path_idx, rule = forbidden_assignment
     if path_idx > length(c.path)
         deactivate!(solver, c)

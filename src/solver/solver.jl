@@ -3,7 +3,7 @@
 
 Abstract constraint solver. 
 Each solver should have at least the following fields:
-- `statistics::SolverStatistics`
+- `statistics::TimerOutput`
 - `fix_point_running::Bool`
 - `schedule::PriorityQueue{AbstractLocalConstraint, Int}`
 
@@ -32,7 +32,7 @@ function fix_point!(solver::Solver)
     while !isempty(solver.schedule)
         if !isfeasible(solver)
             #an inconsistency was found, stop propagating constraints and return
-            track!(solver, "inconsistency")
+            @timeit_debug solver.statistics "inconsistency" begin end
             empty!(solver.schedule)
             break
         end
@@ -51,7 +51,7 @@ Schedules the `constraint` for propagation.
 function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
-        track!(solver, "schedule!")
+        @timeit_debug solver.statistics "schedule!" begin end
         enqueue!(solver.schedule, constraint, get_priority(constraint))
     end
 end
