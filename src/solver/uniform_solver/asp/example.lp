@@ -47,7 +47,7 @@ child(5,2,8).
 % RuleNode 4: 1st child must have a RuleNode with index smaller or equal to the index of the 2mnd child's RuleNode
 % ordered(4,1,2).
 
-% Forbids a tree where a RuleNode 4 has a child somewhere with RuleNode 1 
+% Forbids a tree where a RuleNode 4 has a child somewhere with RuleNode 1
 % forbidden_sequence(4,1).
 
 % :- node(X,5), child(X,1,Y), node(Y,YD), allowed(yD,YD).
@@ -56,8 +56,10 @@ child(5,2,8).
 % allowed(yD,1).
 
 % Ordered(5, [y,z], [y, z])
-ordered_subtree(X,Y,Z) :- node(X,5), child(X,1,Y), node(Y, YR), child(X,2,Z), node(Z,ZR), YR <= ZR.
-% ordered_subtree(YC,ZC) :- ordered_subtree(X,Y,Z), child(Y,Int,YC), node(YC, YR), child(Z,Int,ZC), node(ZC,ZR), YR <= ZR.
-invalid :- not ordered_subtree(_,_,_).
-:- invalid.
 
+is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
+is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), child(Y,Z,YC), is_smaller(XC, YC)}, M = #max {Z: child(X,Z,XC)}, S = M.
+
+:- node(X,5), child(X,1,C1), child(X,2,C2), not is_smaller(C1,C2).
+
+#show node/2.
