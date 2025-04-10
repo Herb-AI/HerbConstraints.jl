@@ -2,7 +2,7 @@
 	ForbiddenSequence <: AbstractGrammarConstraint
 
 This [`AbstractGrammarConstraint`] forbids the given `sequence` of rule nodes.
-Sequences are strictly vertical and may include gaps. Consider the tree `1(a, 2(b, 3(c, d))))`:
+Sequences are strictly vertical and may include gaps. Consider the tree `1{a, 2{b, 3{c, d}}}`:
 - `[2, 3, d]` is a sequence
 - `[1, 3, d]` is a sequence
 - `[3, c, d]` is not a sequence since c and d are siblings (horizontal)
