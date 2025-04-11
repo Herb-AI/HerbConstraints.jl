@@ -188,6 +188,23 @@ function remove_all_but!(set::StateSparseSet, val::Int)::Bool
     return true
 end
 
+"""
+    remove_all_but!(set::StateSparseSet, vals::Vector{Int})::Bool
+
+Removes all values from StateSparseSet `set`, except those in `vals`
+"""
+function remove_all_but!(set::StateSparseSet, vals::Vector{Int})::Bool
+    to_remove = filter(v -> v ∉ vals, collect(set))
+    if isempty(to_remove)
+        return false
+    end
+    
+    for v in to_remove
+        remove!(set, v)
+    end
+    
+    return true
+end
 
 """
 Remove all the values less than `val` from the `set`

@@ -171,6 +171,29 @@
         remove_all_but!(set, 2)
         @test length(set) == 1
         @test 2 ∈ set
+
+        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        result = remove_all_but!(set, [1])
+        @test length(set) == 1
+        @test 1 ∈ set
+        @test result == true
+
+        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        result = remove_all_but!(set, [2])
+        @test length(set) == 0
+        @test result == true
+        
+        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        result = remove_all_but!(set, [2, 3])
+        @test length(set) == 1
+        @test 3 ∈ set
+        @test result == true
+
+        set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
+        result = remove_all_but!(set, [1, 3])
+        @test length(set) == 2
+        @test 1 ∈ set && 3 ∈ set
+        @test result == false
     end
 
     @testset "are_disjoint" begin

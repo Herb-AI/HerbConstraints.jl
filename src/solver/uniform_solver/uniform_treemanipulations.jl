@@ -83,7 +83,7 @@ end
 
 Fill in the hole located at the `path` with rule `rule_index`.
 """
-function remove_all_but!(solver::UniformSolver, path::Vector{Int}, rule_index::Int)
+function remove_all_but!(solver::UniformSolver, path::Vector{Int}, rule_index::Union{Int, Vector{Int}})
     hole = get_hole_at_location(solver, path)
     if remove_all_but!(hole.domain, rule_index)
         if isempty(hole.domain)
