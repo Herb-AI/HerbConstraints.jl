@@ -16,17 +16,23 @@ Converts a [`UniformHole`](@ref) to a [`StateHole`](@ref)
 """
 function StateHole(sm::StateManager, hole::UniformHole)
 	sss_domain = StateSparseSet(sm, hole.domain)
-	children = [StateHole(sm, child) for child ∈ hole.children]
+	children = [StateHole(sm, child, length(hole.domain)) for child ∈ hole.children]
 	return StateHole(sss_domain, children)
 end
+
+StateHole(sm::StateManager, hole::UniformHole, _) = StateHole(sm, hole)
 
 
 """
 Converts a [`RuleNode`](@ref) to a [`StateHole`](@ref)
 """
-function StateHole(sm::StateManager, rulenode::RuleNode)
-	children = [StateHole(sm, child) for child ∈ rulenode.children]
-	return RuleNode(rulenode.ind, children)
+function StateHole(sm::StateManager, rulenode::RuleNode, domain_length)
+	domain = BitVector(zeros(domain_length))
+	domain[rulenode.ind] = 1
+	domain_set = StateSparseSet(sm, domain)
+
+	children = [StateHole(sm, child, domain_length) for child ∈ rulenode.children]
+	return StateHole(domain_set, children)
 end
 
 
