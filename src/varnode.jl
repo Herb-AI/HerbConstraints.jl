@@ -32,3 +32,32 @@ Checks if an [`AbstractRuleNode`](@ref) tree contains a [`VarNode`](@ref) with t
 """
 contains_varnode(rn::AbstractRuleNode, name::Symbol) = any(contains_varnode(c, name) for c ∈ rn.children)
 contains_varnode(vn::VarNode, name::Symbol) = vn.name == name
+
+"""
+	HerbCore.update_rule_indices!(c::ContainVarNodesSubtree, n_rules::Integer)
+
+This function serves as interface for `HerbCore.update_rule_indices!` on node type `VarNode`. Since `VarNode` doesn't change,
+this function does not perform any operations. 
+
+"""
+function HerbCore.update_rule_indices!(
+    node::VarNode,
+    n_rules::Integer,
+)
+    # VarNode does not change
+end
+
+"""
+	HerbCore.update_rule_indices!(c::VarNode, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+
+This function serves as interface for `HerbCore.update_rule_indices!` on node type `VarNode`. Since `VarNode` doesn't change,
+this function does not perform any operations. 
+
+"""
+function HerbCore.update_rule_indices!(
+    node::VarNode,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    # VarNode does not change
+end

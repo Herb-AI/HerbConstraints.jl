@@ -76,6 +76,7 @@ include("grammarconstraints/contains.jl")
 include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
+include("grammarconstraints/utils.jl")
 
 export
     AbstractGrammarConstraint,
@@ -146,6 +147,8 @@ export
 
     #state fixed shaped hole
     StateHole,
-    freeze_state
+    freeze_state,
+
+    update_rule_indices!
 
 end # module HerbConstraints
