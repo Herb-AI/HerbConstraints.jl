@@ -1,4 +1,4 @@
-@testset verbose=false "ContainsSubtree" begin
+@testset verbose = false "ContainsSubtree" begin
 
     function has_active_constraints(solver::UniformSolver)::Bool
         for c ∈ keys(solver.isactive)
@@ -188,16 +188,19 @@
                 # - 4{4{1, 1}, 4{1, 1}} INVALID
                 # no deductions can be made at this point.
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    UniformHole(BitVector((0, 0, 1, 1)), [
-                        RuleNode(1),
-                        RuleNode(1)
-                    ])
-                    RuleNode(4, [
-                        RuleNode(1),
-                        RuleNode(1)
-                    ])
-                ])
+                tree = UniformHole(
+                    BitVector((0, 0, 1, 1)),
+                    [
+                        UniformHole(BitVector((0, 0, 1, 1)), [
+                            RuleNode(1),
+                            RuleNode(1)
+                        ])
+                        RuleNode(4, [
+                            RuleNode(1),
+                            RuleNode(1)
+                        ])
+                    ]
+                )
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -215,7 +218,6 @@
                 "SoftFail large domain",
                 BitVector((0, 0, 0, 1, 1, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 1)), # domain_root_target
-
                 BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf
                 BitVector((1, 1, 1, 0, 0, 0)), # domain_leaf_target
             ),
@@ -223,7 +225,6 @@
                 "SoftFail small domain",
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
-
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
             ),
@@ -231,7 +232,6 @@
                 "Deduction in Root",
                 BitVector((0, 0, 0, 1, 0, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
-
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf
                 BitVector((1, 1, 0, 0, 0, 0)), # domain_leaf_target
             ),
@@ -239,7 +239,6 @@
                 "Deduction in Leaf",
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root
                 BitVector((0, 0, 0, 1, 1, 0)), # domain_root_target
-
                 BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
                 BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
             ),
@@ -247,7 +246,6 @@
                 "Deduction in Root and Leaf",
                 BitVector((0, 0, 0, 1, 0, 1)), # domain_root
                 BitVector((0, 0, 0, 1, 0, 0)), # domain_root_target
-
                 BitVector((0, 1, 1, 0, 0, 0)), # domain_leaf
                 BitVector((0, 1, 0, 0, 0, 0)), # domain_leaf_target
             )
@@ -262,7 +260,7 @@
                 S = 5, S
                 S = 6, S
             end
-    
+
             # must contain at least rule 4 or 5 in the root.
             # must contain at least rule 1 or 2 in the leaf. 
             addconstraint!(grammar, ContainsSubtree(DomainRuleNode(grammar, [4, 5], [
@@ -292,6 +290,34 @@
 
             @test !isfeasible(UniformSolver(grammar, RuleNode(3)))
             @test !isfeasible(UniformSolver(grammar, UniformHole(BitVector((0, 0, 1, 1)), [])))
+        end
+    end
+    @testset verbose = true "Update rule indices" begin
+        @testset "Update rule index only." begin
+            # with mapping
+
+            n_rules = 10
+            contains_subtree = ContainsSubtree(
+                RuleNode(5, [
+                    VarNode(:a),
+                    VarNode(:a),
+                ]),
+            )
+
+            expected_contains_subtree = ContainsSubtree(
+                RuleNode(3, [
+                    VarNode(:a),
+                    VarNode(:a),
+                ]),
+            )
+            tree = @rulenode 3{3{1,1},2}
+            HerbConstraints.update_rule_indices!(contains_subtree, n_rules) # no change to RuleNode and VarNode
+            @test check_tree(contains_subtree, tree) == false
+
+            mapping = Dict(1 => 7, 5 => 3)
+            HerbConstraints.update_rule_indices!(contains_subtree, n_rules, mapping)
+            @test check_tree(contains_subtree, tree) == true
+            @test contains_subtree.tree == expected_contains_subtree.tree
         end
     end
 end

@@ -25,4 +25,5 @@ using Test
 
     include("test_state_fixed_shaped_hole.jl")
     include("test_domainrulenode.jl")
+    include("test_grammarconstraints.jl")
 end

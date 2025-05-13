@@ -1,4 +1,4 @@
-@testset verbose=false "Forbidden" begin
+@testset verbose = false "Forbidden" begin
     forbidden = Forbidden(RuleNode(4, [
         VarNode(:a),
         VarNode(:a)
@@ -58,5 +58,23 @@
         ])
         @test check_tree(forbidden, tree22) == false
         @test check_tree(forbidden, tree_large_false) == false
+    end
+
+    @testset "update_rule_indices" begin
+        forbidden = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)
+        ]))
+        tree = @rulenode 3{4{2,3{2,2}},7}
+        n_rules = 5
+        HerbConstraints.update_rule_indices!(forbidden, n_rules)
+        @test check_tree(forbidden, tree) == false
+        @test forbidden.tree == RuleNode(3, [VarNode(:a), VarNode(:a)
+        ])
+
+        mapping = Dict(3 => 9, 2 => 22)
+        expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
+        ]))
+        HerbConstraints.update_rule_indices!(forbidden, n_rules, mapping)
+        @test check_tree(forbidden, tree) == true
+        @test forbidden.tree == expected_forbidden.tree
     end
 end

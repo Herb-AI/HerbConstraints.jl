@@ -33,8 +33,12 @@ function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
         @match get_node_at_location(solver, path) begin
-            hole::AbstractHole => if !hole.domain[c.tree.ind] return end
-            node::RuleNode => if node.ind != c.tree.ind return end
+            hole::AbstractHole => if !hole.domain[c.tree.ind]
+                return
+            end
+            node::RuleNode => if node.ind != c.tree.ind
+                return
+            end
         end
     end
     post!(solver, LocalOrdered(path, c.tree, c.order))
@@ -46,7 +50,7 @@ end
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Ordered`](@ref) constraint.
 """
 function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
-    vars = Dict{Symbol, AbstractRuleNode}()
+    vars = Dict{Symbol,AbstractRuleNode}()
     if pattern_match(tree, c.tree, vars) isa PatternMatchSuccess
         # Check variable ordering
         for (var₁, var₂) ∈ zip(c.order[1:end-1], c.order[2:end])
@@ -56,4 +60,46 @@ function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
         end
     end
     return all(check_tree(c, child) for child ∈ tree.children)
+end
+
+"""
+	update_rule_indices!(c::Ordered, n_rules::Integer)
+
+Interface function for updating a `Ordered` constraint to reflect grammar changes.
+
+# Arguments
+- `c`: The `Ordered` constraint to be updated.
+- `n_rules`: The new number of rules in the grammar.
+
+# Notes
+This function does not perform any operations because no updates are required for this specific interface.
+"""
+function update_rule_indices!(
+    c::Ordered,
+    n_rules::Integer,
+)
+    # no update required
+    # HerbCore.update_rule_indices!(c.tree, n_rules) # TODO: check if correct
+
+end
+
+"""
+	update_rule_indices!(c::Ordered, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+
+Updates the a `Ordered` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+
+# Arguments
+- `c`: `Ordered` constraint.
+- `n_rules`: The new number of rules in the grammar.
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+
+# Notes
+This function ensures that every node of the `tree` field of the `Ordered` constraint is updated as required.
+"""
+function update_rule_indices!(
+    c::Ordered,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end

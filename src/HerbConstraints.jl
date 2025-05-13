@@ -15,6 +15,30 @@ Grammar constraints should implement `on_new_node` to post a [`AbstractLocalCons
 """
 abstract type AbstractGrammarConstraint <: AbstractConstraint end
 
+# Interface for update_rule_indices!
+"""
+    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer)
+
+Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
+"""
+function update_rule_indices!(c::AbstractGrammarConstraint,
+    n_rules::Integer
+)
+    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
+end
+
+"""
+    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer})
+
+Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
+"""
+function update_rule_indices!(c::AbstractGrammarConstraint,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer}
+)
+    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
+end
+
 """
     abstract type AbstractLocalConstraint <: AbstractConstraint
 
@@ -40,6 +64,7 @@ Constraints with fast propagators and/or strong inference should be propagated f
 function get_priority(::AbstractLocalConstraint)
     return 0
 end
+
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -80,13 +105,11 @@ include("grammarconstraints/utils.jl")
 
 export
     AbstractGrammarConstraint,
-    AbstractLocalConstraint,
-
-    DomainRuleNode,
+    AbstractLocalConstraint, DomainRuleNode,
     VarNode,
     pattern_match,
     check_tree,
-    
+
     #grammar constraints
     Forbidden,
     Ordered,
@@ -148,7 +171,6 @@ export
     #state fixed shaped hole
     StateHole,
     freeze_state,
-
     update_rule_indices!
 
 end # module HerbConstraints

@@ -27,8 +27,12 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
         @match get_node_at_location(solver, path) begin
-            hole::AbstractHole => if !hole.domain[c.tree.ind] return end
-            node::RuleNode => if node.ind != c.tree.ind return end
+            hole::AbstractHole => if !hole.domain[c.tree.ind]
+                return
+            end
+            node::RuleNode => if node.ind != c.tree.ind
+                return
+            end
         end
     end
     post!(solver, LocalForbidden(path, c.tree))
@@ -41,10 +45,52 @@ Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@re
 """
 function check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
     @match pattern_match(tree, c.tree) begin
-      ::PatternMatchHardFail => ()
-      ::PatternMatchSoftFail => ()
-      ::PatternMatchSuccess => return false
-      ::PatternMatchSuccessWhenHoleAssignedTo => ()
+        ::PatternMatchHardFail => ()
+        ::PatternMatchSoftFail => ()
+        ::PatternMatchSuccess => return false
+        ::PatternMatchSuccessWhenHoleAssignedTo => ()
     end
     return all(check_tree(c, child) for child ∈ tree.children)
+end
+
+"""
+    update_rule_indices!(c::Forbidden, n_rules::Integer)
+
+Interface function for updating a `Forbidden` constraint to reflect grammar changes.
+
+# Arguments
+- `c`: The `Forbidden` constraint to be updated.
+- `n_rules`: The new number of rules in the grammar.
+
+# Notes
+This function does not perform any operations because no updates are required for this specific interface.
+"""
+func
+function update_rule_indices!(
+    c::Forbidden,
+    n_rules::Integer,
+)
+    # no update required
+    # HerbCore.update_rule_indices!(c.tree, n_rules) # TODO: check if correct
+end
+
+"""
+	update_rule_indices!(c::Forbidden, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+
+Updates the a `Forbidden` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+
+# Arguments
+- `c`: `Forbidden` constraint.
+- `n_rules`: The new number of rules in the grammar.
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+
+# Notes
+This function ensures that every node of the `tree` field of the `Forbidden` constraint is updated as required.
+"""
+function update_rule_indices!(
+    c::Forbidden,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end
