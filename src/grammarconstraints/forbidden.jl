@@ -3,14 +3,13 @@
 
 This [`AbstractGrammarConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
 A pattern is a tree of [`AbstractRuleNode`](@ref)s. 
-Such a node can either be a [`RuleNode`](@ref), which contains a rule index corresponding to the 
-rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, similar to [`RuleNode`](@ref)s.
-It can also contain a [`VarNode`](@ref), which contains a single identifier symbol.
-A [`VarNode`](@ref) can match any subtree, but if there are multiple instances of the same
-variable in the pattern, the matched subtrees must be identical.
-Any rule in the domain that makes the match attempt successful is removed.
 
-For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
+# Example
+
+A node in the tree can be of any type `<:AbstractRuleNode`. For example, a [`RuleNode`](@ref), which contains a rule index corresponding to the 
+rule index in the [`AbstractGrammar`](@ref) and the appropriate number of children, or a [`VarNode`](@ref), which contains a single identifier symbol.
+
+Let's consider the tree `1(a, 2(b, 3(c, 4))))`:
 
 - `Forbidden(RuleNode(3, [RuleNode(5), RuleNode(4)]))` forbids `c` to be filled with `5`.
 - `Forbidden(RuleNode(3, [VarNode(:v), RuleNode(4)]))` forbids `c` to be filled, since a [`VarNode`] can 
@@ -18,6 +17,11 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     Therefore, this tree invalid.
 - `Forbidden(RuleNode(3, [VarNode(:v), VarNode(:v)]))` forbids `c` to be filled with `4`, since that would 
     make both assignments to `v` equal, which causes a successful match.
+
+A [`VarNode`](@ref) can match any subtree, but if there are multiple instances of the same
+variable in the pattern, the matched subtrees must be identical.
+Any rule in the domain that makes the match attempt successful is removed.
+
 """
 struct Forbidden <: AbstractGrammarConstraint
     tree::AbstractRuleNode
@@ -56,22 +60,21 @@ end
 """
     update_rule_indices!(c::Forbidden, n_rules::Integer)
 
-Interface function for updating a `Forbidden` constraint to reflect grammar changes.
+Updates the `Forbidden` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
 
 # Arguments
 - `c`: The `Forbidden` constraint to be updated.
 - `n_rules`: The new number of rules in the grammar.
 
 # Notes
-This function does not perform any operations because no updates are required for this specific interface.
+This function ensures that every node of the `tree` field of the `Forbidden` constraint is updated as required.
 """
 func
 function update_rule_indices!(
     c::Forbidden,
     n_rules::Integer,
 )
-    # no update required
-    # HerbCore.update_rule_indices!(c.tree, n_rules) # TODO: check if correct
+    HerbCore.update_rule_indices!(c.tree, n_rules)
 end
 
 """

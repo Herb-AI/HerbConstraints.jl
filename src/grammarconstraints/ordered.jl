@@ -63,24 +63,22 @@ function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
 end
 
 """
-	update_rule_indices!(c::Ordered, n_rules::Integer)
+    update_rule_indices!(c::Ordered, n_rules::Integer)
 
-Interface function for updating a `Ordered` constraint to reflect grammar changes.
+Updates the `Ordered` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
 
 # Arguments
 - `c`: The `Ordered` constraint to be updated.
 - `n_rules`: The new number of rules in the grammar.
 
 # Notes
-This function does not perform any operations because no updates are required for this specific interface.
+This function ensures that every node of the `tree` field of the `Ordered` constraint is updated as required.
 """
 function update_rule_indices!(
     c::Ordered,
     n_rules::Integer,
 )
-    # no update required
-    # HerbCore.update_rule_indices!(c.tree, n_rules) # TODO: check if correct
-
+    HerbCore.update_rule_indices!(c.tree, n_rules)
 end
 
 """
