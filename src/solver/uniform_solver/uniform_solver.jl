@@ -189,7 +189,7 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if (constraint ∈ keys(solver.isactive))
         @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
     else
-        solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
+        solver.isactive[constraint] = StateInt(solver.sm, 1) #initializing the state int as 0 will deactivate it on backtrack
     end
     set_value!(solver.isactive[constraint], 1)
 end
