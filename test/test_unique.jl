@@ -1,4 +1,4 @@
-@testset verbose=false "Unique" begin
+@testset verbose = false "Unique" begin
     grammar = @csgrammar begin
         Number = x | 1
         Number = Number + Number
@@ -30,7 +30,7 @@
                 RuleNode(2)
             ])
         ])
-        
+
         tree_one_leaf = RuleNode(3, [
             RuleNode(3, [
                 RuleNode(1),
@@ -128,5 +128,17 @@
         @test number_of_holes(tree) == 2
         @test length(findall(get_node_at_location(tree, [1, 1]).domain)) == 3
         @test length(findall(get_node_at_location(tree, [2, 2]).domain)) == 3
+    end
+
+    @testset "update_rule_indices!" begin
+        c = Unique(1)
+        n_rules = 5
+        mapping = Dict(1 => 5, 2 => 6)
+        HerbConstraints.update_rule_indices!(c, n_rules)
+        @test grammar.constraints[1] == Unique(1)
+        HerbConstraints.update_rule_indices!(c, grammar.constraints,
+            n_rules,
+            mapping)
+        @test grammar.constraints[1] == Unique(5)
     end
 end

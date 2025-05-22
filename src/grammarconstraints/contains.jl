@@ -24,3 +24,39 @@ function check_tree(c::Contains, tree::AbstractRuleNode)::Bool
     end
     return any(check_tree(c, child) for child ∈ get_children(tree))
 end
+
+
+"""
+	update_rule_indices!(c::Contains, n_rules::Integer)
+
+Updates a `Contains` constraint to reflect grammar changes. No operation is performed 
+as `Contains` constraints do not require updates for grammar rule changes.
+
+# Arguments
+- `c`: The `Contains` constraint to be updated
+- `n_rules`: The new number of rules in the grammar
+"""
+function update_rule_indices!(c::Contains, n_rules::Integer)
+    # no update required
+end
+
+"""
+    update_rule_indices!(c::Contains, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{AbstractConstraint})
+
+Updates the `Contains` constraint to reflect grammar changes by replacing it with a new 
+`Contains` constraint using the mapped rule index.
+
+# Arguments
+- `c`: The `Contains` constraint to be updated
+- `n_rules`: The new number of rules in the grammar  
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+- `constraints`: Vector of grammar constraints containing the constraint to update
+"""
+function update_rule_indices!(c::Contains,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+    constraints::Vector{AbstractConstraint})
+    index = findfirst(x -> x == c, c_vector) # assumes no duplicate constraints => TODO: can we assume this?
+    new_rule = _get_new_index(c.rule, mapping)
+    c_vector[index] = Contains(new_rule)
+end

@@ -33,14 +33,14 @@ end
 """
 	update_rule_indices!(c::ContainsSubtree, n_rules::Integer)
 
-Updates the `ContainsSubtree` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
 # Arguments
-- `c`: The `ContainsSubtree` constraint to be updated.
-- `n_rules`: The new number of rules in the grammar.
+- `c`: The `ContainsSubtree` constraint to be updated
+- `n_rules`: The new number of rules in the grammar
 
 # Notes
-This function ensures that every node of the `tree` field of the `ContainsSubtree` constraint is updated as required.
+Ensures that every node of the `tree` field is updated as required.
 """
 function update_rule_indices!(
     c::ContainsSubtree,
@@ -50,22 +50,24 @@ function update_rule_indices!(
 end
 
 """
-	update_rule_indices!(c::ContainsSubtree, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+	update_rule_indices!(c::ContainsSubtree, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{AbstractConstraint})
 
-Updates the `ContainsSubtree` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
 # Arguments
-- `c`: The `ContainsSubtree` constraint to be updated.
-- `n_rules`: The new number of rules in the grammar.
-- `mapping`: A dictionary mapping old rule indices to new rule indices
+- `c`: The `ContainsSubtree` to be updated
+- `n_rules`: The new number of rules in the grammar
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+- `constraints`: List of grammar constraints
 
 # Notes
-This function ensures that every node of the `tree` field of the `ContainsSubtree` constraint is updated as required.
+Ensures that every node of the `tree` field is updated as required.
 """
 function update_rule_indices!(
     c::ContainsSubtree,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
+    constraints::Vector{AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end

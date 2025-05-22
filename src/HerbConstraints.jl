@@ -20,6 +20,13 @@ abstract type AbstractGrammarConstraint <: AbstractConstraint end
     function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer)
 
 Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
+
+# Arguments
+- `c`: The `AbstractGrammarConstraint` to be updated
+- `n_rules`: The new number of rules in the grammar
+
+# Notes
+Individual implementations may not use all provided arguments.
 """
 function update_rule_indices!(c::AbstractGrammarConstraint,
     n_rules::Integer
@@ -28,9 +35,18 @@ function update_rule_indices!(c::AbstractGrammarConstraint,
 end
 
 """
-    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer})
+    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{AbstractConstraint})
 
-Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
+Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars. 
+
+# Arguments
+- `c`: The `AbstractGrammarConstraint` to be updated
+- `n_rules`: The new number of rules in the grammar
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+- `constraints`: List of grammar constraints
+
+# Notes
+Individual implementations may not use all provided arguments.
 """
 function update_rule_indices!(c::AbstractGrammarConstraint,
     n_rules::Integer,
@@ -171,6 +187,7 @@ export
     #state fixed shaped hole
     StateHole,
     freeze_state,
-    update_rule_indices!
+    update_rule_indices!,
+    removeconstraint!
 
 end # module HerbConstraints

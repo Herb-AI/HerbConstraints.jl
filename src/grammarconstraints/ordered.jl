@@ -65,7 +65,7 @@ end
 """
     update_rule_indices!(c::Ordered, n_rules::Integer)
 
-Updates the `Ordered` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+Updates the `Ordered` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
 # Arguments
 - `c`: The `Ordered` constraint to be updated.
@@ -82,22 +82,24 @@ function update_rule_indices!(
 end
 
 """
-	update_rule_indices!(c::Ordered, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+	update_rule_indices!(c::Ordered, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{AbstractConstraint})
 
-Updates the a `Ordered` constraint to reflect grammar changes. Calls `HerbCore.update_rule_indices!` its `tree` field.
+Updates the `Ordered` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
 # Arguments
-- `c`: `Ordered` constraint.
-- `n_rules`: The new number of rules in the grammar.
+- `c`: The `Ordered` constraint to be updated
+- `n_rules`: The new number of rules in the grammar  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
+- `constraints`: Vector of grammar constraints containing the constraint to update
 
 # Notes
-This function ensures that every node of the `tree` field of the `Ordered` constraint is updated as required.
+Ensures that every node of the `tree` field is updated as required.
 """
 function update_rule_indices!(
     c::Ordered,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
+    constraints::Vector{AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end

@@ -1,4 +1,4 @@
-@testset verbose=false "Contains" begin
+@testset verbose = false "Contains" begin
     contains = Contains(2)
 
     @testset "check_tree true" begin
@@ -27,5 +27,24 @@
 
         @test check_tree(contains, tree1) == false
         @test check_tree(contains, tree2) == false
+    end
+
+    @testset "update_rule_indices!" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        addconstraint!(grammar, Contains(2))
+        addconstraint!(grammar, Contains(3))
+        c = Contains(2)
+        n_rules = 5
+        mapping = Dict(1 => 5, 2 => 6)
+        HerbConstraints.update_rule_indices!(c, grammar.constraints,
+            n_rules,
+            mapping)
+        @test grammar.constraints[1] == Contains(6)
     end
 end
