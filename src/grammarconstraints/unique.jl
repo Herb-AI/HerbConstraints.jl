@@ -58,7 +58,7 @@ end
     HerbCore.update_rule_indices!(c::Unique,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{AbstractConstraint})
+    constraints::Vector{<:AbstractConstraint})
 
 Updates the `Unique` constraint to reflect grammar changes by replacing it with a new 
 `Unique` constraint using the mapped rule index.
@@ -72,8 +72,8 @@ Updates the `Unique` constraint to reflect grammar changes by replacing it with 
 function update_rule_indices!(c::Unique,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{AbstractConstraint})
-    index = findfirst(x -> x == c, c_vector) # assumes no duplicate constraints => TODO: can we assume this?
+    constraints::Vector{<:AbstractConstraint})
+    index = findfirst(x -> x == c, constraints) # assumes no duplicate constraints => TODO: can we assume this?
     new_rule = _get_new_index(c.rule, mapping)
-    c_vector[index] = Unique(new_rule)
+    constraints[index] = Unique(new_rule)
 end

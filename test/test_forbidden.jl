@@ -71,9 +71,10 @@
         ])
 
         mapping = Dict(3 => 9, 2 => 22)
+        constraints = [forbidden]
         expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
         ]))
-        HerbConstraints.update_rule_indices!(forbidden, n_rules, mapping)
+        HerbConstraints.update_rule_indices!(forbidden, n_rules, mapping, constraints)
         @test check_tree(forbidden, tree) == true
         @test forbidden.tree == expected_forbidden.tree
     end

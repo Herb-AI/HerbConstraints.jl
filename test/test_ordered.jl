@@ -167,7 +167,8 @@
         @test check_tree(ordered, tree) == true # constraint pattern not found in tree
 
         mapping = Dict(4 => 10, 2 => 22)
-        HerbConstraints.update_rule_indices!(ordered, n_rules, mapping)
+        constraints = [ordered]
+        HerbConstraints.update_rule_indices!(ordered, n_rules, mapping, constraints)
         @test check_tree(ordered, tree) == false # tree now violates constraint
         @test ordered.tree == RuleNode(10, [
             VarNode(:a),

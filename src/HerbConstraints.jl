@@ -50,7 +50,8 @@ Individual implementations may not use all provided arguments.
 """
 function update_rule_indices!(c::AbstractGrammarConstraint,
     n_rules::Integer,
-    mapping::AbstractDict{<:Integer,<:Integer}
+    mapping::AbstractDict{<:Integer,<:Integer},
+    constraints::Vector{<:AbstractConstraint}
 )
     error("update_rule_indices! not implemented for constraint type $(typeof(c))")
 end

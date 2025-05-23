@@ -297,14 +297,15 @@
     end
 
     @testset "update_rule_indices!" begin
-        constraint = ForbiddenSequence([1, 2, 3], [2, 5])
+        c = ForbiddenSequence([1, 2, 3], [2, 5])
         n_rules = 10
-        HerbConstraints.update_rule_indices!(constraint, n_rules)
-        @test constraint.sequence == [1, 2, 3]
-        @test constraint.ignore_if == [2, 5]
+        HerbConstraints.update_rule_indices!(c, n_rules)
+        @test c.sequence == [1, 2, 3]
+        @test c.ignore_if == [2, 5]
         mapping = Dict(1 => 10, 3 => 99, 5 => 6)
-        HerbConstraints.update_rule_indices!(constraint, n_rules, mapping)
-        @test constraint.sequence == [10, 2, 99]
-        @test constraint.ignore_if == [2, 6]
+        constraints = [c]
+        HerbConstraints.update_rule_indices!(c, n_rules, mapping, constraints)
+        @test c.sequence == [10, 2, 99]
+        @test c.ignore_if == [2, 6]
     end
 end

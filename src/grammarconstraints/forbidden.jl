@@ -77,7 +77,7 @@ function update_rule_indices!(
 end
 
 """
-	update_rule_indices!(c::Forbidden, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{AbstractConstraint})
+	update_rule_indices!(c::Forbidden, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{<:AbstractConstraint})
 
 Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
@@ -94,6 +94,7 @@ function update_rule_indices!(
     c::Forbidden,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
+    constraints::Vector{<:AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end

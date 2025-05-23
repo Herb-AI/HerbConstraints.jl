@@ -41,7 +41,7 @@ function update_rule_indices!(c::Contains, n_rules::Integer)
 end
 
 """
-    update_rule_indices!(c::Contains, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{AbstractConstraint})
+    update_rule_indices!(c::Contains, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{<:AbstractConstraint})
 
 Updates the `Contains` constraint to reflect grammar changes by replacing it with a new 
 `Contains` constraint using the mapped rule index.
@@ -55,8 +55,8 @@ Updates the `Contains` constraint to reflect grammar changes by replacing it wit
 function update_rule_indices!(c::Contains,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{AbstractConstraint})
-    index = findfirst(x -> x == c, c_vector) # assumes no duplicate constraints => TODO: can we assume this?
+    constraints::Vector{<:AbstractConstraint})
+    index = findfirst(x -> x == c, constraints) # assumes no duplicate constraints => TODO: can we assume this?
     new_rule = _get_new_index(c.rule, mapping)
-    c_vector[index] = Contains(new_rule)
+    constraints[index] = Contains(new_rule)
 end

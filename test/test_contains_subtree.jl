@@ -315,7 +315,8 @@
             @test check_tree(contains_subtree, tree) == false
 
             mapping = Dict(1 => 7, 5 => 3)
-            HerbConstraints.update_rule_indices!(contains_subtree, n_rules, mapping)
+            constraints = [contains_subtree]
+            HerbConstraints.update_rule_indices!(contains_subtree, n_rules, mapping, constraints)
             @test check_tree(contains_subtree, tree) == true
             @test contains_subtree.tree == expected_contains_subtree.tree
         end

@@ -42,9 +42,8 @@
         c = Contains(2)
         n_rules = 5
         mapping = Dict(1 => 5, 2 => 6)
-        HerbConstraints.update_rule_indices!(c, grammar.constraints,
-            n_rules,
-            mapping)
+        HerbConstraints.update_rule_indices!(c, n_rules,
+            mapping, grammar.constraints)
         @test grammar.constraints[1] == Contains(6)
     end
 end

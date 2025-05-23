@@ -102,7 +102,7 @@ function update_rule_indices!(c::ForbiddenSequence, n_rules::Integer)
 end
 
 """
-	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{AbstractConstraint})
+	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{<:AbstractConstraint})
 
 Updates the rule indices in a `ForbiddenSequence` constraint by applying the given mapping to both the `sequence` and `ignore_if` fields.
 
@@ -112,7 +112,7 @@ Updates the rule indices in a `ForbiddenSequence` constraint by applying the giv
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 - `constraints`: Vector of grammar constraints containing the constraint to update
 """
-function update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{AbstractConstraint})
+function update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{<:AbstractConstraint})
     c.sequence .= _get_new_index.(c.sequence, Ref(mapping))
     c.ignore_if .= _get_new_index.(c.ignore_if, Ref(mapping))
     return c
