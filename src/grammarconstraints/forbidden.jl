@@ -69,11 +69,30 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 # Notes
 Ensures that every node of the `tree` field is updated as required.
 """
-function update_rule_indices!(
+function HerbCore.update_rule_indices!(
     c::Forbidden,
     n_rules::Integer,
 )
     HerbCore.update_rule_indices!(c.tree, n_rules)
+end
+
+"""
+    update_rule_indices!(c::Forbidden, grammar::AbstractGrammar)
+
+Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `Forbidden` constraint to be updated.
+- `grammar`: The new number of rules in the grammar.
+
+# Notes
+Ensures that every node of the `tree` field is updated as required.
+"""
+function HerbCore.update_rule_indices!(
+    c::Forbidden,
+    grammar::AbstractGrammar,
+)
+    HerbCore.update_rule_indices!(c.tree, length(grammar.rules))
 end
 
 """
@@ -90,11 +109,32 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 # Notes
 Ensures that every node of the `tree` field is updated as required.
 """
-function update_rule_indices!(
+function HerbCore.update_rule_indices!(
     c::Forbidden,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
+end
+
+"""
+	update_rule_indices!(c::Forbidden, grammar::AbstractGrammar, mapping::AbstractDict{<:Integer, <:Integer})
+
+Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `Forbidden` constraint to be updated
+- `grammar`: The grammar that changed
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+
+# Notes
+Ensures that every node of the `tree` field is updated as required.
+"""
+function HerbCore.update_rule_indices!(
+    c::Forbidden,
+    grammar::AbstractGrammar,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    HerbCore.update_rule_indices!(c, length(grammar.rules), mapping, grammar.constraints)
 end

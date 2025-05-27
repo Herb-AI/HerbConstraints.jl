@@ -12,10 +12,10 @@
         struct TestConstraintWithoutImpl <: AbstractGrammarConstraint end
         n_rules = 5
         c = TestConstraintWithoutImpl()
-        @test_throws ErrorException HerbConstraints.update_rule_indices!(c, n_rules)
+        @test_throws ErrorException HerbCore.update_rule_indices!(c, n_rules)
         mapping = Dict(1 => 5, 2 => 6, 3 => 1)
         constraints = [c]
-        @test_throws ErrorException HerbConstraints.update_rule_indices!(
+        @test_throws ErrorException HerbCore.update_rule_indices!(
             c, n_rules, mapping, constraints)
     end
 

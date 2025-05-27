@@ -37,13 +37,29 @@
             Int = Int + Int
             Int = Int * Int
         end
-        addconstraint!(grammar, Contains(2))
-        addconstraint!(grammar, Contains(3))
         c = Contains(2)
-        n_rules = 5
-        mapping = Dict(1 => 5, 2 => 6)
-        HerbConstraints.update_rule_indices!(c, n_rules,
-            mapping, grammar.constraints)
-        @test grammar.constraints[1] == Contains(6)
+        @testset "interface without grammar" begin
+            addconstraint!(grammar, Contains(2))
+            addconstraint!(grammar, Contains(3))
+            n_rules = 5
+            HerbCore.update_rule_indices!(c, n_rules)
+            @test grammar.constraints[1] == Contains(2)
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, n_rules,
+                mapping, grammar.constraints)
+            @test grammar.constraints[1] == Contains(6)
+        end
+        # TODO: interface with grammar
+
+        @testset "interface with grammar" begin
+            clearconstraints!(grammar)
+            addconstraint!(grammar, Contains(2))
+            addconstraint!(grammar, Contains(3))
+            HerbCore.update_rule_indices!(c, grammar)
+            @test grammar.constraints[1] == Contains(2)
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, grammar, mapping)
+            @test grammar.constraints[1] == Contains(6)
+        end
     end
 end

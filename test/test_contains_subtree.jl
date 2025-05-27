@@ -294,16 +294,6 @@
     end
     @testset verbose = true "Update rule indices" begin
         @testset "Update rule index only." begin
-            # with mapping
-
-            n_rules = 10
-            contains_subtree = ContainsSubtree(
-                RuleNode(5, [
-                    VarNode(:a),
-                    VarNode(:a),
-                ]),
-            )
-
             expected_contains_subtree = ContainsSubtree(
                 RuleNode(3, [
                     VarNode(:a),
@@ -311,14 +301,45 @@
                 ]),
             )
             tree = @rulenode 3{3{1,1},2}
-            HerbConstraints.update_rule_indices!(contains_subtree, n_rules) # no change to RuleNode and VarNode
-            @test check_tree(contains_subtree, tree) == false
-
             mapping = Dict(1 => 7, 5 => 3)
-            constraints = [contains_subtree]
-            HerbConstraints.update_rule_indices!(contains_subtree, n_rules, mapping, constraints)
-            @test check_tree(contains_subtree, tree) == true
-            @test contains_subtree.tree == expected_contains_subtree.tree
+            @testset "interface without grammar" begin
+                n_rules = 5
+                contains_subtree = ContainsSubtree(
+                    RuleNode(5, [
+                        VarNode(:a),
+                        VarNode(:a),
+                    ]),
+                )
+                HerbCore.update_rule_indices!(contains_subtree, n_rules) # no change to RuleNode and VarNode
+                @test check_tree(contains_subtree, tree) == false
+                # with mapping
+                constraints = [contains_subtree]
+                HerbCore.update_rule_indices!(contains_subtree, n_rules, mapping, constraints)
+                @test check_tree(contains_subtree, tree) == true
+                @test contains_subtree.tree == expected_contains_subtree.tree
+            end
+            @testset "interface with grammar" begin
+                grammar = @csgrammar begin
+                    Int = 1
+                    Int = x
+                    Int = -Int
+                    Int = Int + Int
+                    Int = Int * Int
+                end
+                contains_subtree = ContainsSubtree(
+                    RuleNode(5, [
+                        VarNode(:a),
+                        VarNode(:a),
+                    ]),
+                )
+                HerbCore.update_rule_indices!(contains_subtree, grammar)
+                @test check_tree(contains_subtree, tree) == false
+                # with mapping
+                HerbCore.update_rule_indices!(contains_subtree, grammar, mapping)
+                @test check_tree(contains_subtree, tree) == true
+                @test contains_subtree.tree == expected_contains_subtree.tree
+            end
         end
+
     end
 end

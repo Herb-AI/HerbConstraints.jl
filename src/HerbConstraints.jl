@@ -28,8 +28,26 @@ Used to update constraints when the grammar changes, e.g., by adding rules or me
 # Notes
 Individual implementations may not use all provided arguments.
 """
-function update_rule_indices!(c::AbstractGrammarConstraint,
+function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
     n_rules::Integer
+)
+    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
+end
+
+"""
+    function update_rule_indices!(node::AbstractGrammarConstraint,grammar::AbstractGrammar)
+
+Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
+
+# Arguments
+- `c`: The `AbstractGrammarConstraint` to be updated
+- `grammar`: The grammar that changed
+
+# Notes
+Individual implementations may not use all provided arguments.
+"""
+function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
+    grammar::AbstractGrammar
 )
     error("update_rule_indices! not implemented for constraint type $(typeof(c))")
 end
@@ -48,10 +66,30 @@ Used to update constraints when the grammar changes, e.g., by adding rules or me
 # Notes
 Individual implementations may not use all provided arguments.
 """
-function update_rule_indices!(c::AbstractGrammarConstraint,
+function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint}
+)
+    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
+end
+
+"""
+    function update_rule_indices!(node::AbstractGrammarConstraint,grammar::AbstractGrammar, mapping::AbstractDict{<:Integer,<:Integer})
+
+Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars. 
+
+# Arguments
+- `c`: The `AbstractGrammarConstraint` to be updated
+- `grammar`: The grammar that changed
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+
+# Notes
+Individual implementations may not use all provided arguments.
+"""
+function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
+    grammar::AbstractGrammar,
+    mapping::AbstractDict{<:Integer,<:Integer}
 )
     error("update_rule_indices! not implemented for constraint type $(typeof(c))")
 end

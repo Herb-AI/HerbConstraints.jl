@@ -151,28 +151,61 @@
         @test check_tree(ordered, tree133_rightchild_false) == false
     end
     @testset "update_rule_indices" begin
-        ordered = Ordered(RuleNode(4, [
+        @testset "interface without grammar" begin
+            ordered = Ordered(RuleNode(4, [
+                    VarNode(:a),
+                    VarNode(:b),
+                    VarNode(:c)
+                ]), [:a, :c, :b])
+
+            tree = @rulenode 10{1,5,6}
+            n_rules = 10
+            HerbCore.update_rule_indices!(ordered, n_rules)
+            @test ordered.tree == RuleNode(4, [
                 VarNode(:a),
                 VarNode(:b),
-                VarNode(:c)
-            ]), [:a, :c, :b])
+                VarNode(:c)])
+            @test check_tree(ordered, tree) == true # constraint pattern not found in tree
 
-        tree = @rulenode 10{1,5,6}
-        n_rules = 10
-        HerbConstraints.update_rule_indices!(ordered, n_rules)
-        @test ordered.tree == RuleNode(4, [
-            VarNode(:a),
-            VarNode(:b),
-            VarNode(:c)])
-        @test check_tree(ordered, tree) == true # constraint pattern not found in tree
+            mapping = Dict(4 => 10, 2 => 22)
+            constraints = [ordered]
+            HerbCore.update_rule_indices!(ordered, n_rules, mapping, constraints)
+            @test check_tree(ordered, tree) == false # tree now violates constraint
+            @test ordered.tree == RuleNode(10, [
+                VarNode(:a),
+                VarNode(:b),
+                VarNode(:c)])
+        end
+        @testset "interface with grammar" begin
+            grammar = @csgrammar begin
+                Int = |(1:9)
+                Int = x
+                Int = -Int
+                Int = Int + Int
+                Int = Int * Int
+            end
+            ordered = Ordered(RuleNode(4, [
+                    VarNode(:a),
+                    VarNode(:b),
+                    VarNode(:c)
+                ]), [:a, :c, :b])
+            addconstraint!(grammar, ordered)
+            tree = @rulenode 10{1,5,6}
+            HerbCore.update_rule_indices!(ordered, grammar)
+            @test ordered.tree == RuleNode(4, [
+                VarNode(:a),
+                VarNode(:b),
+                VarNode(:c)])
+            @test check_tree(ordered, tree) == true # constraint pattern not found in tree
 
-        mapping = Dict(4 => 10, 2 => 22)
-        constraints = [ordered]
-        HerbConstraints.update_rule_indices!(ordered, n_rules, mapping, constraints)
-        @test check_tree(ordered, tree) == false # tree now violates constraint
-        @test ordered.tree == RuleNode(10, [
-            VarNode(:a),
-            VarNode(:b),
-            VarNode(:c)])
+            mapping = Dict(4 => 10, 2 => 22)
+
+            HerbCore.update_rule_indices!(ordered, grammar, mapping)
+            @test check_tree(ordered, tree) == false # tree now violates constraint
+            @test ordered.tree == RuleNode(10, [
+                VarNode(:a),
+                VarNode(:b),
+                VarNode(:c)])
+        end
     end
 end

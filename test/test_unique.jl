@@ -131,13 +131,27 @@
     end
 
     @testset "update_rule_indices!" begin
-        c = Unique(1)
-        n_rules = 5
-        mapping = Dict(1 => 5, 2 => 6)
-        HerbConstraints.update_rule_indices!(c, n_rules)
-        @test grammar.constraints[1] == Unique(1)
-        HerbConstraints.update_rule_indices!(c, n_rules,
-            mapping, grammar.constraints)
-        @test grammar.constraints[1] == Unique(5)
+        @testset "interface without grammar" begin
+            c = Unique(1)
+            n_rules = 5
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, n_rules)
+            @test grammar.constraints[1] == Unique(1)
+            HerbCore.update_rule_indices!(c, n_rules,
+                mapping, grammar.constraints)
+            @test grammar.constraints[1] == Unique(5)
+        end
+        @testset "interface with grammar" begin
+            clearconstraints!(grammar)
+            c = Unique(1)
+            addconstraint!(grammar, c)
+
+            HerbCore.update_rule_indices!(c, grammar)
+            @test grammar.constraints[1] == Unique(1)
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, grammar,
+                mapping)
+            @test grammar.constraints[1] == Unique(5)
+        end
     end
 end

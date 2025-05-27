@@ -61,21 +61,45 @@
     end
 
     @testset "update_rule_indices" begin
-        forbidden = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)
-        ]))
-        tree = @rulenode 3{4{2,3{2,2}},7}
-        n_rules = 5
-        HerbConstraints.update_rule_indices!(forbidden, n_rules)
-        @test check_tree(forbidden, tree) == false
-        @test forbidden.tree == RuleNode(3, [VarNode(:a), VarNode(:a)
-        ])
+        @testset "interface without grammar" begin
+            forbidden = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)
+            ]))
+            tree = @rulenode 3{4{2,3{2,2}},7}
+            n_rules = 5
+            HerbCore.update_rule_indices!(forbidden, n_rules)
+            @test check_tree(forbidden, tree) == false
+            @test forbidden.tree == RuleNode(3, [VarNode(:a), VarNode(:a)
+            ])
 
-        mapping = Dict(3 => 9, 2 => 22)
-        constraints = [forbidden]
-        expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
-        ]))
-        HerbConstraints.update_rule_indices!(forbidden, n_rules, mapping, constraints)
-        @test check_tree(forbidden, tree) == true
-        @test forbidden.tree == expected_forbidden.tree
+            mapping = Dict(3 => 9, 2 => 22)
+            constraints = [forbidden]
+            expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
+            ]))
+            HerbCore.update_rule_indices!(forbidden, n_rules, mapping, constraints)
+            @test check_tree(forbidden, tree) == true
+            @test forbidden.tree == expected_forbidden.tree
+        end
+        @testset "interface with grammar" begin
+            grammar = @csgrammar begin
+                Int = |(1:9)
+                Int = x
+                Int = -Int
+                Int = Int + Int
+                Int = Int * Int
+            end
+            forbidden = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)]))
+            addconstraint!(grammar, forbidden)
+            tree = @rulenode 3{4{2,3{2,2}},7}
+            HerbCore.update_rule_indices!(forbidden, grammar)
+            @test check_tree(forbidden, tree) == false
+            @test forbidden.tree == RuleNode(3, [VarNode(:a), VarNode(:a)])
+
+            mapping = Dict(3 => 9, 2 => 22)
+            expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
+            ]))
+            HerbCore.update_rule_indices!(forbidden, grammar, mapping)
+            @test check_tree(forbidden, tree) == true
+            @test forbidden.tree == expected_forbidden.tree
+        end
     end
 end
