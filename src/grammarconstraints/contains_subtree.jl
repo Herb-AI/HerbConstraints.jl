@@ -6,7 +6,7 @@ This [`AbstractGrammarConstraint`] enforces that a given `subtree` appears in th
 !!! warning:
     This constraint can only be propagated by the UniformSolver
 """
-struct ContainsSubtree <: AbstractGrammarConstraint
+@auto_hash_equals struct ContainsSubtree <: AbstractGrammarConstraint
     tree::AbstractRuleNode
 end
 
