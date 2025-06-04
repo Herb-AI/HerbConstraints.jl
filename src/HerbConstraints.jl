@@ -5,7 +5,6 @@ using HerbGrammar
 using DataStructures
 using MLStyle
 using TimerOutputs
-using AutoHashEquals
 
 
 """

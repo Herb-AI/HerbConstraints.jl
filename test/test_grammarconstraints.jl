@@ -44,13 +44,15 @@
         add_rule!(grammar, :(Number = 3 | 4))
         @test length(grammar.rules) == 7
 
-        # TODO: check if constraints were updated as expected
-        expected_contains_subtree = ContainsSubtree(UniformHole(BitVector((0, 0, 1, 1, 0, 0, 0)), [RuleNode(2), RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0, 0, 0)), []), UniformHole(BitVector((1, 1, 0, 0, 0, 0, 0)), [])])]))
-        expected_forbidden = Forbidden(tree2)
+        expected_bv1 = BitVector((0, 0, 1, 1, 0, 0, 0))
+        expected_bv2 = BitVector((1, 1, 0, 0, 0, 0, 0))
+        expected_bv3 = BitVector((1, 1, 0, 0, 0, 0, 0))
 
         @test grammar.constraints[1] == Contains(3) # no changes
         @test grammar.constraints[2].sequence == [1, 2, 3] # no changes
-        @test grammar.constraints[3] == expected_contains_subtree # size BV changes
-        @test grammar.constraints[4] == expected_forbidden # no changes
+        @test grammar.constraints[3].tree.domain == expected_bv1# size BV changes
+        @test grammar.constraints[3].tree.children[2].children[1].domain == expected_bv2
+        @test grammar.constraints[3].tree.children[2].children[2].domain == expected_bv3
+        @test grammar.constraints[4].tree == tree2
     end
 end
