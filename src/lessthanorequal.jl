@@ -98,9 +98,7 @@ function make_less_than_or_equal!(
     guards::Vector{Tuple{AbstractHole, Int}}
 )::LessThanOrEqualResult
     @assert isfeasible(solver)
-    # must test both `isfilled` and `isa Hole` because a `Hole` may be `isfilled` (domain size == 1)
-    # but it still does not have children (`Hole`s cannot have children, only `<:AbstractUniformHole`s can)
-    @match (isfilled(hole1) && !(hole1 isa Hole), isfilled(hole2) && !(hole2 isa Hole)) begin
+    @match (isfilled(hole1), isfilled(hole2)) begin
         (true, true) => begin
             #(RuleNode | Hole [domain size == 1], RuleNode | Hole [domain size == 1])
             if get_rule(hole1) < get_rule(hole2)
