@@ -18,7 +18,7 @@
         @test_throws ErrorException HerbCore.update_rule_indices!(
             c, n_rules, mapping, constraints)
     end
-    @testset "Add rules to grammar and update constraints" begin
+    @testset "add_rule! to grammar and update constraints" begin
         # define grammar
         grammar = @cfgrammar begin
             Number = |(1:2)
@@ -53,6 +53,27 @@
         @test grammar.constraints[3].tree.domain == expected_bv1# size BV changes
         @test grammar.constraints[3].tree.children[2].children[1].domain == expected_bv2
         @test grammar.constraints[3].tree.children[2].children[2].domain == expected_bv3
-        @test grammar.constraints[4].tree == tree2
+        @test grammar.constraints[4].tree == tree2 # no changes
+    end
+    @testset "merge_grammars! and update constraints" begin
+        g₁ = @csgrammar begin
+            Real = |(1:2)
+            Real = x
+        end
+        g₂ = @csgrammar begin
+            Real = Real + Real
+            Real = Real * Real
+        end
+
+        ordered_operations_constraint = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
+        tree = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(2)])
+        contains_subtree_constraint = ContainsSubtree(tree)
+        addconstraint!(g₂, ordered_operations_constraint)
+        addconstraint!(g₂, contains_subtree_constraint)
+        merge_grammars!(g₁, g₂)
+
+        @test g₁.constraints[1].tree.domain == BitVector((0, 0, 0, 1, 1))
+        @test g₁.constraints[2].tree.children == [RuleNode(4), RuleNode(5)]
+
     end
 end
