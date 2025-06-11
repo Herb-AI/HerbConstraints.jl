@@ -194,16 +194,16 @@ end
 Removes all values from StateSparseSet `set`, except those in `vals`
 """
 function remove_all_but!(set::StateSparseSet, vals::Vector{Int})::Bool
-    to_remove = filter(v -> v ∉ vals, collect(set))
-    if isempty(to_remove)
-        return false
+    @assert issubset(vals, set) "$vals is not a subset of $set"
+    removed = false
+
+    for v in set
+        if v ∉ vals
+            removed = removed || remove!(set, v)
+        end
     end
-    
-    for v in to_remove
-        remove!(set, v)
-    end
-    
-    return true
+
+    return removed
 end
 
 """
