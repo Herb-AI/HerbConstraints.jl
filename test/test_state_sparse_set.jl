@@ -179,15 +179,10 @@
         @test result == true
 
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
-        result = remove_all_but!(set, [2])
-        @test length(set) == 0
-        @test result == true
-        
+        @test_throws Exception remove_all_but!(set, [2])
+
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
-        result = remove_all_but!(set, [2, 3])
-        @test length(set) == 1
-        @test 3 ∈ set
-        @test result == true
+        @test_throws Exception remove_all_but!(set, [2, 3])
 
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), BitVector((1, 0, 1)))
         result = remove_all_but!(set, [1, 3])
