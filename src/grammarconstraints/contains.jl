@@ -70,7 +70,7 @@ function HerbCore.update_rule_indices!(c::Contains,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint})
-    index = findfirst(x -> x == c, constraints) # assumes no duplicate constraints => TODO: can we assume this?
+    index = only(findall(x -> x == c, constraints))
     new_rule = _get_new_index(c.rule, mapping)
     constraints[index] = Contains(new_rule)
 end
