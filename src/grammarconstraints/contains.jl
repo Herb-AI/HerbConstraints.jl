@@ -66,10 +66,12 @@ Updates the `Contains` constraint to reflect grammar changes by replacing it wit
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 - `constraints`: Vector of grammar constraints containing the constraint to update
 """
-function HerbCore.update_rule_indices!(c::Contains,
+function HerbCore.update_rule_indices!(
+    c::Contains,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{<:AbstractConstraint})
+    constraints::Vector{<:AbstractConstraint}
+)
     index = only(findall(x -> x == c, constraints))
     new_rule = _get_new_index(c.rule, mapping)
     constraints[index] = Contains(new_rule)
