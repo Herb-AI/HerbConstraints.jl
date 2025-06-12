@@ -56,24 +56,46 @@
         @test grammar.constraints[4].tree == tree2 # no changes
     end
     @testset "merge_grammars! and update constraints" begin
-        g₁ = @csgrammar begin
-            Real = |(1:2)
-            Real = x
+        @testset "Simple example" begin
+            g₁ = @csgrammar begin
+                Real = |(1:2)
+                Real = x
+            end
+            g₂ = @csgrammar begin
+                Real = Real + Real
+                Real = Real * Real
+            end
+
+            ordered_operations_constraint = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
+            tree = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(2)])
+            contains_subtree_constraint = ContainsSubtree(tree)
+            addconstraint!(g₂, ordered_operations_constraint)
+            addconstraint!(g₂, contains_subtree_constraint)
+            merge_grammars!(g₁, g₂)
+
+            @test g₁.constraints[1].tree.domain == BitVector((0, 0, 0, 1, 1))
+            @test g₁.constraints[2].tree.children == [RuleNode(4), RuleNode(5)]
         end
-        g₂ = @csgrammar begin
-            Real = Real + Real
-            Real = Real * Real
+        @testset "Duplicate rules" begin
+            merge_to = @csgrammar begin
+                Int = Int + Int
+                Int = x | 1 | 2 | 3
+            end
+            addconstraint!(merge_to, Contains(1))
+
+            merge_from = @csgrammar begin
+                Int = x | 1 | 2 | 3
+                Int = Int + Int
+            end
+            addconstraint!(merge_from, Contains(5))
+            addconstraint!(merge_from, Contains(3))
+
+            merge_grammars!(merge_to, merge_from)
+            # Note: addconstraint! (used in merge_grammars!) currently does not check for duplicate constraints. 
+            # Might change in the future and some of the tests will need to be updated.
+            @test length(merge_to.constraints) == 3
+            @test merge_to.constraints[2] == Contains(1)
+            @test merge_to.constraints[3] == Contains(4)
         end
-
-        ordered_operations_constraint = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
-        tree = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(2)])
-        contains_subtree_constraint = ContainsSubtree(tree)
-        addconstraint!(g₂, ordered_operations_constraint)
-        addconstraint!(g₂, contains_subtree_constraint)
-        merge_grammars!(g₁, g₂)
-
-        @test g₁.constraints[1].tree.domain == BitVector((0, 0, 0, 1, 1))
-        @test g₁.constraints[2].tree.children == [RuleNode(4), RuleNode(5)]
-
     end
 end
