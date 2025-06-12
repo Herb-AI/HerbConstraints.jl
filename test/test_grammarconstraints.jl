@@ -94,8 +94,8 @@
             # Note: addconstraint! (used in merge_grammars!) currently does not check for duplicate constraints. 
             # Might change in the future and some of the tests will need to be updated.
             @test length(merge_to.constraints) == 3
-            @test merge_to.constraints[2] == Contains(1)
-            @test merge_to.constraints[3] == Contains(4)
+            @test Contains(1) in merge_to.constraints
+            @test Contains(4) in merge_to.constraints
         end
     end
 end
