@@ -34,11 +34,9 @@ contains_varnode(rn::AbstractRuleNode, name::Symbol) = any(contains_varnode(c, n
 contains_varnode(vn::VarNode, name::Symbol) = vn.name == name
 
 """
-	HerbCore.update_rule_indices!(c::ContainVarNodesSubtree, n_rules::Integer)
+     HerbCore.update_rule_indices!(c::ContainVarNodesSubtree, n_rules::Integer)
 
-This function serves as interface for `HerbCore.update_rule_indices!` on node type `VarNode`. Since `VarNode` doesn't change,
-this function does not perform any operations. 
-
+Update the rule indices of a `VarNode`. As `VarNode`s contain no indices, this function does nothing.
 """
 function HerbCore.update_rule_indices!(
     node::VarNode,
