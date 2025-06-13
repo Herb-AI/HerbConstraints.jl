@@ -90,45 +90,52 @@ end
 """
 	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer)
 
-Updates a `ForbiddenSequence` constraint to reflect grammar changes. No operation is performed 
-as `ForbiddenSequence` constraints do not require updates for grammar rule changes.
+Updates a `ForbiddenSequence` constraint to reflect grammar changes. Errors if rule indices exceeds `n_rules`.
 
 # Arguments
 - `c`: The `ForbiddenSequence` constraint to be updated
 - `n_rules`: The new number of rules in the grammar
 """
 function HerbCore.update_rule_indices!(c::ForbiddenSequence, n_rules::Integer)
+    if any(i -> i > n_rules, c.sequence) || any(i -> i > n_rules, c.ignore_if)
+        error("Rule index exceeds the number of grammar rules ($n_rules).")
+    end
     # no update required
 end
 
 """
 	update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar)
 
-Updates a `ForbiddenSequence` constraint to reflect grammar changes. No operation is performed 
-as `ForbiddenSequence` constraints do not require updates for grammar rule changes.
-
+Updates a `ForbiddenSequence` constraint to reflect grammar changes. Errors if rule indices exceeds number of grammar rules.
 # Arguments
 - `c`: The `ForbiddenSequence` constraint to be updated
 - `grammar`: The grammar that changed
 """
 function HerbCore.update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar)
-    # no update required
+    HerbCore.update_rule_indices!(c, length(grammar.rules))
 end
 
 """
-	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{<:AbstractConstraint})
+	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, ::Vector{<:AbstractConstraint})
 
 Updates the rule indices in a `ForbiddenSequence` constraint by applying the given mapping to both the `sequence` and `ignore_if` fields.
+Errors if rule indices exceeds number of grammar rules.
 
 # Arguments
 - `c`: The `ForbiddenSequence` constraint to be updated
 - `n_rules`: The new number of rules in the grammar  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
-- `constraints`: Vector of grammar constraints containing the constraint to update
 """
-function HerbCore.update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{<:AbstractConstraint})
-    c.sequence .= _get_new_index.(c.sequence, Ref(mapping))
-    c.ignore_if .= _get_new_index.(c.ignore_if, Ref(mapping))
+function HerbCore.update_rule_indices!(
+    c::ForbiddenSequence, n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+    ::Vector{<:AbstractConstraint}
+)
+    if any(i -> i > n_rules, c.sequence) || any(i -> i > n_rules, c.ignore_if)
+        error("Rule index $(i) exceeds the number of grammar rules ($n_rules).")
+    end
+    c.sequence .= get.(Ref(mapping), c.sequence, c.sequence) # keep rule index if no matching entry found in mapping
+    c.ignore_if .= get.(Ref(mapping), c.ignore_if, c.ignore_if)
     return c
 end
 
@@ -136,7 +143,7 @@ end
 	update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar, mapping::AbstractDict{<:Integer, <:Integer})
 
 Updates the rule indices in a `ForbiddenSequence` constraint by applying the given mapping to both the `sequence` and `ignore_if` fields.
-
+Errors if rule indices exceeds number of grammar rules.
 # Arguments
 - `c`: The `ForbiddenSequence` constraint to be updated
 - `grammar`: The grammar that changed

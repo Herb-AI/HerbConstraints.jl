@@ -29,28 +29,33 @@ end
 """
 	update_rule_indices!(c::Contains, n_rules::Integer)
 
-Updates a `Contains` constraint to reflect grammar changes. No operation is performed 
-as `Contains` constraints do not require updates for grammar rule changes.
+Updates a `Contains` constraint to reflect grammar changes. Errors if rule index exceeds new `n_rules`.
 
 # Arguments
 - `c`: The `Contains` constraint to be updated
 - `n_rules`: The new number of rules in the grammar
 """
 function HerbCore.update_rule_indices!(c::Contains, n_rules::Integer)
+    if c.rule > n_rules
+        error("Rule index $(c.rule) exceeds the number of grammar rules ($n_rules).")
+    end
     # no update required
 end
 
 """
 	update_rule_indices!(c::Contains, grammar::AbstractGrammar)
 
-Updates a `Contains` constraint to reflect grammar changes. No operation is performed 
-as `Contains` constraints do not require updates for grammar rule changes.
+Updates the `Contains` constraint as required when grammar size changes. Errors if the rule index exceeds number of grammar rules.
 
 # Arguments
 - `c`: The `Contains` constraint to be updated
 - `grammar`: The grammar that changed
 """
 function HerbCore.update_rule_indices!(c::Contains, grammar::AbstractGrammar)
+    n_rules = length(grammar.rules)
+    if c.rule > n_rules
+        error("Rule index $(c.rule) exceeds the number of grammar rules ($n_rules).")
+    end
     # no update required
 end
 
@@ -72,8 +77,11 @@ function HerbCore.update_rule_indices!(
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint}
 )
+    if c.rule > n_rules
+        error("Rule index $(c.rule) exceeds the number of grammar rules ($n_rules).")
+    end
     index = only(findall(x -> x == c, constraints))
-    new_rule = _get_new_index(c.rule, mapping)
+    new_rule = get(mapping, c.rule, c.rule) # keep rule index if no matching entry found in mapping
     constraints[index] = Contains(new_rule)
 end
 

@@ -14,9 +14,7 @@
         expected_domain[[4, 6...]] .= true
         @test node.domain == expected_domain
     end
-
-    # TODO: test with children 
-    @testset "with children" begin
+    @testset "Update with children" begin
         node = DomainRuleNode(BitVector((1, 0)), [DomainRuleNode(BitVector((1, 1))), DomainRuleNode(BitVector((0, 1)))])
         n_rules = 4
         mapping = Dict(1 => 3, 2 => 4)
@@ -26,5 +24,10 @@
         @test length(children) == 2
         @test children[1].domain == BitVector((0, 0, 1, 1))
         @test children[2].domain == BitVector((0, 0, 0, 1))
+    end
+    @testset "error" begin
+        node = DomainRuleNode(BitVector((1, 0, 0, 0, 0)), [DomainRuleNode(BitVector((1, 1))), DomainRuleNode(BitVector((0, 1)))])
+        n_rules = 3
+        @test_throws ErrorException HerbCore.update_rule_indices!(node, n_rules)
     end
 end

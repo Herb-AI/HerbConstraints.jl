@@ -65,9 +65,6 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 # Arguments
 - `c`: The `Forbidden` constraint to be updated.
 - `n_rules`: The new number of rules in the grammar.
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::Forbidden,
@@ -84,9 +81,6 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 # Arguments
 - `c`: The `Forbidden` constraint to be updated.
 - `grammar`: The new number of rules in the grammar.
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::Forbidden,
@@ -96,7 +90,7 @@ function HerbCore.update_rule_indices!(
 end
 
 """
-	update_rule_indices!(c::Forbidden, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{<:AbstractConstraint})
+	update_rule_indices!(c::Forbidden, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, ::Vector{<:AbstractConstraint})
 
 Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
@@ -104,16 +98,12 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 - `c`: The `Forbidden` constraint to be updated
 - `n_rules`: The new number of rules in the grammar  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
-- `constraints`: Vector of grammar constraints containing the constraint to update
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::Forbidden,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{<:AbstractConstraint}
+    ::Vector{<:AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end
@@ -127,9 +117,6 @@ Updates the `Forbidden` constraint to reflect grammar changes by calling `HerbCo
 - `c`: The `Forbidden` constraint to be updated
 - `grammar`: The grammar that changed
 - `mapping`: Dictionary mapping old rule indices to new rule indices
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::Forbidden,

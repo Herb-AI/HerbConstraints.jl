@@ -43,28 +43,30 @@ end
 """
 	update_rule_indices!(c::Unique, n_rules::Integer)
 
-Updates a `Unique` constraint to reflect grammar changes. No operation is performed 
-as `Unique` constraints do not require updates for grammar rule changes.
+Updates a `Unique` constraint to reflect grammar changes. Errors if rule index exceeds new `n_rules`.
 
 # Arguments
 - `c`: The `Unique` constraint to be updated.
 - `n_rules`: The new number of rules in the grammar.
 """
 function HerbCore.update_rule_indices!(c::Unique, n_rules::Integer)
+    if c.rule > n_rules
+        error("Rule index $(c.rule) exceeds the number of grammar rules ($n_rules).")
+    end
     # no update required
 end
 
 """
 	update_rule_indices!(c::Unique, grammar::AbstractGrammar)
 
-Updates a `Unique` constraint to reflect grammar changes. No operation is performed 
-as `Unique` constraints do not require updates for grammar rule changes.
+Updates a `Unique` constraint to reflect grammar changes. Errors if rule index exceeds number of grammar rules.
 
 # Arguments
 - `c`: The `Unique` constraint to be updated
 - `grammar`: The grammar that changed
 """
 function HerbCore.update_rule_indices!(c::Unique, grammar::AbstractGrammar)
+    HerbCore.update_rule_indices!(c, length(grammar.rules))
     # no update required
 end
 
@@ -75,7 +77,7 @@ end
     constraints::Vector{<:AbstractConstraint})
 
 Updates the `Unique` constraint to reflect grammar changes by replacing it with a new 
-`Unique` constraint using the mapped rule index.
+`Unique` constraint using the mapped rule index. Errors if rule index exceeds new `n_rules`.
 
 # Arguments
 - `c`: The `Unique` constraint to be updated
@@ -87,8 +89,11 @@ function HerbCore.update_rule_indices!(c::Unique,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint})
-    index = findfirst(x -> x == c, constraints) # assumes no duplicate constraints => TODO: can we assume this?
-    new_rule = _get_new_index(c.rule, mapping)
+    if c.rule > n_rules
+        error("Rule index $(c.rule) exceeds the number of grammar rules ($n_rules).")
+    end
+    index = only(findall(x -> x == c, constraints))
+    new_rule = new_rule = get(mapping, c.rule, c.rule) # keep rule index if no matching entry found in mapping
     constraints[index] = Unique(new_rule)
 end
 
@@ -98,7 +103,7 @@ end
     mapping::AbstractDict{<:Integer,<:Integer})
 
 Updates the `Unique` constraint to reflect grammar changes by replacing it with a new 
-`Unique` constraint using the mapped rule index.
+`Unique` constraint using the mapped rule index.Errors if rule index exceeds number of grammar rules.
 
 # Arguments
 - `c`: The `Unique` constraint to be updated

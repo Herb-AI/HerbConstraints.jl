@@ -43,13 +43,13 @@
             addconstraint!(grammar, Contains(3))
             n_rules = 5
             HerbCore.update_rule_indices!(c, n_rules)
-            @test grammar.constraints[1] == Contains(2)
+            @test Contains(2) in grammar.constraints
             mapping = Dict(1 => 5, 2 => 6)
             HerbCore.update_rule_indices!(c, n_rules,
                 mapping, grammar.constraints)
-            @test grammar.constraints[1] == Contains(6)
+            @test Contains(6) in grammar.constraints
+            @test !(Contains(2) in grammar.constraints)
         end
-        # TODO: interface with grammar
 
         @testset "interface with grammar" begin
             clearconstraints!(grammar)
@@ -59,7 +59,13 @@
             @test grammar.constraints[1] == Contains(2)
             mapping = Dict(1 => 5, 2 => 6)
             HerbCore.update_rule_indices!(c, grammar, mapping)
-            @test grammar.constraints[1] == Contains(6)
+            @test Contains(6) in grammar.constraints
+        end
+        @testset "error" begin
+            clearconstraints!(grammar)
+            c = Contains(23)
+            addconstraint!(grammar, c)
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
         end
     end
 end

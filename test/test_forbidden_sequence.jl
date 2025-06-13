@@ -327,5 +327,17 @@
             @test grammar.constraints[1].sequence == [10, 2, 99]
             @test grammar.constraints[1].ignore_if == [2, 6]
         end
+        @testset "error" begin
+            grammar = @csgrammar begin
+                Int = 1
+                Int = x
+                Int = -Int
+                Int = Int + Int
+                Int = Int * Int
+            end
+            c = ForbiddenSequence([1, 2, 10], [2, 5])
+            addconstraint!(grammar, c)
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
+        end
     end
 end

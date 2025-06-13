@@ -39,8 +39,8 @@ contains_varnode(vn::VarNode, name::Symbol) = vn.name == name
 Update the rule indices of a `VarNode`. As `VarNode`s contain no indices, this function does nothing.
 """
 function HerbCore.update_rule_indices!(
-    node::VarNode,
-    n_rules::Integer,
+    ::VarNode,
+    ::Integer,
 )
     # VarNode does not change
 end
@@ -48,14 +48,12 @@ end
 """
 	HerbCore.update_rule_indices!(c::VarNode, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
 
-This function serves as interface for `HerbCore.update_rule_indices!` on node type `VarNode`. Since `VarNode` doesn't change,
-this function does not perform any operations. 
-
+Update the rule indices of a `VarNode`. As `VarNode`s contain no indices, this function does nothing.
 """
 function HerbCore.update_rule_indices!(
-    node::VarNode,
-    n_rules::Integer,
-    mapping::AbstractDict{<:Integer,<:Integer},
+    ::VarNode,
+    ::Integer,
+    ::AbstractDict{<:Integer,<:Integer},
 )
     # VarNode does not change
 end

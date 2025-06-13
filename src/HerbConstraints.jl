@@ -16,85 +16,6 @@ Grammar constraints should implement `on_new_node` to post a [`AbstractLocalCons
 """
 abstract type AbstractGrammarConstraint <: AbstractConstraint end
 
-# Interface for update_rule_indices!
-"""
-    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer)
-
-Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
-
-# Arguments
-- `c`: The `AbstractGrammarConstraint` to be updated
-- `n_rules`: The new number of rules in the grammar
-
-# Notes
-Individual implementations may not use all provided arguments.
-"""
-function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
-    n_rules::Integer
-)
-    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
-end
-
-"""
-    function update_rule_indices!(node::AbstractGrammarConstraint,grammar::AbstractGrammar)
-
-Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars.
-
-# Arguments
-- `c`: The `AbstractGrammarConstraint` to be updated
-- `grammar`: The grammar that changed
-
-# Notes
-Individual implementations may not use all provided arguments.
-"""
-function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
-    grammar::AbstractGrammar
-)
-    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
-end
-
-"""
-    function update_rule_indices!(node::AbstractGrammarConstraint,n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{AbstractConstraint})
-
-Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars. 
-
-# Arguments
-- `c`: The `AbstractGrammarConstraint` to be updated
-- `n_rules`: The new number of rules in the grammar
-- `mapping`: Dictionary mapping old rule indices to new rule indices
-- `constraints`: List of grammar constraints
-
-# Notes
-Individual implementations may not use all provided arguments.
-"""
-function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
-    n_rules::Integer,
-    mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{<:AbstractConstraint}
-)
-    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
-end
-
-"""
-    function update_rule_indices!(node::AbstractGrammarConstraint,grammar::AbstractGrammar, mapping::AbstractDict{<:Integer,<:Integer})
-
-Used to update constraints when the grammar changes, e.g., by adding rules or merging grammars. 
-
-# Arguments
-- `c`: The `AbstractGrammarConstraint` to be updated
-- `grammar`: The grammar that changed
-- `mapping`: Dictionary mapping old rule indices to new rule indices
-
-# Notes
-Individual implementations may not use all provided arguments.
-"""
-function HerbCore.update_rule_indices!(c::AbstractGrammarConstraint,
-    grammar::AbstractGrammar,
-    mapping::AbstractDict{<:Integer,<:Integer}
-)
-    error("update_rule_indices! not implemented for constraint type $(typeof(c))")
-end
-
 """
     abstract type AbstractLocalConstraint <: AbstractConstraint
 
@@ -157,7 +78,6 @@ include("grammarconstraints/contains.jl")
 include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
-include("grammarconstraints/utils.jl")
 
 export
     AbstractGrammarConstraint,

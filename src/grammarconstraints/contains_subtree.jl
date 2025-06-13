@@ -38,9 +38,6 @@ Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `
 # Arguments
 - `c`: The `ContainsSubtree` constraint to be updated
 - `n_rules`: The new number of rules in the grammar
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::ContainsSubtree,
@@ -57,9 +54,6 @@ Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `
 # Arguments
 - `c`: The `ContainsSubtree` constraint to be updated
 - `grammar`: The grammar that changed
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::ContainsSubtree,
@@ -69,7 +63,7 @@ function HerbCore.update_rule_indices!(
 end
 
 """
-	update_rule_indices!(c::ContainsSubtree, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, constraints::Vector{<:AbstractConstraint})
+	update_rule_indices!(c::ContainsSubtree, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, ::Vector{<:AbstractConstraint})
 
 Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
 
@@ -77,16 +71,12 @@ Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `
 - `c`: The `ContainsSubtree` to be updated
 - `n_rules`: The new number of rules in the grammar
 - `mapping`: Dictionary mapping old rule indices to new rule indices
-- `constraints`: List of grammar constraints
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::ContainsSubtree,
     n_rules::Integer,
     mapping::AbstractDict{<:Integer,<:Integer},
-    constraints::Vector{<:AbstractConstraint}
+    ::Vector{<:AbstractConstraint}
 )
     HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
 end
@@ -100,9 +90,6 @@ Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `
 - `c`: The `ContainsSubtree` to be updated
 - `grammar`: The grammar that changed
 - `mapping`: Dictionary mapping old rule indices to new rule indices
-
-# Notes
-Ensures that every node of the `tree` field is updated as required.
 """
 function HerbCore.update_rule_indices!(
     c::ContainsSubtree,
