@@ -1,4 +1,4 @@
-@testset verbose=false "Unique" begin
+@testset verbose = false "Unique" begin
     grammar = @csgrammar begin
         Number = x | 1
         Number = Number + Number
@@ -30,7 +30,7 @@
                 RuleNode(2)
             ])
         ])
-        
+
         tree_one_leaf = RuleNode(3, [
             RuleNode(3, [
                 RuleNode(1),
@@ -128,5 +128,36 @@
         @test number_of_holes(tree) == 2
         @test length(findall(get_node_at_location(tree, [1, 1]).domain)) == 3
         @test length(findall(get_node_at_location(tree, [2, 2]).domain)) == 3
+    end
+
+    @testset "update_rule_indices!" begin
+        @testset "interface without grammar" begin
+            c = Unique(1)
+            n_rules = 5
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, n_rules)
+            @test grammar.constraints[1] == Unique(1)
+            HerbCore.update_rule_indices!(c, n_rules,
+                mapping, grammar.constraints)
+            @test grammar.constraints[1] == Unique(5)
+        end
+        @testset "interface with grammar" begin
+            clearconstraints!(grammar)
+            c = Unique(1)
+            addconstraint!(grammar, c)
+
+            HerbCore.update_rule_indices!(c, grammar)
+            @test grammar.constraints[1] == Unique(1)
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, grammar,
+                mapping)
+            @test grammar.constraints[1] == Unique(5)
+        end
+        @testset "error" begin
+            clearconstraints!(grammar)
+            c = Unique(23)
+            addconstraint!(grammar, c)
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
+        end
     end
 end

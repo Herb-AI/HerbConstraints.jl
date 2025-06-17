@@ -1,4 +1,4 @@
-@testset verbose=false "Contains" begin
+@testset verbose = false "Contains" begin
     contains = Contains(2)
 
     @testset "check_tree true" begin
@@ -27,5 +27,45 @@
 
         @test check_tree(contains, tree1) == false
         @test check_tree(contains, tree2) == false
+    end
+
+    @testset "update_rule_indices!" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        c = Contains(2)
+        @testset "interface without grammar" begin
+            addconstraint!(grammar, Contains(2))
+            addconstraint!(grammar, Contains(3))
+            n_rules = 5
+            HerbCore.update_rule_indices!(c, n_rules)
+            @test Contains(2) in grammar.constraints
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, n_rules,
+                mapping, grammar.constraints)
+            @test Contains(6) in grammar.constraints
+            @test !(Contains(2) in grammar.constraints)
+        end
+
+        @testset "interface with grammar" begin
+            clearconstraints!(grammar)
+            addconstraint!(grammar, Contains(2))
+            addconstraint!(grammar, Contains(3))
+            HerbCore.update_rule_indices!(c, grammar)
+            @test grammar.constraints[1] == Contains(2)
+            mapping = Dict(1 => 5, 2 => 6)
+            HerbCore.update_rule_indices!(c, grammar, mapping)
+            @test Contains(6) in grammar.constraints
+        end
+        @testset "error" begin
+            clearconstraints!(grammar)
+            c = Contains(23)
+            addconstraint!(grammar, c)
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
+        end
     end
 end

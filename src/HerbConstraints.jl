@@ -6,6 +6,7 @@ using DataStructures
 using MLStyle
 using TimerOutputs
 
+
 """
     abstract type AbstractGrammarConstraint <: AbstractConstraint
 
@@ -40,6 +41,7 @@ Constraints with fast propagators and/or strong inference should be propagated f
 function get_priority(::AbstractLocalConstraint)
     return 0
 end
+
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -79,13 +81,11 @@ include("grammarconstraints/unique.jl")
 
 export
     AbstractGrammarConstraint,
-    AbstractLocalConstraint,
-
-    DomainRuleNode,
+    AbstractLocalConstraint, DomainRuleNode,
     VarNode,
     pattern_match,
     check_tree,
-    
+
     #grammar constraints
     Forbidden,
     Ordered,
@@ -146,6 +146,8 @@ export
 
     #state fixed shaped hole
     StateHole,
-    freeze_state
+    freeze_state,
+    update_rule_indices!,
+    removeconstraint!
 
 end # module HerbConstraints
