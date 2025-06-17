@@ -13,7 +13,7 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 [compat]
 DataStructures = "0.17,0.18"
 HerbCore = "^0.3.0"
-HerbGrammar = "0.5"
+HerbGrammar = "0.6"
 MLStyle = "^0.4.17"
 TimerOutputs = "0.5.28"
 julia = "1.10"
