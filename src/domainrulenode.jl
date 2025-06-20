@@ -77,3 +77,10 @@ function HerbCore.update_rule_indices!(
         HerbCore.update_rule_indices!(child, n_rules, mapping)
     end
 end
+"""Check if `DomainRuleNode`'s domain length matches `n_rules`."""
+function HerbCore.is_domain_valid(node::DomainRuleNode, n_rules::Integer)
+    if length(node.domain) != n_rules
+        return false
+    end
+    all(child -> HerbCore.is_domain_valid(child, n_rules), get_children(node))
+end
