@@ -62,10 +62,9 @@
             @test Contains(6) in grammar.constraints
         end
         @testset "error" begin
-            clearconstraints!(grammar)
             c = Contains(23)
-            addconstraint!(grammar, c)
-            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
+            n_rules = 10
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, n_rules)
         end
     end
     @testset "is_domain_valid" begin
