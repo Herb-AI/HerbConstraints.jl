@@ -340,4 +340,17 @@
             @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
         end
     end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        constraint1 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
+        @test HerbCore.is_domain_valid(constraint1, grammar) == false
+        constraint2 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5])
+        @test HerbCore.is_domain_valid(constraint2, grammar) == true
+    end
 end

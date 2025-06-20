@@ -208,4 +208,24 @@
                 VarNode(:c)])
         end
     end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        ordered1 = Ordered(RuleNode(4, [
+                VarNode(:a),
+                VarNode(:b)
+            ]), [:a, :b])
+        ordered2 = Ordered(RuleNode(31, [
+                VarNode(:a),
+                VarNode(:b)
+            ]), [:a, :b])
+        @test HerbCore.is_domain_valid(ordered1, grammar) == true
+        @test HerbCore.is_domain_valid(ordered2, grammar) == false
+
+    end
 end

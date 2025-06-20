@@ -68,4 +68,15 @@
             @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
         end
     end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        @test HerbCore.is_domain_valid(Contains(8), grammar) == false
+        @test HerbCore.is_domain_valid(Contains(3), grammar) == true
+    end
 end
