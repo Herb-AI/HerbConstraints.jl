@@ -96,7 +96,12 @@
         end
         # valid domains
         @test isempty(grammar.constraints) == true
+        forbidden = Forbidden(UniformHole(BitVector((0, 0, 1, 0, 0))))
+        addconstraint!(grammar, forbidden)
+        @test length(grammar.constraints) == 1
+
         # invalid domains
-        # TODO: continue
+        forbidden_invalid = Forbidden(UniformHole(BitVector((0, 0, 1))))
+        @test_throws ErrorException addconstraint!(grammar, forbidden_invalid)
     end
 end
