@@ -75,6 +75,11 @@ function notify_new_constraints(solver::UniformSolver, node::AbstractRuleNode, c
     end
 end
 
+"""
+    add_constraints!(solver::UniformSolver, constraints::Vector{AbstractGrammarConstraint})
+
+Add the `constraints` to the solver and schedule them for propagation.
+"""
 function add_constraints!(solver::UniformSolver, constraints::Vector{AbstractGrammarConstraint})
     notify_new_constraints(solver, get_tree(solver), constraints, Vector{Int}())
     fix_point!(solver)
