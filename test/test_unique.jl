@@ -154,10 +154,20 @@
             @test grammar.constraints[1] == Unique(5)
         end
         @testset "error" begin
-            clearconstraints!(grammar)
             c = Unique(23)
-            addconstraint!(grammar, c)
-            @test_throws ErrorException HerbCore.update_rule_indices!(c, grammar)
+            n_rules = 10
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, n_rules)
         end
+    end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        @test HerbCore.is_domain_valid(Unique(8), grammar) == false
+        @test HerbCore.is_domain_valid(Unique(3), grammar) == true
     end
 end

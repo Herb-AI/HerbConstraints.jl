@@ -156,3 +156,6 @@ function HerbCore.update_rule_indices!(
 )
     HerbCore.update_rule_indices!(c, length(grammar.rules), mapping, grammar.constraints)
 end
+
+HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <= n_rules, c.sequence) && all(i -> i <= n_rules, c.ignore_if)
+HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))

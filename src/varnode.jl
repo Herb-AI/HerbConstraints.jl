@@ -57,3 +57,6 @@ function HerbCore.update_rule_indices!(
 )
     # VarNode does not change
 end
+
+"""Always return `true` (interface only)"""
+HerbCore.is_domain_valid(node::VarNode, n_rules::Integer) = true

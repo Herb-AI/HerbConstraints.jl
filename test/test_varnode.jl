@@ -22,4 +22,7 @@
         HerbCore.update_rule_indices!(node, n_rules, mapping)
         @test node == VarNode(:b)
     end
+    @testset "is_domain_valid" begin
+        @test HerbCore.is_domain_valid(VarNode(:a), 99) == true
+    end
 end

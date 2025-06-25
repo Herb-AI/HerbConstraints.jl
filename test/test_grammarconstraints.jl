@@ -47,15 +47,23 @@
                 Real = Real * Real
             end
 
-            ordered_operations_constraint = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
-            tree = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(1), RuleNode(2)])
-            contains_subtree_constraint = ContainsSubtree(tree)
-            addconstraint!(merge_from, ordered_operations_constraint)
-            addconstraint!(merge_from, contains_subtree_constraint)
-            merge_grammars!(merge_to, merge_from)
+            forbidden = Forbidden(UniformHole(BitVector((0, 0, 1))))
+            ordered = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
+            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)])
+            contains_subtree = ContainsSubtree(tree)
+            addconstraint!(merge_to, forbidden)
+            addconstraint!(merge_from, ordered)
+            addconstraint!(merge_from, contains_subtree)
 
-            @test merge_to.constraints[1].tree.domain == BitVector((0, 0, 0, 1, 1))
-            @test merge_to.constraints[2].tree.children == [RuleNode(4), RuleNode(5)]
+            merge_grammars!(merge_to, merge_from)
+            # test that merge_grammars! does not modify merge_from.constraints
+            @test length(merge_from.constraints) == 2
+            @test merge_from.constraints[1].tree.domain == BitVector((1, 1))
+            # test that rule nodes were updated correctly
+            @test merge_to.constraints[1].tree.domain == BitVector((0, 0, 1, 0, 0))
+            @test merge_to.constraints[2].tree.domain == BitVector((0, 0, 0, 1, 1))
+            @test merge_to.constraints[3].tree.domain == BitVector((0, 0, 0, 1, 0))
+            @test merge_to.constraints[3].tree.children == [RuleNode(4), RuleNode(5)]
         end
         @testset "Duplicate rules" begin
             merge_to = @csgrammar begin
@@ -78,5 +86,22 @@
             @test Contains(1) in merge_to.constraints
             @test Contains(4) in merge_to.constraints
         end
+    end
+    @testset "addconstraint!" begin
+        grammar = @cfgrammar begin
+            Number = |(1:2)
+            Number = x
+            Number = Number + Number
+            Number = Number * Number
+        end
+        # valid domains
+        @test isempty(grammar.constraints) == true
+        forbidden = Forbidden(UniformHole(BitVector((0, 0, 1, 0, 0))))
+        addconstraint!(grammar, forbidden)
+        @test length(grammar.constraints) == 1
+
+        # invalid domains
+        forbidden_invalid = Forbidden(UniformHole(BitVector((0, 0, 1))))
+        @test_throws ErrorException addconstraint!(grammar, forbidden_invalid)
     end
 end

@@ -30,4 +30,11 @@
         n_rules = 3
         @test_throws ErrorException HerbCore.update_rule_indices!(node, n_rules)
     end
+    @testset "is_domain_valid" begin
+        node1 = DomainRuleNode(BitVector((1, 0)), [DomainRuleNode(BitVector((1, 1, 0, 0, 0))), DomainRuleNode(BitVector((0, 1)))])
+        node2 = DomainRuleNode(BitVector((1, 0)), [DomainRuleNode(BitVector((1, 1))), DomainRuleNode(BitVector((0, 1)))])
+        n_rules = 2
+        @test HerbCore.is_domain_valid(node1, n_rules) == false
+        @test HerbCore.is_domain_valid(node2, n_rules) == true
+    end
 end
