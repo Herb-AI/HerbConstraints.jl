@@ -147,7 +147,6 @@ export
     #state fixed shaped hole
     StateHole,
     freeze_state,
-    update_rule_indices!,
-    removeconstraint!
+    update_rule_indices!
 
 end # module HerbConstraints
