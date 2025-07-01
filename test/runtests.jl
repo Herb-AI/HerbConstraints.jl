@@ -1,9 +1,11 @@
+using Aqua
 using HerbCore
 using HerbConstraints
 using HerbGrammar
 using Test
 
 @testset "HerbConstraints.jl" verbose = true begin
+    @testset "Aqua.jl" Aqua.test_all(HerbConstraints)
     include("test_domain_utils.jl")
     include("test_treemanipulations.jl")
     include("test_varnode.jl")

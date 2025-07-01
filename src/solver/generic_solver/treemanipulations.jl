@@ -56,6 +56,26 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::B
 end
 
 """
+    remove_all_but!(solver::GenericSolver, path::Vector{Int}, rules_to_keep::Vector{Int})
+
+Remove all rules from the domain of the hole located at the `path` except for the rules in `rules_to_keep`.
+"""
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rules_indices::Vector{Int})
+    hole = get_hole_at_location(solver, path)
+
+    bit_to_keep = BitVector(falses(length(hole.domain)))
+    bit_to_keep[rules_indices] .= true
+
+    updated_domain = hole.domain .& bit_to_keep
+    if hole.domain != updated_domain
+        hole.domain = updated_domain
+        simplify_hole!(solver, path)
+        notify_tree_manipulation(solver, path)
+        fix_point!(solver)
+    end
+end
+
+"""
     remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
