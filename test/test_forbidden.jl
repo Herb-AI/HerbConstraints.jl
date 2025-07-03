@@ -102,4 +102,17 @@
             @test forbidden.tree == expected_forbidden.tree
         end
     end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        forbidden1 = Forbidden(RuleNode(3, [RuleNode(5), RuleNode(8)]))
+        forbidden2 = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)]))
+        @test HerbCore.is_domain_valid(forbidden1, grammar) == false
+        @test HerbCore.is_domain_valid(forbidden2, grammar) == true
+    end
 end

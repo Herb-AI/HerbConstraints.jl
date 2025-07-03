@@ -342,4 +342,21 @@
         end
 
     end
+    @testset verbose = true "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        contains_subtree = ContainsSubtree(
+            RuleNode(5, [
+                VarNode(:a),
+                VarNode(:a),
+            ]),
+        )
+        @test HerbCore.is_domain_valid(contains_subtree, grammar) == true
+
+    end
 end

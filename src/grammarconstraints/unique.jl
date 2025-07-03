@@ -115,3 +115,6 @@ function HerbCore.update_rule_indices!(c::Unique,
     mapping::AbstractDict{<:Integer,<:Integer})
     HerbCore.update_rule_indices!(c, length(grammar.rules), mapping, grammar.constraints)
 end
+
+HerbCore.is_domain_valid(c::Unique, n_rules::Integer) = c.rule <= n_rules
+HerbCore.is_domain_valid(c::Unique, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
