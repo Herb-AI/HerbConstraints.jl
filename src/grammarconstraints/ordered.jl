@@ -133,3 +133,5 @@ end
 
 HerbCore.is_domain_valid(c::Ordered, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::Ordered, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
+
+HerbCore.issame(c1::Ordered, c2::Ordered) = HerbCore.issame(c1.tree, c2.tree) && c1.order == c2.order

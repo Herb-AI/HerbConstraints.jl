@@ -42,7 +42,6 @@ function get_priority(::AbstractLocalConstraint)
     return 0
 end
 
-
 include("csg_annotated/csg_annotated.jl")
 
 include("varnode.jl")
@@ -147,6 +146,7 @@ export
     #state fixed shaped hole
     StateHole,
     freeze_state,
-    update_rule_indices!
+    update_rule_indices!,
+    issame
 
 end # module HerbConstraints
