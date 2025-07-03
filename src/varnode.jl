@@ -58,7 +58,7 @@ function HerbCore.update_rule_indices!(
     # VarNode does not change
 end
 
-"""Always return `true` (interface only)"""
+# Always return `true` (interface only)
 HerbCore.is_domain_valid(node::VarNode, n_rules::Integer) = true
 
 HerbCore.issame(A::VarNode, B::VarNode) = A.name == B.name

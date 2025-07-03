@@ -75,5 +75,28 @@ using HerbCore, HerbGrammar
         @test tree.children[2] == RuleNode(2)
     end
 
+
+    @testset "remove_all_but! (vector)" begin
+        solver = create_dummy_solver()
+        new_state!(solver, @rulenode Hole[1, 1, 1, 1])
+        remove_all_but!(solver, Int[], [2, 3])
+        node = get_tree(solver)
+        @test node.domain == BitVector((0, 1, 1, 0))
+    
+        new_state!(solver, @rulenode Hole[1, 1, 1, 1])
+        remove_all_but!(solver, Int[], [1, 2])
+        node = get_tree(solver)
+        @test node.domain == BitVector((1, 1, 0, 0))
+    
+        new_state!(solver, @rulenode Hole[1, 1, 0, 1])
+        remove_all_but!(solver, Int[], [3, 4])
+        node = get_tree(solver)
+        @test node.ind == 4
+    
+        new_state!(solver, @rulenode Hole[0, 1, 0, 1])
+        remove_all_but!(solver, Int[], [2, 4])
+        node = get_tree(solver)
+        @test node.domain == BitVector((0, 1, 0, 1))
+    end
 end
 

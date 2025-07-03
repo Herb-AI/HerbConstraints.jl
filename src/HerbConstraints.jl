@@ -147,7 +147,6 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    removeconstraint!,
     issame
 
 end # module HerbConstraints
