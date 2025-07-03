@@ -42,6 +42,12 @@ function get_priority(::AbstractLocalConstraint)
     return 0
 end
 
+"""
+    issame(::AbstractGrammarConstraint, ::AbstractGrammarConstraint)
+
+Default implementation.
+"""
+HerbCore.issame(::AbstractGrammarConstraint, ::AbstractGrammarConstraint) = false # TODO: default in HerbCore?
 
 include("csg_annotated/csg_annotated.jl")
 
@@ -148,6 +154,7 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    removeconstraint!
+    removeconstraint!,
+    issame
 
 end # module HerbConstraints

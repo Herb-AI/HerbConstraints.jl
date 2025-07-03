@@ -84,3 +84,9 @@ function HerbCore.is_domain_valid(node::DomainRuleNode, n_rules::Integer)
     end
     all(child -> HerbCore.is_domain_valid(child, n_rules), get_children(node))
 end
+
+function HerbCore.issame(A::DomainRuleNode, B::DomainRuleNode)
+
+    A.domain == B.domain && length(A.children) == length(B.children) && all(HerbCore.issame(a, b) for (a, b) in zip(A.children, B.children))
+
+end
