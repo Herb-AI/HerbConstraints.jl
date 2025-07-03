@@ -42,13 +42,6 @@ function get_priority(::AbstractLocalConstraint)
     return 0
 end
 
-"""
-    issame(::AbstractGrammarConstraint, ::AbstractGrammarConstraint)
-
-Default implementation.
-"""
-HerbCore.issame(::AbstractGrammarConstraint, ::AbstractGrammarConstraint) = false # TODO: default in HerbCore?
-
 include("csg_annotated/csg_annotated.jl")
 
 include("varnode.jl")
