@@ -132,6 +132,12 @@
 
     @testset "update_rule_indices!" begin
         @testset "interface without grammar" begin
+            grammar = @csgrammar begin
+                Number = x | 1
+                Number = Number + Number
+                Number = Number - Number
+            end
+            addconstraint!(grammar, Unique(1))
             c = Unique(1)
             n_rules = 5
             mapping = Dict(1 => 5, 2 => 6)
@@ -160,14 +166,11 @@
         end
     end
     @testset "is_domain_valid" begin
-        grammar = @csgrammar begin
-            Int = 1
-            Int = x
-            Int = -Int
-            Int = Int + Int
-            Int = Int * Int
-        end
         @test HerbCore.is_domain_valid(Unique(8), grammar) == false
         @test HerbCore.is_domain_valid(Unique(3), grammar) == true
+    end
+    @testset "issame" begin
+        @test HerbCore.issame(Unique(2), Unique(2)) == true
+        @test HerbCore.issame(Unique(17), Unique(2)) == false
     end
 end

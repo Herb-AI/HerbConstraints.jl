@@ -159,3 +159,5 @@ end
 
 HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <= n_rules, c.sequence) && all(i -> i <= n_rules, c.ignore_if)
 HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
+
+HerbCore.issame(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)

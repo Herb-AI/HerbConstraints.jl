@@ -104,3 +104,5 @@ end
 
 HerbCore.is_domain_valid(c::Contains, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Contains, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
+
+HerbCore.issame(c1::Contains, c2::Contains) = c1 == c2

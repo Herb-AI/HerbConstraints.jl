@@ -80,9 +80,7 @@
             addconstraint!(merge_from, Contains(3))
 
             merge_grammars!(merge_to, merge_from)
-            # Note: addconstraint! (used in merge_grammars!) currently does not check for duplicate constraints. 
-            # Might change in the future and some of the tests will need to be updated.
-            @test length(merge_to.constraints) == 3
+            @test length(merge_to.constraints) == 2 # duplicate constraint 
             @test Contains(1) in merge_to.constraints
             @test Contains(4) in merge_to.constraints
         end
@@ -99,9 +97,21 @@
         forbidden = Forbidden(UniformHole(BitVector((0, 0, 1, 0, 0))))
         addconstraint!(grammar, forbidden)
         @test length(grammar.constraints) == 1
+        addconstraint!(grammar, Unique(2))
+        @test length(grammar.constraints) == 2
+
+        # try to add same constraint again
+        addconstraint!(grammar, forbidden)
+        @test length(grammar.constraints) == 2
+
 
         # invalid domains
         forbidden_invalid = Forbidden(UniformHole(BitVector((0, 0, 1))))
         @test_throws ErrorException addconstraint!(grammar, forbidden_invalid)
+
+
+    end
+    @testset "issame" begin
+        @test HerbCore.issame(Contains(1), Unique(1)) == false
     end
 end
