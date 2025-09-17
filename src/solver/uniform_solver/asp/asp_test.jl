@@ -40,7 +40,12 @@ include("asp_uniform_tree_solver.jl")
 
 asp = ASPSolver(g, t4_right)
 
-find_solutions!(asp)
+solve(asp, true)
+
+println("Found $(length(asp.solutions)) solutions:")
+for sol in asp.solutions
+    println("   ", sol)
+end
 
 
 # function tree_to_ASP(tree::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)

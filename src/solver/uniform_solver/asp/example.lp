@@ -57,6 +57,9 @@ child(5,2,8).
 
 % Ordered(5, [y,z], [y, z])
 
+% Unique(5)
+% { node(X,5) : node(X, 5) } 1.
+
 is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
 is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), child(Y,Z,YC), is_smaller(XC, YC)}, M = #max {Z: child(X,Z,XC)}, S = M.
 
