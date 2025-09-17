@@ -13,51 +13,61 @@ get_grammar(solver::ASPSolver) = solver.grammar
 
 get_filename(solver::ASPSolver) = solver.tmp_file_name
 
-ASPSolver(grammar, tree) = ASPSolver(grammar, tree, Vector{Dict{Int32,Int32}}(), "__tmp_asp_file.lp")
-
-function prepare_ASP(solver::ASPSolver)
-    string_tree, _ = tree_to_ASP(get_tree(solver), get_grammar(solver), 1)
-
-    open(get_filename(solver), "w") do file
-        write(file, "%%% Tree\n")
-        write(file, string_tree)
-        write(file, "\n%%% Constraints\n")
-        constraints = to_ASP(get_grammar(solver))
-        write(file, constraints)
-        write(file, "#show node/2.\n")
-    end
-end
-
 get_resultsfile(solver::ASPSolver) = replace(get_filename(solver), ".lp" => "_res.lp")
 
-function extract_solutions!(solver::ASPSolver)
-    open(get_resultsfile(solver), "r") do file
-        current_solution = Dict{Int64,Int64}()
-        for line in eachline(file)
-            if startswith(line, "Answer")
-                if !isempty(current_solution)
-                    push!(solver.solutions, current_solution)
-                end
-                current_solution = Dict{Int64,Int64}()
-            elseif startswith(line, "node")
-                node_assignments = split(line, " ")
-                for node in node_assignments
-                    m = match(r"node\((\d+),(\d+)\)", node)
-                    current_solution[parse(Int, m.captures[1])] = parse(Int, m.captures[2])
-                end
-            elseif startswith(line, "SATISFIABLE")
-                break
-            end
+ASPSolver(grammar, tree) = ASPSolver(grammar, tree, Vector{Dict{Int32,Int32}}(), "__tmp_asp_file.lp")
+
+function solve(solver::ASPSolver, write_to_file::Bool=false)
+    string_tree, _ = tree_to_ASP(get_tree(solver), get_grammar(solver), 1)
+    constraints = to_ASP(get_grammar(solver))
+    asp_input = """
+%%% Tree
+$string_tree
+
+%%% Constraints
+$constraints
+
+%%% Query
+#show node/2.
+"""
+    buffer = IOBuffer(asp_input)
+    asp_output = IOBuffer()
+    run(pipeline(ignorestatus(`$(Clingo_jll.clingo()) --models 0`), stdin=buffer, stdout=asp_output))
+    extract_solutions(solver, split(String(take!(asp_output)), "\n"))
+    if write_to_file
+        # Write the asp program to a file
+        open(get_filename(solver), "w") do file
+            write(file, String(take!(buffer)))
+        end
+        # Write the asp output to a file
+        open(get_resultsfile(solver), "w") do file
+            write(file, String(take!(asp_output)))
         end
     end
 end
 
-function find_solutions!(solver::ASPSolver)
-    prepare_ASP(solver)
+function extract_solutions_from_file(solver::ASPSolver)
+    open(get_resultsfile(solver), "r") do file
+        extract_solutions(solver, eachline(file))
+    end
+end
 
-    source_file = get_filename(solver)
-    res_file = get_resultsfile(solver)
-    run(`clingo --models 0 ./$source_file \> ./$res_file`)
-
-    extract_solutions!(solver)
+function extract_solutions(solver::ASPSolver, output_lines)
+    current_solution = Dict{Int64,Int64}()
+    for line in output_lines
+        if startswith(line, "Answer")
+            if !isempty(current_solution)
+                push!(solver.solutions, current_solution)
+            end
+            current_solution = Dict{Int64,Int64}()
+        elseif startswith(line, "node")
+            node_assignments = split(line, " ")
+            for node in node_assignments
+                m = match(r"node\((\d+),(\d+)\)", node)
+                current_solution[parse(Int, m.captures[1])] = parse(Int, m.captures[2])
+            end
+        elseif startswith(line, "SATISFIABLE")
+            break
+        end
+    end
 end

@@ -67,15 +67,19 @@ function node_to_ASP(tree::Union{UniformHole,DomainRuleNode}, grammar::AbstractG
     return "1 { $(options) } 1.\n"
 end
 
+"""
+  node_to_ASP(tree::StateHole, grammar::AbstractGrammar, node_index::Int64)
 
+Transform a [StateHole] into an ASP representation in the form
+`1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...}1.`
+"""
 function node_to_ASP(tree::StateHole, grammar::AbstractGrammar, node_index::Int64)
     options = join(["node($(node_index),$(ind))" for ind in Base.findall(tree.domain)], ";")
     return "1 { $(options) } 1.\n"
 end
 
-
 """
-    constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode, node_index::Int64)
+    constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
 
 Transforms a template tree to an ASP form suitable for constraints.
 
@@ -107,24 +111,33 @@ function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode
 end
 
 """
-    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64)
+    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constrain_index::Int64)
 
-Transforms a RuleNode into an ASP shape for a constraint
+Transforms a [RuleNode] into an ASP representation in the form
+`node(X_node_index, RuleNode_index).`
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constraint_index::Int64)
     return "node(X$(node_index),$(get_rule(node)))", []
 end
 
 """
-    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64)
+    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNodUnion{UniformHole,DomainRuleNode}, node_index::Int64, constrain_index::Int64)
 
-Transforms a RuleNode into an ASP shape for a constraint
+Transforms a [UniformHole] or [DomainRuleNode] into an ASP representation in the form
+`node(X_node_index, D_node_index, allowed(c{constraint_index}x{node_index}, D_node_index))`
+and the allowed domains of this constraint node.
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::Union{UniformHole,DomainRuleNode}, node_index::Int64, constraint_index::Int64)
     return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index), $x).\n", collect(filter(x -> node.domain[x], 1:length(grammar.rules))))
 end
 
+"""
+    constraint_node_to_ASP(grammar::AbstractGrammar, node::StateHole, node_index::Int64, constrain_index::Int64)
 
+Transforms a [StateHole] into an ASP representation in the form
+`node(X_node_index, D_node_index, allowed(c{constraint_index}x{node_index}, D_node_index))` 
+and the allowed domains of this constraint node.
+"""
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::StateHole, node_index::Int64, constraint_index::Int64)
     return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index), $x).\n", Base.findall(node.domain))
 end

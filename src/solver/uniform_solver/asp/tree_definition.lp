@@ -1,10 +1,12 @@
-node(1..N).
+% Choice vars: n and d are parameters that we can set to control the size of the search space. n is the number of nodes in the tree, and d is the number of derivation rules in the grammar.
+#const n = 8. % number of nodes
+#const d = 5. % number of derivation rules
 
-Choice vars:
+node(1..n).
 
 % for each node, select whether to include it and, if yes, which derivation rule to use. We can do this easily by saying that their domain is [ 0 , . . . , d ] where 0 means "not included" and 1 − d are derivation rule indices.
 
-1 { node(X,0..D) } 1 :- node(X).
+1 { node(X,0..d) } 1 :- node(X).
 
 % for an edge between any pair of nodes, choose whether it exists or not
 

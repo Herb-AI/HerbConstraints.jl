@@ -38,29 +38,29 @@ function to_ASP(grammar::AbstractGrammar, constraint::Forbidden, constraint_inde
 end
 
 """
-    to_ASP(grammar::AbstractGrammar, constraint::Contains, index::Int64)
+    to_ASP(grammar::AbstractGrammar, constraint::Contains, constraint_index::Int64)
 
 Transforms the contains constraint into ASP format.
 
 Contains(4) -> :- not node(_,4).
 """
-function to_ASP(grammar::AbstractGrammar, constraint::Contains, index::Int64)
+function to_ASP(grammar::AbstractGrammar, constraint::Contains, constraint_index::Int64)
     return ":- not node(_, $(constraint.rule)).\n"
 end
 
 """
-    to_ASP(grammar::AbstractGrammar, constraint::Unique, index::Int64)
+    to_ASP(grammar::AbstractGrammar, constraint::Unique, constraint_index::Int64)
 
 Transforms the unique constraint into ASP format.
 
-Unique(4) -> { X : node(X,4) } 1.
+Unique(4) -> { node(X,4) : node(X,4) } 1.
 """
-function to_ASP(grammar::AbstractGrammar, constraint::Unique, index::Int64)
-    return "{ X : node(X, $(constraint.rule)) } 1.\n"
+function to_ASP(grammar::AbstractGrammar, constraint::Unique, constraint_index::Int64)
+    return "{ node(X, $(constraint.rule)) : node(X, $(constraint.rule)) } 1.\n"
 end
 
 """
-    to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, index::Int64)
+    to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
 
 Transforms the contains subtree constraint into ASP format.
 
@@ -68,18 +68,18 @@ ContainsSubtree(5{1,2}) ->
 subtree(c1) :- node(X1,5), child(X1,1,X2), node(X2,1), child(X1,2,X3), node(X3,2).
 :- not subtree(c1).
 """
-function to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, index::Int64)
-    tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, index)
+function to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
+    tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
     output = ""
     output *= domains
 
-    output *= "subtree(c$(index)) :- $(tree).\n:- not subtree(c$(index)).\n"
+    output *= "subtree(c$(constraint_index)) :- $(tree).\n:- not subtree(c$(constraint_index)).\n"
 
     return output
 end
 
 """
-    to_ASP(grammar::AbstractGrammar, constraint::Ordered, index::Int64)
+    to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
 
 Transforms the Ordered constraint into ASP format.
 
@@ -94,11 +94,11 @@ is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), 
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(X,Y).
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(Y,Z).
 """
-function to_ASP(grammar::AbstractGrammar, constraint::Ordered, index::Int64)
+function to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
     output = "is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.\n"
     output *= "is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), child(Y,Z,YC), is_smaller(XC, YC)}, M = #max {Z: child(X,Z,XC)}, S = M.\n"
 
-    tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, index)
+    tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
 
     output *= domains
 
