@@ -46,4 +46,13 @@
         @test HerbCore.issame(node2, node3) == false
 
     end
+    @testset "error on number of children mismatch with N children in rules in domain" begin
+        g = @csgrammar begin
+            Int = Int + Int
+            Int = -Int
+            Int = 1 | 2 | 3
+        end
+
+        @test_throws r"number of children for each rule in the domain" DomainRuleNode(g, [1, 2], [VarNode(:a), VarNode(:b)])
+    end
 end
