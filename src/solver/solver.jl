@@ -27,7 +27,9 @@ abstract type Solver end
 Propagate constraints in the current state until no further dedecutions can be made
 """
 function fix_point!(solver::Solver)
-    if solver.fix_point_running return end
+    if solver.fix_point_running
+        return
+    end
     solver.fix_point_running = true
     while !isempty(solver.schedule)
         if !isfeasible(solver)
@@ -36,7 +38,9 @@ function fix_point!(solver::Solver)
             empty!(solver.schedule)
             break
         end
-        constraint = dequeue!(solver.schedule) 
+        # popfirst! returns a (constraint => priority) pair.
+        # we only need the constraint so we discard the priority with "_"
+        (constraint, _) = popfirst!(solver.schedule)
         propagate!(solver, constraint)
     end
     solver.fix_point_running = false
@@ -52,7 +56,7 @@ function schedule!(solver::Solver, constraint::AbstractLocalConstraint)
     @assert isfeasible(solver)
     if constraint ∉ keys(solver.schedule)
         @timeit_debug solver.statistics "schedule!" begin end
-        enqueue!(solver.schedule, constraint, get_priority(constraint))
+        push!(solver.schedule, constraint => get_priority(constraint))
     end
 end
 
