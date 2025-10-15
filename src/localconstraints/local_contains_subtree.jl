@@ -45,88 +45,89 @@ Nodes that can potentially become the target sub-tree are considered `candidates
 In case of multiple candidates, a stateful set of `indices` is used to keep track of active candidates.
 """
 function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
-    track!(solver, "LocalContainsSubtree propagation")
-    if isnothing(c.candidates)
-        # Initial propagation: pattern match all nodes, only store the candidates for re-propagation
-        c.candidates = Vector{AbstractRuleNode}()
-        for node ∈ get_nodes(solver)
-            @match pattern_match(c.tree, node) begin
-                ::PatternMatchHardFail => ()
-                ::PatternMatchSuccess => begin
-                    track!(solver, "LocalContainsSubtree satisfied (initial propagation)")
-                    deactivate!(solver, c);
-                    return
-                end
-                ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => push!(c.candidates, node)
-            end
-        end
-        n = length(c.candidates)
-        if n == 0
-            track!(solver, "LocalContainsSubtree inconsistency (initial propagation)")
-            set_infeasible!(solver)
-            return
-        elseif n == 1
-            @match make_equal!(solver, c.candidates[1], c.tree) begin
-                ::MakeEqualHardFail => begin
-                    @assert false "pattern_match failed to detect a hardfail"
-                end 
-                ::MakeEqualSuccess => begin 
-                    track!(solver, "LocalContainsSubtree deduction (initial)")
-                    deactivate!(solver, c);
-                    return
-                end 
-                ::MakeEqualSoftFail => begin
-                    track!(solver, "LocalContainsSubtree softfail (1 candidate) (initial)")
-                    return
-                end 
-            end
-        else
-            track!(solver, "LocalContainsSubtree softfail (>=2 candidates) (initial)")
-            c.indices = StateSparseSet(solver.sm, n)
-            return
-        end
-    else
-        # Re-propagation
-        if !isnothing(c.indices) && (size(c.indices) >= 2)
-            # Update the candidates by pattern matching them again
-            for i ∈ c.indices
-                match = pattern_match(c.candidates[i], c.tree)
-                @match match begin
-                    ::PatternMatchHardFail => remove!(c.indices, i)
+    @timeit_debug solver.statistics "LocalContainsSubtree propagation" begin
+        if isnothing(c.candidates)
+            # Initial propagation: pattern match all nodes, only store the candidates for re-propagation
+            c.candidates = Vector{AbstractRuleNode}()
+            for node ∈ get_nodes(solver)
+                @match pattern_match(c.tree, node) begin
+                    ::PatternMatchHardFail => ()
                     ::PatternMatchSuccess => begin
-                        track!(solver, "LocalContainsSubtree satisfied")
+                        @timeit_debug solver.statistics "LocalContainsSubtree satisfied (initial propagation)" begin end
                         deactivate!(solver, c);
                         return
                     end
-                    ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => ()
+                    ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => push!(c.candidates, node)
                 end
             end
-        end
-        n = isnothing(c.indices) ? 1 : size(c.indices)
-        if n == 1
-            # If there is a single candidate remaining, set it equal to the target tree
-            index = isnothing(c.indices) ? 1 : findfirst(c.indices)
-            @match make_equal!(solver, c.candidates[index], c.tree) begin
-                ::MakeEqualHardFail => begin
-                    track!(solver, "LocalContainsSubtree inconsistency")
-                    set_infeasible!(solver)
-                    return
-                end 
-                ::MakeEqualSuccess => begin 
-                    track!(solver, "LocalContainsSubtree deduction")
-                    deactivate!(solver, c);
-                    return
-                end 
-                ::MakeEqualSoftFail => begin
-                    track!(solver, "LocalContainsSubtree softfail (1 candidate)")
-                    return
-                end 
+            n = length(c.candidates)
+            if n == 0
+                @timeit_debug solver.statistics "LocalContainsSubtree inconsistency (initial propagation)" begin end
+                set_infeasible!(solver)
+                return
+            elseif n == 1
+                @match make_equal!(solver, c.candidates[1], c.tree) begin
+                    ::MakeEqualHardFail => begin
+                        @assert false "pattern_match failed to detect a hardfail"
+                    end
+                    ::MakeEqualSuccess => begin
+                        @timeit_debug solver.statistics "LocalContainsSubtree deduction (initial)" begin end
+                        deactivate!(solver, c);
+                        return
+                    end
+                    ::MakeEqualSoftFail => begin
+                        @timeit_debug solver.statistics "LocalContainsSubtree softfail (1 candidate) (initial)" begin end
+                        return
+                    end
+                end
+            else
+                @timeit_debug solver.statistics "LocalContainsSubtree softfail (>=2 candidates) (initial)" begin end
+                c.indices = StateSparseSet(solver.sm, n)
+                return
             end
-        elseif n == 0
-            track!(solver, "LocalContainsSubtree inconsistency")
-            set_infeasible!(solver)
-            return
+        else
+            # Re-propagation
+            if !isnothing(c.indices) && (size(c.indices) >= 2)
+                # Update the candidates by pattern matching them again
+                for i ∈ c.indices
+                    match = pattern_match(c.candidates[i], c.tree)
+                    @match match begin
+                        ::PatternMatchHardFail => remove!(c.indices, i)
+                        ::PatternMatchSuccess => begin
+                            @timeit_debug solver.statistics "LocalContainsSubtree satisfied" begin end
+                            deactivate!(solver, c);
+                            return
+                        end
+                        ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => ()
+                    end
+                end
+            end
+            n = isnothing(c.indices) ? 1 : size(c.indices)
+            if n == 1
+                # If there is a single candidate remaining, set it equal to the target tree
+                index = isnothing(c.indices) ? 1 : findfirst(c.indices)
+                @match make_equal!(solver, c.candidates[index], c.tree) begin
+                    ::MakeEqualHardFail => begin
+                        @timeit_debug solver.statistics "LocalContainsSubtree inconsistency" begin end
+                        set_infeasible!(solver)
+                        return
+                    end
+                    ::MakeEqualSuccess => begin
+                        @timeit_debug solver.statistics "LocalContainsSubtree deduction" begin end
+                        deactivate!(solver, c);
+                        return
+                    end
+                    ::MakeEqualSoftFail => begin
+                        @timeit_debug solver.statistics "LocalContainsSubtree softfail (1 candidate)" begin end
+                        return
+                    end
+                end
+            elseif n == 0
+                @timeit_debug solver.statistics "LocalContainsSubtree inconsistency" begin end
+                set_infeasible!(solver)
+                return
+            end
+            @timeit_debug solver.statistics "LocalContainsSubtree softfail (>=2 candidates)" begin end
         end
-        track!(solver, "LocalContainsSubtree softfail (>=2 candidates)")
     end
 end

@@ -20,18 +20,18 @@ Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree 
 function propagate!(solver::Solver, c::LocalOrdered)
     @assert isfeasible(solver)
     node = get_node_at_location(solver, c.path)
-    track!(solver, "LocalOrdered propagation")
+    @timeit_debug solver.statistics "LocalOrdered propagation" begin end
     vars = Dict{Symbol, AbstractRuleNode}()
     @match pattern_match(node, c.tree, vars) begin
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
-            track!(solver, "LocalOrdered match hardfail")
+            @timeit_debug solver.statistics "LocalOrdered match hardfail" begin end
         end;
         ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
             # The constraint will re-propagated on any tree manipulation.
-            track!(solver, "LocalOrdered match softfail")
+            @timeit_debug solver.statistics "LocalOrdered match softfail" begin end
             ()
         end
         ::PatternMatchSuccess => begin 
@@ -42,7 +42,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
                 @match make_less_than_or_equal!(solver, vars[name1], vars[name2]) begin
                     ::LessThanOrEqualHardFail => begin
                         # vars[name1] > vars[name2]. This means the state is infeasible.
-                        track!(solver, "LocalOrdered inconsistency")
+                        @timeit_debug solver.statistics "LocalOrdered inconsistency" begin end
                         set_infeasible!(solver) #throw(InconsistencyException())
                         return
                     end

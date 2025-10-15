@@ -32,3 +32,33 @@ Checks if an [`AbstractRuleNode`](@ref) tree contains a [`VarNode`](@ref) with t
 """
 contains_varnode(rn::AbstractRuleNode, name::Symbol) = any(contains_varnode(c, name) for c ∈ rn.children)
 contains_varnode(vn::VarNode, name::Symbol) = vn.name == name
+
+"""
+     HerbCore.update_rule_indices!(c::ContainVarNodesSubtree, n_rules::Integer)
+
+Update the rule indices of a `VarNode`. As `VarNode`s contain no indices, this function does nothing.
+"""
+function HerbCore.update_rule_indices!(
+    ::VarNode,
+    ::Integer,
+)
+    # VarNode does not change
+end
+
+"""
+	HerbCore.update_rule_indices!(c::VarNode, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer})
+
+Update the rule indices of a `VarNode`. As `VarNode`s contain no indices, this function does nothing.
+"""
+function HerbCore.update_rule_indices!(
+    ::VarNode,
+    ::Integer,
+    ::AbstractDict{<:Integer,<:Integer},
+)
+    # VarNode does not change
+end
+
+# Always return `true` (interface only)
+HerbCore.is_domain_valid(node::VarNode, n_rules::Integer) = true
+
+HerbCore.issame(A::VarNode, B::VarNode) = A.name == B.name

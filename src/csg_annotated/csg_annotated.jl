@@ -51,12 +51,14 @@ macro csgrammar_annotated(expression)
 
     for (e, label) in zip(expression.args, labels)
         # only consider if e is of type ... = ...
-        if !(e isa Expr && e.head == :(=)) continue end
-        
+        if !(e isa Expr && e.head == :(=))
+            continue
+        end
+
         # get the left and right hand side of a rule
         lhs = e.args[1]
         rhs = e.args[2]
-        
+
         # parse annotations if present
         if rhs isa Expr && rhs.head == :(:=)
             # get new annotations as a list
@@ -85,7 +87,7 @@ macro csgrammar_annotated(expression)
             push!(rules, new_rule)
             push!(types, lhs)
             bytype[lhs] = push!(get(bytype, lhs, Int[]), rule_index)
-            
+
             rule_index += 1
         end
     end
@@ -95,7 +97,10 @@ macro csgrammar_annotated(expression)
     is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
     is_eval = [iseval(rule) for rule ∈ rules]
     childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
-    bychildtypes = [BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for i1 ∈ 1:length(rules)]
+    bychildtypes = [
+        BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for
+        i1 ∈ 1:length(rules)
+    ]
     domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
 
     return ContextSensitiveGrammar(
@@ -108,7 +113,7 @@ macro csgrammar_annotated(expression)
         childtypes,
         bychildtypes,
         nothing,
-        constraints
+        constraints,
     )
 end
 
@@ -119,7 +124,9 @@ function _get_labels!(expression::Expr)::Vector{String}
 
     for e in expression.args
         # only consider if e is of type ... = ...
-        if !(e isa Expr && e.head == :(=)) continue end
+        if !(e isa Expr && e.head == :(=))
+            continue
+        end
 
         lhs = e.args[1]
 
@@ -145,10 +152,18 @@ end
 Converts an annotation to a constraint.
 commutative: creates an Ordered constraint
 transitive: creates an (incorrect) Forbidden constraint
-forbidden_path(path::Vector{Union{Symbol, Int}}): creates a ForbiddenPath constraint with the original rule included
+forbidden_path(path::Vector{Union{Symbol, Int}}): creates a `ForbiddenSequence`` constraint with the original rule included
 ... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
+
+!!! warning
+    This function is untested and probably broken. Tests are a really good idea. 
 """
-function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{String})::AbstractConstraint
+function annotation2constraint(
+    annotation::Any,
+    rule_index::Int,
+    labels::Vector{String},
+)::AbstractConstraint
+    # TODO: tracking issue https://github.com/Herb-AI/HerbConstraints.jl/issues/74
     if annotation isa Expr
         # function-like annotations
         if annotation.head == :call
@@ -157,10 +172,13 @@ function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{
 
             if func_name == :forbidden_path
                 string_args = eval(func_args[1])
-                index_args = [arg isa Symbol ? _get_rule_index(labels, string(arg)) : arg for arg in string_args]
+                index_args = [
+                    arg isa Symbol ? _get_rule_index(labels, string(arg)) : arg for
+                    arg in string_args
+                ]
 
-                return ForbiddenPath(
-                    [rule_index; index_args]
+                return ForbiddenSequence(
+                    [rule_index; index_args],
                 )
             end
         end
@@ -177,13 +195,16 @@ function annotation2constraint(annotation::Any, rule_index::Int, labels::Vector{
     if annotation == :commutative
         return Ordered(
             MatchNode(rule_index, [MatchVar(:x), MatchVar(:y)]),
-            [:x, :y]
+            [:x, :y],
         )
     end
 
     if annotation == :transitive
         return Forbidden(
-            MatchNode(rule_index, [MatchVar(:x), MatchNode(rule_index, [MatchVar(:y), MatchVar(:z)])])
+            MatchNode(
+                rule_index,
+                [MatchVar(:x), MatchNode(rule_index, [MatchVar(:y), MatchVar(:z)])],
+            ),
         )
     end
 

@@ -107,17 +107,6 @@ function make_less_than_or_equal!(
                 return LessThanOrEqualHardFail()
             end
 
-            # domain of hole must have been 1 because it `isfilled`
-            # but still has no children, so there's nothing more that
-            # can be deduced before the hole is simplified
-            # ideally, these holes should be simplified before making
-            # it to the lessthanorequal step.
-            if hole1 isa Hole && !isempty(get_children(hole2))
-                return LessThanOrEqualSoftFail(hole1)
-            elseif hole2 isa Hole && !isempty(get_children(hole1))
-                return LessThanOrEqualSoftFail(hole2)
-            end
-
             return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
         end
         (true, false) => begin
@@ -148,7 +137,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
             else
                 return LessThanOrEqualSoftFail(hole2)
             end
@@ -181,7 +170,7 @@ function make_less_than_or_equal!(
                     return LessThanOrEqualSuccessLessThan()
                 end
                 # tiebreak on the children
-                return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
             else
                 return LessThanOrEqualSoftFail(hole1)
             end
@@ -225,7 +214,7 @@ function make_less_than_or_equal!(
                     # {2, 3} <= {3, 4}, try to tiebreak on the children
                     push!(guards, (hole1, 0))
                     push!(guards, (hole2, 0))
-                    return make_less_than_or_equal!(solver, hole1.children, hole2.children, guards)
+                    return make_less_than_or_equal!(solver, get_children(hole1), get_children(hole2), guards)
                 elseif left_highest_ind < right_lowest_ind
                     # {2, 3} < {7, 8}, success
                     return LessThanOrEqualSuccessLessThan()

@@ -1,11 +1,11 @@
 """
-    ForbiddenPath <: AbstractGrammarConstraint
+	ForbiddenSequence <: AbstractGrammarConstraint
 
 This [`AbstractGrammarConstraint`] forbids the given `sequence` of rule nodes.
-Sequences are strictly vertical and may include gaps. Consider the tree `1(a, 2(b, 3(c, d))))`:
+Sequences are strictly vertical and may include gaps. Consider the tree `1{a, 2{b, 3{c, d}}}`:
 - `[2, 3, d]` is a sequence
 - `[1, 3, d]` is a sequence
-- `[3, c, d]` is not a sequence
+- `[3, c, d]` is not a sequence since c and d are siblings (horizontal)
 
 Examples:
 - `ForbiddenSequence([3, 4])` enforces that rule `4` cannot be applied at `c` or `d`.
@@ -24,19 +24,24 @@ struct ForbiddenSequence <: AbstractGrammarConstraint
     ignore_if::Vector{Int}
 end
 
-ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) = ForbiddenSequence(sequence, ignore_if)
+ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) =
+    ForbiddenSequence(sequence, ignore_if)
 
 function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     @match get_node_at_location(solver, path) begin
-        hole::AbstractHole => if !hole.domain[c.sequence[end]] return end
-        node::RuleNode => if node.ind != c.sequence[end] return end
+        hole::AbstractHole => if !hole.domain[c.sequence[end]]
+            return
+        end
+        node::RuleNode => if node.ind != c.sequence[end]
+            return
+        end
     end
     post!(solver, LocalForbiddenSequence(path, c.sequence, c.ignore_if))
 end
 
 """
-    check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_started=false)::Bool
+	check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_started=false)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`ForbiddenSequence`](@ref) constraint.
 """
@@ -51,7 +56,7 @@ function check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_start
             end
         end
     end
-    
+
     # add the current node to the current sequence if possible
     if (get_rule(tree) == c.sequence[1])
         remaining_sequence = c.sequence[2:end]
@@ -64,13 +69,13 @@ function check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_start
     if isempty(remaining_sequence)
         return false
     end
-    
+
     if sequence_started
         # the sequence contains one of the `ignore_if` rules, and therefore is satisfied
         if get_rule(tree) ∈ c.ignore_if
             return true
         end
-        
+
         # continue the current sequence
         smaller_constraint = ForbiddenSequence(remaining_sequence, c.ignore_if)
         for child ∈ tree.children
@@ -81,3 +86,78 @@ function check_tree(c::ForbiddenSequence, tree::AbstractRuleNode; sequence_start
     end
     return true
 end
+
+"""
+	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer)
+
+Updates a `ForbiddenSequence` constraint to reflect grammar changes. Errors if rule indices exceeds `n_rules`.
+
+# Arguments
+- `c`: The `ForbiddenSequence` constraint to be updated
+- `n_rules`: The new number of rules in the grammar
+"""
+function HerbCore.update_rule_indices!(c::ForbiddenSequence, n_rules::Integer)
+    if any(i -> i > n_rules, c.sequence) || any(i -> i > n_rules, c.ignore_if)
+        error("Rule index exceeds the number of grammar rules ($n_rules).")
+    end
+    # no update required
+end
+
+"""
+	update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar)
+
+Updates a `ForbiddenSequence` constraint to reflect grammar changes. Errors if rule indices exceeds number of grammar rules.
+# Arguments
+- `c`: The `ForbiddenSequence` constraint to be updated
+- `grammar`: The grammar that changed
+"""
+function HerbCore.update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar)
+    HerbCore.update_rule_indices!(c, length(grammar.rules))
+end
+
+"""
+	update_rule_indices!(c::ForbiddenSequence, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, ::Vector{<:AbstractConstraint})
+
+Updates the rule indices in a `ForbiddenSequence` constraint by applying the given mapping to both the `sequence` and `ignore_if` fields.
+Errors if rule indices exceeds number of grammar rules.
+
+# Arguments
+- `c`: The `ForbiddenSequence` constraint to be updated
+- `n_rules`: The new number of rules in the grammar  
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+"""
+function HerbCore.update_rule_indices!(
+    c::ForbiddenSequence, n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+    ::Vector{<:AbstractConstraint}
+)
+    if any(i -> i > n_rules, c.sequence) || any(i -> i > n_rules, c.ignore_if)
+        error("Rule index $(i) exceeds the number of grammar rules ($n_rules).")
+    end
+    c.sequence .= get.(Ref(mapping), c.sequence, c.sequence) # keep rule index if no matching entry found in mapping
+    c.ignore_if .= get.(Ref(mapping), c.ignore_if, c.ignore_if)
+    return c
+end
+
+"""
+	update_rule_indices!(c::ForbiddenSequence, grammar::AbstractGrammar, mapping::AbstractDict{<:Integer, <:Integer})
+
+Updates the rule indices in a `ForbiddenSequence` constraint by applying the given mapping to both the `sequence` and `ignore_if` fields.
+Errors if rule indices exceeds number of grammar rules.
+# Arguments
+- `c`: The `ForbiddenSequence` constraint to be updated
+- `grammar`: The grammar that changed
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+"""
+function HerbCore.update_rule_indices!(
+    c::ForbiddenSequence,
+    grammar::AbstractGrammar,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    HerbCore.update_rule_indices!(c, length(grammar.rules), mapping, grammar.constraints)
+end
+
+HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <= n_rules, c.sequence) && all(i -> i <= n_rules, c.ignore_if)
+HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
+
+HerbCore.issame(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)

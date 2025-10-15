@@ -21,7 +21,7 @@ Uses a helper function to retrieve a list of holes that can potentially hold the
 If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
 """
 function propagate!(solver::Solver, c::LocalUnique)
-    track!(solver, "LocalUnique propagation")
+    @timeit_debug solver.statistics "LocalUnique propagation" begin end
     if (solver isa GenericSolver) | isempty(c.holes)
         empty!(c.holes)
         node = get_node_at_location(solver, c.path)
@@ -32,10 +32,10 @@ function propagate!(solver::Solver, c::LocalUnique)
     end
     if count >= 2
         set_infeasible!(solver)
-        track!(solver, "LocalUnique inconsistency")
+        @timeit_debug solver.statistics "LocalUnique inconsistency" begin end
     elseif count == 1
         if all(isuniform(hole) for hole ∈ c.holes)
-            track!(solver, "LocalUnique deactivate")
+            @timeit_debug solver.statistics "LocalUnique deactivate" begin end
             deactivate!(solver, c)
         end 
         for hole ∈ c.holes
@@ -44,7 +44,7 @@ function propagate!(solver::Solver, c::LocalUnique)
                 path = get_path(solver, hole)
                 remove!(solver, path, c.rule)
                 deductions += 1
-                track!(solver, "LocalUnique deduction")
+                @timeit_debug solver.statistics "LocalUnique deduction" begin end
             end
         end
     end

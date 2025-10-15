@@ -29,3 +29,77 @@ function check_tree(c::ContainsSubtree, tree::AbstractRuleNode)::Bool
     end
     return any(check_tree(c, child) for child ∈ get_children(tree))
 end
+
+"""
+	update_rule_indices!(c::ContainsSubtree, n_rules::Integer)
+
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `ContainsSubtree` constraint to be updated
+- `n_rules`: The new number of rules in the grammar
+"""
+function HerbCore.update_rule_indices!(
+    c::ContainsSubtree,
+    n_rules::Integer,
+)
+    HerbCore.update_rule_indices!(c.tree, n_rules)
+end
+
+"""
+	update_rule_indices!(c::ContainsSubtree, grammar::AbstractGrammar)
+
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `ContainsSubtree` constraint to be updated
+- `grammar`: The grammar that changed
+"""
+function HerbCore.update_rule_indices!(
+    c::ContainsSubtree,
+    grammar::AbstractGrammar,
+)
+    HerbCore.update_rule_indices!(c, length(grammar.rules))
+end
+
+"""
+	update_rule_indices!(c::ContainsSubtree, n_rules::Integer, mapping::AbstractDict{<:Integer, <:Integer}, ::Vector{<:AbstractConstraint})
+
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `ContainsSubtree` to be updated
+- `n_rules`: The new number of rules in the grammar
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+"""
+function HerbCore.update_rule_indices!(
+    c::ContainsSubtree,
+    n_rules::Integer,
+    mapping::AbstractDict{<:Integer,<:Integer},
+    ::Vector{<:AbstractConstraint}
+)
+    HerbCore.update_rule_indices!(c.tree, n_rules, mapping)
+end
+
+"""
+    update_rule_indices!(c::ContainsSubtree, grammar::AbstractGrammar, mapping::AbstractDict{<:Integer, <:Integer})
+
+Updates the `ContainsSubtree` constraint to reflect grammar changes by calling `HerbCore.update_rule_indices!` on its `tree` field.
+
+# Arguments
+- `c`: The `ContainsSubtree` to be updated
+- `grammar`: The grammar that changed
+- `mapping`: Dictionary mapping old rule indices to new rule indices
+"""
+function HerbCore.update_rule_indices!(
+    c::ContainsSubtree,
+    grammar::AbstractGrammar,
+    mapping::AbstractDict{<:Integer,<:Integer},
+)
+    HerbCore.update_rule_indices!(c, length(grammar.rules), mapping, grammar.constraints)
+end
+
+HerbCore.is_domain_valid(c::ContainsSubtree, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
+HerbCore.is_domain_valid(c::ContainsSubtree, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
+
+HerbCore.issame(c1::ContainsSubtree, c2::ContainsSubtree) = HerbCore.issame(c1.tree, c2.tree)

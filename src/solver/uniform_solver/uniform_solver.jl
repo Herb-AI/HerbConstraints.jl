@@ -12,7 +12,7 @@ mutable struct UniformSolver <: Solver
     isfeasible::Bool
     schedule::PriorityQueue{AbstractLocalConstraint, Int}
     fix_point_running::Bool
-    statistics::Union{SolverStatistics, Nothing}
+    statistics::Union{TimerOutput, Nothing}
 end
 
 
@@ -30,8 +30,8 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     schedule = PriorityQueue{AbstractLocalConstraint, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
-        ::SolverStatistics => with_statistics
-        ::Bool => with_statistics ? SolverStatistics() : nothing
+        ::TimerOutput => with_statistics
+        ::Bool => with_statistics ? TimerOutput("Uniform Solver") : nothing
         ::Nothing => nothing
     end
     solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
@@ -155,18 +155,18 @@ Function that should be called whenever the constraint is already satisfied and 
 function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
-        track!(solver, "deactivate! removed from schedule")
+        @timeit_debug solver.statistics "deactivate! removed from schedule" begin end
         delete!(solver.schedule, constraint)
     end
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
-        track!(solver, "deactivate!")
+        @timeit_debug solver.statistics "deactivate!" begin end
         set_value!(solver.isactive[constraint], 0)
         return
     end
     # the constraint is satisfied during its initial propagation
     # the constraint was not posted yet, the post should be canceled
-    track!(solver, "cancel post (1/2)")
+    @timeit_debug solver.statistics "cancel post (1/2)" begin end
     push!(solver.canceledconstraints, constraint)
 end
 
@@ -186,7 +186,7 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     solver.fix_point_running = temp
     if constraint ∈ solver.canceledconstraints
         # the constraint was deactivated during the initial propagation, cancel posting the constraint
-        track!(solver, "cancel post (2/2)")
+        @timeit_debug solver.statistics "cancel post (2/2)" begin end
         delete!(solver.canceledconstraints, constraint)
         return
     end
@@ -242,7 +242,7 @@ Save the current state of the solver, can restored using `restore!`
 """
 function save_state!(solver::UniformSolver)
     @assert isfeasible(solver)
-    track!(solver, "save_state!")
+    @timeit_debug solver.statistics "save_state!" begin end
     save_state!(solver.sm)
 end
 
@@ -251,7 +251,7 @@ end
 Restore state of the solver until the last `save_state!`
 """
 function restore!(solver::UniformSolver)
-    track!(solver, "restore!")
+    @timeit_debug solver.statistics "restore!" begin end
     restore!(solver.sm)
     solver.isfeasible = true
 end

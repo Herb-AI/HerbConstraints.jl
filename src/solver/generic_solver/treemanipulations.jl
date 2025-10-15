@@ -56,6 +56,26 @@ function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::B
 end
 
 """
+    remove_all_but!(solver::GenericSolver, path::Vector{Int}, rules_to_keep::Vector{Int})
+
+Remove all rules from the domain of the hole located at the `path` except for the rules in `rules_to_keep`.
+"""
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rules_indices::Vector{Int})
+    hole = get_hole_at_location(solver, path)
+
+    bit_to_keep = BitVector(falses(length(hole.domain)))
+    bit_to_keep[rules_indices] .= true
+
+    updated_domain = hole.domain .& bit_to_keep
+    if hole.domain != updated_domain
+        hole.domain = updated_domain
+        simplify_hole!(solver, path)
+        notify_tree_manipulation(solver, path)
+        fix_point!(solver)
+    end
+end
+
+"""
     remove_above!(solver::GenericSolver, path::Vector{Int}, rule_index::Int)
 
 Reduce the domain of the hole located at the `path` by removing all rules indices above `rule_index`
@@ -171,21 +191,21 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
     
     if isnothing(is_domain_increasing)
         #automatically decide if the event is domain increasing
-        track!(solver, "substitute! checks is_domain_increasing")
+        @timeit_debug solver.statistics "substitute! checks is_domain_increasing" begin end
         is_domain_increasing = !is_subdomain(new_node, old_node)
     end
     if is_domain_increasing
         #propagate all constraints from the ground up
-        track!(solver, "substitute! (domain increasing)")
+        @timeit_debug solver.statistics "substitute! (domain increasing)" begin end
         new_state!(solver, get_tree(solver))
     else
         if !have_same_shape(new_node, old_node)
             #unknown locations have been added to the tree
             #let the grammar constraint post new local constraints at these new paths
-            track!(solver, "substitute! (domain decreasing, different shape)")
+            @timeit_debug solver.statistics "substitute! (domain decreasing, different shape)" begin end
             notify_new_nodes(solver, new_node, path)
         else
-            track!(solver, "substitute! (domain decreasing, same shape)")
+            @timeit_debug solver.statistics "substitute! (domain decreasing, same shape)" begin end
         end
         notify_tree_manipulation(solver, path)
         fix_point!(solver)
@@ -199,7 +219,7 @@ end
 Remove the node at the given `path` by substituting it with a hole of the same symbol.
 """
 function remove_node!(solver::GenericSolver, path::Vector{Int})
-    track!(solver, "remove_node!")
+    @timeit_debug solver.statistics "remove_node!" begin end
     node = get_node_at_location(solver, path)
     @assert !(node isa Hole)
     grammar = get_grammar(solver)

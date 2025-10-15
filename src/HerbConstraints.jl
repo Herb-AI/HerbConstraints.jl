@@ -4,6 +4,8 @@ using HerbCore
 using HerbGrammar
 using DataStructures
 using MLStyle
+using TimerOutputs
+
 
 """
     abstract type AbstractGrammarConstraint <: AbstractConstraint
@@ -46,7 +48,6 @@ include("varnode.jl")
 include("domainrulenode.jl")
 
 include("solver/solver.jl")
-include("solver/solverstatistics.jl")
 include("solver/generic_solver/state.jl")
 include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
@@ -79,13 +80,11 @@ include("grammarconstraints/unique.jl")
 
 export
     AbstractGrammarConstraint,
-    AbstractLocalConstraint,
-
-    DomainRuleNode,
+    AbstractLocalConstraint, DomainRuleNode,
     VarNode,
     pattern_match,
     check_tree,
-    
+
     #grammar constraints
     Forbidden,
     Ordered,
@@ -133,9 +132,6 @@ export
     are_disjoint,
     get_intersection,
 
-    #solverstatistics
-    track!,
-
     #functions related to stateful objects
     restore!,
     StateInt,
@@ -149,6 +145,8 @@ export
 
     #state fixed shaped hole
     StateHole,
-    freeze_state
+    freeze_state,
+    update_rule_indices!,
+    issame
 
 end # module HerbConstraints

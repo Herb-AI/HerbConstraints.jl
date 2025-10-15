@@ -1,4 +1,4 @@
-@testset verbose=false "Forbidden Sequence" begin
+@testset verbose = false "Forbidden Sequence" begin
     function dummy_tree(sequence)::AbstractRuleNode
         # returns a tree that contains the specified sequence and some noise.
         # holes can be represented by tuples of indices
@@ -16,18 +16,18 @@
         end
         return RuleNode(sequence[1], children)
     end
-    
+
     function dummy_solver(sequence, constraint)::Solver
         grammar = @csgrammar begin
             S = (S, 1) | (S, 2) | (S, 3) | (S, 4) | (S, 5) | (S, 6) | (S, 7) | (S, 8)
             S = 9
         end
         # only 1 grammar is ever instantiated (at compile time), so we need to clear the grammar
-        empty!(grammar.constraints) 
+        empty!(grammar.constraints)
         addconstraint!(grammar, constraint)
         return GenericSolver(grammar, dummy_tree(sequence))
     end
-    
+
     function get_sequence(solver, n)
         #converts a tree into a sequence of Int (representing a rule) and Tuple{Int} (representing a domain of rules)
         sequence = []
@@ -44,10 +44,10 @@
         end
         return sequence
     end
-    
+
     function test_propagation(
-        constraint::ForbiddenSequence, 
-        sequence_before_propagation, 
+        constraint::ForbiddenSequence,
+        sequence_before_propagation,
         sequence_after_propagation
     )
         # An "Int" in the sequence represents a rule (RuleNode)
@@ -57,9 +57,9 @@
         expected = sequence_after_propagation
         @test actual == expected
     end
-    
+
     function test_infeasible(
-        constraint::ForbiddenSequence, 
+        constraint::ForbiddenSequence,
         sequence_before_propagation
     )
         solver = dummy_solver(sequence_before_propagation, constraint)
@@ -88,7 +88,7 @@
             tree4 = dummy_tree([1, 2, 1, 2, 3])
             tree5 = dummy_tree([3, 2, 1, 1, 2, 3])
             tree6 = dummy_tree([1, 1, 2, 2, 3, 3])
-            
+
             @test check_tree(constraint, tree1) == false
             @test check_tree(constraint, tree2) == false
             @test check_tree(constraint, tree3) == false
@@ -102,7 +102,7 @@
 
             tree1 = dummy_tree([1, 2, 5, 3])
             tree2 = dummy_tree([5, 1, 5, 2, 5, 3, 1])
-            
+
             @test check_tree(constraint, tree1) == true
             @test check_tree(constraint, tree2) == true
         end
@@ -117,7 +117,7 @@
             tree5 = dummy_tree([1, 2, 5, 1, 2, 3])
             tree6 = dummy_tree([1, 2, 3, 5, 3])
             tree7 = dummy_tree([1, 5, 1, 2, 3])
-            
+
             @test check_tree(constraint, tree1) == false
             @test check_tree(constraint, tree2) == false
             @test check_tree(constraint, tree3) == false
@@ -131,22 +131,22 @@
     @testset "propagation" begin
         @testset "infeasible" begin
             constraint = ForbiddenSequence([1, 2, 3])
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, 3]
             )
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, (1, 2, 3), 3]
             )
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, (1, 2, 3), (1, 2, 3), 3]
             )
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, 3, (1, 2, 3), (1, 2, 3), 3]
@@ -177,7 +177,7 @@
                 [1, (1, 2, 3), 3],
                 [1, (1, 3), 3]
             )
-            
+
             test_propagation(
                 constraint,
                 [1, 2, (1, 2, 3)],
@@ -209,7 +209,7 @@
 
         @testset "infeasible (with ignore_if)" begin
             constraint = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5])
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, 3]
@@ -219,7 +219,7 @@
                 constraint,
                 [(1, 2, 3, 4), 1, 2, 3, (1, 2, 3, 4)]
             )
-        
+
             test_infeasible(
                 constraint,
                 [1, 2, 3, 1, 2, 4, 3]
@@ -294,5 +294,65 @@
                 [1, 2, (4, 5), 3]
             )
         end
+    end
+
+    @testset "update_rule_indices!" begin
+        @testset "interface without grammar" begin
+            c = ForbiddenSequence([1, 2, 3], [2, 5])
+            n_rules = 10
+            HerbCore.update_rule_indices!(c, n_rules)
+            @test c.sequence == [1, 2, 3]
+            @test c.ignore_if == [2, 5]
+            mapping = Dict(1 => 10, 3 => 99, 5 => 6)
+            constraints = [c]
+            HerbCore.update_rule_indices!(c, n_rules, mapping, constraints)
+            @test c.sequence == [10, 2, 99]
+            @test c.ignore_if == [2, 6]
+        end
+        @testset "interface with grammar" begin
+            grammar = @csgrammar begin
+                Int = 1
+                Int = x
+                Int = -Int
+                Int = Int + Int
+                Int = Int * Int
+            end
+            c = ForbiddenSequence([1, 2, 3], [2, 5])
+            addconstraint!(grammar, c)
+            HerbCore.update_rule_indices!(c, grammar)
+            @test grammar.constraints[1].sequence == [1, 2, 3]
+            @test grammar.constraints[1].ignore_if == [2, 5]
+            mapping = Dict(1 => 10, 3 => 99, 5 => 6)
+            HerbCore.update_rule_indices!(c, grammar, mapping)
+            @test grammar.constraints[1].sequence == [10, 2, 99]
+            @test grammar.constraints[1].ignore_if == [2, 6]
+        end
+        @testset "error" begin
+            c = ForbiddenSequence([1, 2, 10], [2, 5])
+            n_rules = 5
+            @test_throws ErrorException HerbCore.update_rule_indices!(c, n_rules)
+        end
+    end
+    @testset "is_domain_valid" begin
+        grammar = @csgrammar begin
+            Int = 1
+            Int = x
+            Int = -Int
+            Int = Int + Int
+            Int = Int * Int
+        end
+        constraint1 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
+        @test HerbCore.is_domain_valid(constraint1, grammar) == false
+        constraint2 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5])
+        @test HerbCore.is_domain_valid(constraint2, grammar) == true
+    end
+    @testset "issame" begin
+        constraint1 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
+        constraint2 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
+        constraint3 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6])
+        constraint4 = ForbiddenSequence([1, 2, 5], ignore_if=[4, 5, 6])
+        @test HerbCore.issame(constraint1, constraint2) == true
+        @test HerbCore.issame(constraint1, constraint3) == false
+        @test HerbCore.issame(constraint3, constraint4) == false
     end
 end
