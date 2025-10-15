@@ -15,9 +15,17 @@ end
 
 function DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}, children::Vector{<:AbstractRuleNode})
     domain = falses(length(grammar.rules))
-    for r ∈ rules
-        domain[r] = true
+    domain[rules] .= true
+    # n children per rule in the domain
+    n_children = length.(grammar.childtypes[domain])
+
+    if !(allequal(n_children) && n_children[1] == length(children)) 
+        error("""Could not create DomainRuleNode. The number of children for \
+              each rule in the domain must be equal (rules $rules have \
+              $n_children children respectively). The length of the \
+              `children` vector ($(length(children))) must also match.""")
     end
+
     return DomainRuleNode(domain, children)
 end
 
