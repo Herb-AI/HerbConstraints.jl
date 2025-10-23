@@ -107,37 +107,37 @@ end
 end
 
 @testitem "check annotations are correctly added" setup=[HerbGrammar, GrammarExpr] begin
-    annotated = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
+    annotated_new = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
 
+    println("\n\n\nAnnotated grammar annotations:\n $(annotated_new)")
+    variables_rules = findall(==(true), annotated_new.label_domains["variables"])
+    @test(annotated_new.rule_annotations[variables_rules[1]] == [])
+    @test(annotated_new.rule_annotations[variables_rules[2]] == [])
 
-    variables_rules = findall(==(true), annotated.label_domains["variables"])
-    @test(annotated.rule_annotations[variables_rules[1]] == [])
-    @test(annotated.rule_annotations[variables_rules[2]] == [])
+    zero_rule = only(findall(==(true), annotated_new.label_domains["zero"]))
+    @test(annotated_new.rule_annotations[zero_rule] == [])
 
-    zero_rule = only(findall(==(true), annotated.label_domains["zero"]))
-    @test(annotated.rule_annotations[zero_rule] == [])
+    one_rule = only(findall(==(true), annotated_new.label_domains["one"]))
+    @test(annotated_new.rule_annotations[one_rule] == [])
 
-    one_rule = only(findall(==(true), annotated.label_domains["one"]))
-    @test(annotated.rule_annotations[one_rule] == [])
-
-    constants_rules = findall(==(true), annotated.label_domains["constants"])
+    constants_rules = findall(==(true), annotated_new.label_domains["constants"])
     for r in constants_rules
-        @test(annotated.rule_annotations[r] == [])
+        @test(annotated_new.rule_annotations[r] == [])
     end
-    
-    minus_rule = only(findall(==(true), annotated.label_domains["minus"]))
-    annotations = annotated.rule_annotations[minus_rule]
+
+    minus_rule = only(findall(==(true), annotated_new.label_domains["minus"]))
+    annotations = annotated_new.rule_annotations[minus_rule]
     @test :(identity("zero")) in annotations
 
-    plus_rule = only(findall(==(true), annotated.label_domains["plus"]))
-    annotations = annotated.rule_annotations[plus_rule]
+    plus_rule = only(findall(==(true), annotated_new.label_domains["plus"]))
+    annotations = annotated_new.rule_annotations[plus_rule]
     @test :associative in annotations
     @test :commutative in annotations
     @test :(identity("zero")) in annotations
     @test :(inverse("minus")) in annotations
 
-    times_rule = only(findall(==(true), annotated.label_domains["times"]))
-    annotations = annotated.rule_annotations[times_rule]
+    times_rule = only(findall(==(true), annotated_new.label_domains["times"]))
+    annotations = annotated_new.rule_annotations[times_rule]
     @test :associative in annotations
     @test :commutative in annotations
     @test :(identity("one")) in annotations
