@@ -4,214 +4,252 @@
 Define an annotated grammar and return it as a ContextSensitiveGrammar.
 Allows for adding optional annotations per rule.
 As well as that, allows for adding optional labels per rule, which can be referenced in annotations. 
-Syntax is backwards-compatible with @csgrammar.
+Syntax is backwards-compatible with @csgrammar.Converts an annotation to constraints.
+
+Supported annotations:
+- commutative: creates an Ordered constraint on the (two) children of the rule
+- associativity: creates Forbidden constraints, such that rule can only be applied in a path formation (no sub trees of the rule r{r,r} allowed)
+- identity(label1, label2, ...): creates Forbidden constraints for applying the rule on an identity element from the specified domain
+- inverse(label1, label2, ...): creates Forbidden constraints for applying the rule on an an element and its inverse from the specified domain (assumes inverses a single child)
+- distributive_over(label1, label2, ...): creates Forbidden constraints for applying the specified domain on (two) children of the rule with a common child (in same position, unless commutative)
+
 Examples:
+
 ```julia-repl
 g₁ = @csgrammar_annotated begin
     Element = 1
     Element = x
     Element = Element + Element := commutative
-    Element = Element * Element := (commutative, transitive)
+    Element = Element * Element := (commutative, associativity)
 end
 ```
 
 ```julia-repl
 g₁ = @csgrammar_annotated begin
-    Element = 1
-    Element = x
-    Element = Element + Element := forbidden_path([3, 1])
-    Element = Element * Element := (commutative, transitive)
-end
-```
-
-```julia-repl
-g₁ = @csgrammar_annotated begin
+    zero::           Element = 0
     one::            Element = 1
     variable::       Element = x
     addition::       Element = Element + Element := (
                                                        commutative,
-                                                       transitive,
-                                                       forbidden_path([:addition, :one]) || forbidden_path([:one, :variable])
+                                                       associativity,
+                                                       identity("zero"),
                                                     )
-    multiplication:: Element = Element * Element := (commutative, transitive)
+    multiplication:: Element = Element * Element := (commutative, associativity, identity("one"), distributive_over("addition"))
 end
 ```
 """
-macro csgrammar_annotated(expression)
-    # collect and remove labels
-    labels = _get_labels!(expression)
+function csgrammar_annotated(expression::Expr)::AnnotatedGrammar
+    grammar, bylabel, rule_annotations = _process_expression(expression)
 
-    # parse rules, get constraints from annotations
-    rules = Any[]
-    types = Symbol[]
-    bytype = Dict{Symbol,Vector{Int}}()
-    constraints = Vector{AbstractConstraint}()
+    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != "")
 
-    rule_index = 1
-
-    for (e, label) in zip(expression.args, labels)
-        # only consider if e is of type ... = ...
-        if !(e isa Expr && e.head == :(=))
-            continue
-        end
-
-        # get the left and right hand side of a rule
-        lhs = e.args[1]
-        rhs = e.args[2]
-
-        # parse annotations if present
-        if rhs isa Expr && rhs.head == :(:=)
-            # get new annotations as a list
-            annotations = rhs.args[2]
-            if annotations isa Expr && annotations.head == :tuple
-                annotations = annotations.args
-            else
-                annotations = [annotations]
-            end
-
-            # convert annotations, append to constraints
-            append!(constraints, annotation2constraint(a, rule_index, labels) for a ∈ annotations)
-
-            # discard annotation
-            rhs = rhs.args[1]
-        end
-
-        # parse rules
-        new_rules = Any[]
-        parse_rule!(new_rules, rhs)
-
-        @assert (length(new_rules) == 1 || label == "") "Cannot give rule name $(label) to multiple rules!"
-
-        # add new rules to data
-        for new_rule ∈ new_rules
-            push!(rules, new_rule)
-            push!(types, lhs)
-            bytype[lhs] = push!(get(bytype, lhs, Int[]), rule_index)
-
-            rule_index += 1
-        end
+    annotated_grammar = AnnotatedGrammar(grammar, labels, rule_annotations)
+    for (rule_index, annotation) in rule_annotations
+        _annotation2constraints!(annotated_grammar, rule_index, annotation)
     end
 
-    # determine parameters
-    alltypes = collect(keys(bytype))
-    is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
-    is_eval = [iseval(rule) for rule ∈ rules]
-    childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
-    bychildtypes = [
-        BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for
-        i1 ∈ 1:length(rules)
-    ]
-    domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
-
-    return ContextSensitiveGrammar(
-        rules,
-        types,
-        is_terminal,
-        is_eval,
-        bytype,
-        domains,
-        childtypes,
-        bychildtypes,
-        nothing,
-        constraints,
-    )
+    return annotated_grammar
 end
 
+macro csgrammar_annotated(ex::Expr)
+    return :(csgrammar_annotated($(QuoteNode(ex))))::AnnotatedGrammar
+end
 
-# gets the labels from an expression
-function _get_labels!(expression::Expr)::Vector{String}
-    labels = Vector{String}()
+struct AnnotatedGrammar
+   grammar::ContextSensitiveGrammar
+   label_domains::Dict{String, BitArray}
+   rule_annotations::Set{Tuple{Int, Any}}
+end
 
+function _process_expression(expression::Expr)::Tuple{
+        ContextSensitiveGrammar, 
+        Dict{String, BitVector},
+        Set{Tuple{Int, Any}}
+        }
+    grammar = ContextSensitiveGrammar()
+    bylabel = Dict{String,Vector{Int}}()
+    rule_annotations = Set{Tuple{Int, Any}}()
     for e in expression.args
-        # only consider if e is of type ... = ...
         if !(e isa Expr && e.head == :(=))
             continue
         end
 
-        lhs = e.args[1]
+        label = _get_label!(e)
+        annotations = _get_annotations!(e)
 
-        label = ""
-        if lhs isa Expr && lhs.head == :(::)
-            label = string(lhs.args[1])
+        numrules_before = length(grammar.rules)
+        add_rule!(grammar, e)
+        numrules_after = length(grammar.rules)
 
-            # discard rule name
-            e.args[1] = lhs.args[2]
-        end
+        bylabel[label] = numrules_before+1:numrules_after
 
-        push!(labels, label)
-    end
-
-    # flatten linenums into expression
-    Base.remove_linenums!(expression)
-
-    return labels
-end
-
-
-"""
-Converts an annotation to a constraint.
-commutative: creates an Ordered constraint
-transitive: creates an (incorrect) Forbidden constraint
-forbidden_path(path::Vector{Union{Symbol, Int}}): creates a `ForbiddenSequence`` constraint with the original rule included
-... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
-
-!!! warning
-    This function is untested and probably broken. Tests are a really good idea. 
-"""
-function annotation2constraint(
-    annotation::Any,
-    rule_index::Int,
-    labels::Vector{String},
-)::AbstractConstraint
-    # TODO: tracking issue https://github.com/Herb-AI/HerbConstraints.jl/issues/74
-    if annotation isa Expr
-        # function-like annotations
-        if annotation.head == :call
-            func_name = annotation.args[1]
-            func_args = annotation.args[2:end]
-
-            if func_name == :forbidden_path
-                string_args = eval(func_args[1])
-                index_args = [
-                    arg isa Symbol ? _get_rule_index(labels, string(arg)) : arg for
-                    arg in string_args
-                ]
-
-                return ForbiddenSequence(
-                    [rule_index; index_args],
-                )
+        for a in annotations
+            for rule in bylabel[label]
+                push!(rule_annotations, (rule, a))
             end
         end
+    end
+    return grammar, bylabel, rule_annotations
+end
 
-        # disjunctive annotations
-        if annotation.head == :||
-            return OneOf(
-                @show [annotation2constraint(a, rule_index, labels) for a in annotation.args]
-            )
+# gets the label from an expression
+function _get_label!(e::Expr)::String
+    # get the left hand side of a rule
+    lhs = e.args[1]
+    label = ""
+    # parse label if present, i.e., of the form label::rule_lhs
+    if lhs isa Expr && lhs.head == :(::)
+        label = string(lhs.args[1])
+
+        # discard rule name
+        e.args[1] = lhs.args[2]
+    end
+    return label
+end
+
+# gets the annotation from an expression
+function _get_annotations!(e::Expr)::Vector{Any}
+    # get the right hand side of a rule
+    rhs = e.args[2]
+    annotations = Any[]
+    # parse annotations if present, i.e., of the form rule_rhs := annotations
+    if rhs isa Expr && rhs.head == :(:=)
+        annotations = rhs.args[2]
+        if annotations isa Expr && annotations.head == :tuple
+            annotations = annotations.args
+        else
+            annotations = [annotations]
+        end
+
+        # discard rule name
+        e.args[2] = rhs.args[2]
+    end
+    return annotations
+end
+
+function _annotation2constraints!(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+    annotation::Any,
+)::Vector{AbstractConstraint}
+    if annotation isa Expr
+        if annotation.head == :call
+            annotation = annotation.args[1]
+            labels = [String(arg) for arg in annotation.args[2:end]]
+            labels_domain = _get_domain_from_labels(annotated_grammar.label_domains, labels, rule_index)
+
+            if func_name == :identity
+                _identity_constraints!(annotated_grammar, rule_index, labels_domain)
+            elseif func_name == :inverse
+                _inverse_constraints!(annotated_grammar, rule_index, labels_domain)
+            elseif func_name == :distributive_over
+                _distributive_over_constraints!(annotated_grammar, rule_index, labels_domain)
+            else
+                throw(ArgumentError("Annotation call $(annotation) at rule $(rule_index) not found!")) 
+            end
+        elseif annotation == :commutative
+            _commutative_constraints!(annotated_grammar, rule_index)
+        elseif annotation == :associativity
+            _associativity_constraints!(annotated_grammar, rule_index)
+        else
+            throw(ArgumentError("Annotation $(annotation) at rule $(rule_index) not found!"))
         end
     end
 
-    # commutative annotations
-    if annotation == :commutative
-        return Ordered(
-            MatchNode(rule_index, [MatchVar(:x), MatchVar(:y)]),
-            [:x, :y],
-        )
-    end
-
-    if annotation == :transitive
-        return Forbidden(
-            MatchNode(
-                rule_index,
-                [MatchVar(:x), MatchNode(rule_index, [MatchVar(:y), MatchVar(:z)])],
-            ),
-        )
-    end
-
-    # unknown constraint
     throw(ArgumentError("Annotation $(annotation) at rule $(rule_index) not found!"))
 end
 
+function _identity_constraints(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+    labels_domain::BitVector,
+)
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(RuleNode(rule_index, [VarNode(:a), DomainRuleNode(labels_domain)]))
+    )
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(RuleNode(rule_index, [DomainRuleNode(labels_domain), VarNode(:a)]))
+    )
+end
 
-# helper function for label lookup
-_get_rule_index(labels::Vector{String}, label::String)::Int = findfirst(isequal(label), labels)
+function _inverse_constraints!(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+    labels_domain::BitVector,
+)::Vector{AbstractConstraint}
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(RuleNode(rule_index, [DomainRuleNode(labels_domain, [VarNode(:x)]), VarNode(:a)]))
+    )
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(RuleNode(rule_index, [VarNode(:a), DomainRuleNode(labels_domain, [VarNode(:x)])]))
+    )
+end
+
+function _distributive_over_constraints!(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+    labels_domain::BitVector,
+)::Vector{AbstractConstraint}
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(DomainRuleNode(labels_domain, [@rulenode rule_index{:x,:a}, @rulenode rule_index{:x,:b}]))
+    )
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(DomainRuleNode(labels_domain, [@rulenode rule_index{:a,:x}, @rulenode rule_index{:b,:x}]))
+    )
+    if (rule_index, :commutative) ∈ annotated_grammar.rule_annotations
+        addconstraint!(annotated_grammar.grammar,
+            Forbidden(DomainRuleNode(labels_domain, [@rulenode rule_index{:x,:a}, @rulenode rule_index{:b,:x}]))
+        )
+        addconstraint!(annotated_grammar.grammar,
+            Forbidden(DomainRuleNode(labels_domain, [@rulenode rule_index{:a,:x}, @rulenode rule_index{:x,:b}]))
+        )
+    end
+end
+
+function _commutative_constraints!(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+)::Vector{AbstractConstraint}
+     addconstraint!(annotated_grammar.grammar,
+                Ordered(
+                RuleNode(rule_index, [VarNode(:x), VarNode(:y)]),
+                [:x, :y],
+                )
+            ) 
+end
+
+function _associativity_constraints!(
+    annotated_grammar::AnnotatedGrammar,
+    rule_index::Int,
+)::Vector{AbstractConstraint}
+    addconstraint!(annotated_grammar.grammar, Forbidden(RuleNode(rule_index, [
+                                RuleNode(rule_index, [VarNode(:a), VarNode(:b)]),
+                                RuleNode(rule_index, [VarNode(:c), VarNode(:d)])
+                            ])))
+    if (rule_index, :commutative) ∈ annotated_grammar.rule_annotations
+        child = RuleNode(rule_index, [VarNode(:y), VarNode(:a)])
+        addconstraint!(annotated_grammar.grammar, Ordered(
+                    RuleNode(rule_index, [VarNode(:x), child]),
+                    [:x, :y],
+                ))
+        addconstraint!(annotated_grammar.grammar, Ordered(
+                    RuleNode(rule_index, [child, VarNode(:x)]),
+                    [:x, :y],
+                ))
+    end
+end
+
+function _get_domain_from_labels(
+    labels_to_domains::Dict{String, BitVector},
+    labels::Vector{String},
+    rule_index::Int
+)::BitVector
+    try
+        return reduce(|, (labels_to_domains[l] for l in labels))
+    catch e
+        if e isa KeyError
+            println("KeyError occurred while evaluating csgrammar_annotated for labels $(labels) at rule index $rule_index: ", e)
+        end
+        rethrow(e)
+    end
+end
