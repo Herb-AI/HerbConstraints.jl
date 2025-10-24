@@ -39,7 +39,8 @@ end
 ```
 """
 function csgrammar_annotated(expression)
-    grammar, bylabel, rule_annotations = _process_expression(expression)
+    expr = deepcopy(expression)
+    grammar, bylabel, rule_annotations = _process_expression(expr)
 
     labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != "")
 
@@ -160,12 +161,13 @@ function _annotation2constraints!(
     if annotation isa Expr && annotation.head == :call
         annotation_name = annotation.args[1]
         labels_domain = annotated_grammar.label_domains[String(annotation.args[2])]
+        label_index = only(findall(==(true), labels_domain))
         if annotation_name == :identity
-            _identity_constraints!(annotated_grammar, rule_index, labels_domain)
+            _identity_constraints!(annotated_grammar, rule_index, label_index)
         elseif annotation_name == :inverse
-            _inverse_constraints!(annotated_grammar, rule_index, labels_domain)
+            _inverse_constraints!(annotated_grammar, rule_index, label_index)
         elseif annotation_name == :distributive_over
-            _distributive_over_constraints!(annotated_grammar, rule_index, labels_domain)
+            _distributive_over_constraints!(annotated_grammar, rule_index, label_index)
         else
             throw(ArgumentError("Annotation call $(annotation) not found! (rule $(rule_index))")) 
         end
@@ -182,21 +184,19 @@ end
 function _identity_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
-    labels_domain::BitVector,
+    label_index::Int,
 )
-    #check number of children of the rule
-    children = length(annotated_grammar.grammar.childtypes[rule_index])
-    #create a list with 'children' number of VarNodes (automated for any number of children)
+    num_label_children = length(annotated_grammar.grammar.childtypes[label_index])
+    label_children = [VarNode(Symbol("y_$(i)")) for i in 1:num_label_children]
+    label_node = RuleNode(label_index, label_children)
 
-    var_nodes = [VarNode(Symbol("child_$(i)")) for i in 1:children-1]
-    for i in 1:children
-        #create a copy of the var_nodes list
-        nodes = Vector{Any}(copy(var_nodes))
-        #insert the DomainRuleNode at position i
-        insert!(nodes, i, DomainRuleNode(labels_domain))
-        #add the Forbidden constraint
+    num_rule_children = length(annotated_grammar.grammar.childtypes[rule_index])
+    rule_non_label_children = [VarNode(Symbol("x_$(i)")) for i in 1:num_rule_children-1]
+    for i in 1:num_rule_children
+        rule_children = Vector{AbstractRuleNode}(copy(rule_non_label_children))
+        insert!(rule_children, i,label_node)
         addconstraint!(annotated_grammar.grammar,
-            Forbidden(RuleNode(rule_index, nodes))
+            Forbidden(RuleNode(rule_index, rule_children))
         )
     end
 end
@@ -204,20 +204,25 @@ end
 function _inverse_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
-    labels_domain::BitVector,
+    label_index::Int,
 )
     addconstraint!(annotated_grammar.grammar,
-        Forbidden(RuleNode(rule_index, [DomainRuleNode(labels_domain, [VarNode(:x)]), VarNode(:a)]))
+        Forbidden(RuleNode(rule_index, [RuleNode(label_index, [VarNode(:x)]), VarNode(:x)]))
     )
     addconstraint!(annotated_grammar.grammar,
-        Forbidden(RuleNode(rule_index, [VarNode(:a), DomainRuleNode(labels_domain, [VarNode(:x)])]))
+        Forbidden(RuleNode(rule_index, [VarNode(:x), RuleNode(label_index, [VarNode(:x)])]))
     )
+    addconstraint!(annotated_grammar.grammar,
+        Forbidden(RuleNode(label_index, [RuleNode(label_index, [VarNode(:a)])]))
+    )
+    # TODO: if has identity, add constraint for inverse of identity
+    # TODO: if associative, any hierarchy of rule of :x and inverse(:x) is forbidden
 end
 
 function _distributive_over_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
-    labels_domain::BitVector,
+    label_index::Int,
 )
     rulenode_ax = RuleNode(rule_index, [VarNode(:a), VarNode(:x)])
     rulenode_bx = RuleNode(rule_index, [VarNode(:b), VarNode(:x)])
@@ -225,17 +230,22 @@ function _distributive_over_constraints!(
     rulenode_xb = RuleNode(rule_index, [VarNode(:x), VarNode(:b)])
 
     addconstraint!(annotated_grammar.grammar,
-        Forbidden(DomainRuleNode(labels_domain, [rulenode_ax, rulenode_bx]))
+        Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_bx]))
     )
     addconstraint!(annotated_grammar.grammar,
-        Forbidden(DomainRuleNode(labels_domain, [rulenode_xa, rulenode_xb]))
+        Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_xb]))
     )
     if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
         addconstraint!(annotated_grammar.grammar,
-            Forbidden(DomainRuleNode(labels_domain, [rulenode_xa, rulenode_xb]))
+            Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_xb]))
         )
         addconstraint!(annotated_grammar.grammar,
-            Forbidden(DomainRuleNode(labels_domain, [rulenode_ax, rulenode_bx]))
+            Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_bx]))
+        )
+    end
+    if :identity ∈ annotated_grammar.rule_annotations[rule_index]
+        addconstraint!(annotated_grammar.grammar,
+            Forbidden(RuleNode(label_index, [VarNode(:x), VarNode(:x)]))
         )
     end
 end

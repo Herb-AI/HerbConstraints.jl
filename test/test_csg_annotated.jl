@@ -10,7 +10,7 @@ end
         variables:: Number = x | y         
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:10)              
+        constants:: Number = |(2:4)              
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
@@ -20,7 +20,7 @@ end
         variables:: Number = x | y         
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:10)              
+        constants:: Number = |(2:4)              
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
@@ -33,20 +33,20 @@ end
 
 @testmodule GrammarExpr begin
     num =  quote
-        Number = x | y
         Number = 0
         Number = 1
-        Number = |(2:10)
+        Number = |(2:4)
+        Number = x | y
         Number = -Number 
         Number = Number + Number
         Number = Number * Number
     end
 
-    num_annotated = quote
-        variables:: Number = x | y         
+    num_annotated = quote        
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:10)              
+        constants:: Number = |(2:4) 
+        variables:: Number = x | y              
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
@@ -63,6 +63,7 @@ end
     for (r1, r2) in zip(annotated.grammar.rules, grammar.rules)
         @test r1 == r2
     end
+    @test "$(annotated.grammar)" == "$(grammar)"
 end
 
 @testitem "backwards compatible to @csgrammar with annotated and labeled" setup=[HerbGrammar, GrammarExpr] begin
@@ -92,7 +93,7 @@ end
     @test(annotated.grammar.rules[one_rule] == :(1))
 
     constants_rules = findall(==(true), annotated.label_domains["constants"])
-    for c in 2:10
+    for c in 2:4
         @test(annotated.grammar.rules[constants_rules[c-1]] == :($c))
     end
 
@@ -142,4 +143,73 @@ end
     @test :commutative in annotations
     @test :(identity("one")) in annotations
     @test :(distributive_over("plus")) in annotations
+end
+
+@testsnippet Candidates begin
+    using HerbSearch
+    grammar = HerbGrammar.expr2csgrammar(GrammarExpr.num)
+    grammar_candidates = ["$(HerbGrammar.rulenode2expr(c, grammar))" 
+        for c ∈ HerbSearch.BFSIterator(grammar, :Number, max_depth=3)]
+
+    annotated = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
+    annotated_candidates = ["$(HerbGrammar.rulenode2expr(c, annotated.grammar))" 
+        for c ∈ HerbSearch.BFSIterator(annotated.grammar, :Number, max_depth=3)]
+
+    macro in_both(candidate) 
+        :( @test ($candidate ∈ grammar_candidates) )
+        :( @test ($candidate ∈ annotated_candidates) )
+    end
+    macro filtered(candidate) 
+        :( @test ($candidate ∈ grammar_candidates) )
+        :( @test ($candidate ∉ annotated_candidates) )
+    end
+end
+
+@testitem "check constraints" setup=[HerbGrammar, GrammarExpr, Candidates] begin
+    @test length(grammar.constraints)==0
+    @test length(annotated.grammar.constraints) == 18
+
+    @test length(annotated_candidates) == 1192
+    @test length(grammar_candidates) == 25207
+
+    # minus identity("zero")
+
+    # plus associative 
+    @in_both("2 + (3 + x)")
+    @filtered("(2 + 3) + x")
+
+    # plus associative + commutative
+    @filtered("3 + (2 + x)")
+    @filtered("x + (2 + 3)")
+
+    # plus commutative
+    @in_both("2 + x")
+    @filtered("x + 2")
+
+    # plus identity("zero")
+    # plus inverse("minus")
+    # times associative
+    @in_both("2 * (x * y)")
+    @filtered("(2 * x) * y")
+
+    # times associative + commutative
+    @filtered("x * (2 * y)")
+    @filtered("y * (2 * x)")
+    
+    # times commutative
+    @in_both("4y")
+    @filtered("y * 4")
+
+    # times identity("one")
+    @in_both("x")
+    @filtered("1 * x")
+    
+    # times distributive_over("plus")
+
+
+
+
+
+
+
 end
