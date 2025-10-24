@@ -173,6 +173,8 @@ end
     @test length(grammar_candidates) == 25207
 
     # minus identity("zero")
+    @in_both("0")
+    @filtered("-0")
 
     # plus associative 
     @in_both("2 + (3 + x)")
@@ -187,7 +189,12 @@ end
     @filtered("x + 2")
 
     # plus identity("zero")
+    @in_both("x")
+    @filtered("0 + x")
+
     # plus inverse("minus")
+    @filtered("y + -y")
+
     # times associative
     @in_both("2 * (x * y)")
     @filtered("(2 * x) * y")
@@ -205,11 +212,11 @@ end
     @filtered("1 * x")
     
     # times distributive_over("plus")
+    @in_both("2 * (x + y)")
+    @filtered("2x + 2y")
+    @filtered("2x + 3x")
 
-
-
-
-
-
-
+    # times distributive_over("plus") + plus commutative
+    @filtered("(x * 2) + 2y")
+    @filtered("2x + (y * 2)")
 end
