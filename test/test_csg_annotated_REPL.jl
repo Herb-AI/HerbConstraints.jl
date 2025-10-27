@@ -18,18 +18,18 @@ begin
     @assert length(grammar.constraints)==0
 
     grammar_candidates = Vector{String}()
-    for (i, candidate_program) ∈ enumerate(HerbSearch.BFSIterator(grammar, :Number, max_depth=3))
+    for candidate_program ∈ HerbSearch.BFSIterator(grammar, :Number, max_depth=3)
         push!(grammar_candidates, "$(HerbGrammar.rulenode2expr(candidate_program, grammar))")
     end
 end
 
 # annotated grammar
 begin
-    num_annotated = quote   
-        variables:: Number = x | y      
+    num_annotated = quote       
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:4)              
+        constants:: Number = |(2:4) 
+        variables:: Number = x | y               
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
@@ -46,35 +46,44 @@ end
 println(length(annotated_candidates))
 println(length(grammar_candidates))
 
-# get bad programs
-begin
-    bad_programs = Vector{Any}()
-    for candidate_program ∈ HerbSearch.BFSIterator(grammar, :Number, max_depth=2)
-        if candidate_program ∉ iterator
-            println("$(HerbGrammar.rulenode2expr(candidate_program, grammar))")
-        end
+for candidate in annotated_candidates
+    if occursin("3x", "$candidate")
+        println("Found candidate: $candidate")
     end
+end
 
-    # check spesific program
-    begin
-        rulenode = HerbCore.@rulenode 8{3}
-        println("Candidate program: $(HerbGrammar.rulenode2expr(rulenode, annotated.grammar))")
-        constraints = annotated.grammar.constraints
-        for c in constraints
-            try
-                if check_tree(c, rulenode)
-                    println("\tpass: $c")
-                else
-                    println("Fail: $c")
-                end
-            catch e
-                println("Error checking constraint $c:\n $e")
+# get bad programs
+filtered_by_constraints = Dict{String, Vector{String}}()
+for c in annotated.grammar.constraints
+    filtered_by_constraints["$c"] = String[]
+end
+begin
+    for candidate_program ∈ HerbSearch.BFSIterator(grammar, :Number, max_depth=3)
+        for c in annotated.grammar.constraints
+            if !check_tree(c, candidate_program)
+                push!(filtered_by_constraints["$c"], "$(HerbGrammar.rulenode2expr(candidate_program, grammar))")
             end
         end
     end
 end
 
+for (constraint, programs) in filtered_by_constraints
+    println("Constraint: $constraint")
+    println("$(programs[round(Int64,length(programs)/4)])")
+    println("$(programs[round(Int64,length(programs)/2)])")
+    println("$(programs[round(Int64,3*length(programs)/4)])")
+    println("$(programs[length(programs)])")
+    println("Total filtered programs: $(length(programs))")
+    println("===================================")
+end
 
+node = @rulenode 9{9{2,3},10{4,6}}
+println("Testing program: $(HerbGrammar.rulenode2expr(node, grammar))")
+for c in annotated.grammar.constraints
+    if !check_tree(c, node)
+        println("Violated constraint: $c")
+    end
+end
 
 
     begin

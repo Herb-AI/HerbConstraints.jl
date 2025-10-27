@@ -7,20 +7,20 @@ end
 @testitem "define grammar from expressions" begin
     
     direct = HerbConstraints.@csgrammar_annotated begin
-        variables:: Number = x | y         
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:4)              
+        constants:: Number = |(2:4)         
+        variables:: Number = x | y              
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
     end
 
-    expr = quote
-        variables:: Number = x | y         
+    expr = quote      
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:4)              
+        constants:: Number = |(2:4)  
+        variables:: Number = x | y               
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
@@ -169,7 +169,7 @@ end
     @test length(grammar.constraints)==0
     @test length(annotated.grammar.constraints) == 18
 
-    @test length(annotated_candidates) == 1192
+    @test length(annotated_candidates) == 1633
     @test length(grammar_candidates) == 25207
 
     # minus identity("zero")
@@ -179,10 +179,15 @@ end
     # plus associative 
     @in_both("2 + (3 + x)")
     @filtered("(2 + 3) + x")
+    @in_both("(1 + 2) * (3 + y)")
+    @filtered("(2 + 1) * (y + 3)")
+    @filtered("(1 + 2) + (3 + 4)")
 
     # plus associative + commutative
     @filtered("3 + (2 + x)")
     @filtered("x + (2 + 3)")
+    @in_both("(1 + 2) + 3x")
+    @filtered("(2 + 1) + 3x")
 
     # plus commutative
     @in_both("2 + x")
@@ -198,6 +203,7 @@ end
     # times associative
     @in_both("2 * (x * y)")
     @filtered("(2 * x) * y")
+    @filtered("(1 * 2) * (3 * 4)")
 
     # times associative + commutative
     @filtered("x * (2 * y)")

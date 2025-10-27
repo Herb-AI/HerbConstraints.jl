@@ -278,7 +278,7 @@ function _associativity_constraints!(
                 ))
         addconstraint!(annotated_grammar.grammar, Ordered(
                     RuleNode(rule_index, [child, VarNode(:x)]),
-                    [:x, :y],
+                    [:y, :x],
                 ))
     end
 end
