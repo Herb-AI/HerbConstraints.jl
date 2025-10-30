@@ -55,17 +55,13 @@ end
 function extract_solutions(solver::ASPSolver, output_lines)
     current_solution = Dict{Int64,Int64}()
     for line in output_lines
-        if startswith(line, "Answer")
-            if !isempty(current_solution)
-                push!(solver.solutions, current_solution)
-            end
-            current_solution = Dict{Int64,Int64}()
-        elseif startswith(line, "node")
+        if startswith(line, "node")
             node_assignments = split(line, " ")
             for node in node_assignments
                 m = match(r"node\((\d+),(\d+)\)", node)
                 current_solution[parse(Int, m.captures[1])] = parse(Int, m.captures[2])
             end
+            push!(solver.solutions, current_solution)
         elseif startswith(line, "SATISFIABLE")
             break
         end

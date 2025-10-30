@@ -60,6 +60,10 @@ include("solver/uniform_solver/uniform_solver.jl")
 include("solver/uniform_solver/uniform_treemanipulations.jl")
 include("solver/domainutils.jl")
 
+include("solver/uniform_solver/asp/asp_tree_transformations.jl")
+include("solver/uniform_solver/asp/asp_constraint_transformations.jl")
+include("solver/uniform_solver/asp/asp_uniform_tree_solver.jl")
+
 include("patternmatch.jl")
 include("lessthanorequal.jl")
 include("makeequal.jl")
@@ -148,5 +152,11 @@ export
     freeze_state,
     update_rule_indices!,
     issame
+
+    #asp uniform solver
+    tree_to_ASP,
+    constraint_tree_to_ASP,
+    to_ASP,
+    ASPSolver
 
 end # module HerbConstraints

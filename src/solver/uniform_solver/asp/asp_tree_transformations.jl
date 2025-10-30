@@ -71,7 +71,7 @@ end
   node_to_ASP(tree::StateHole, grammar::AbstractGrammar, node_index::Int64)
 
 Transform a [StateHole] into an ASP representation in the form
-`1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...}1.`
+`1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...} 1.`
 """
 function node_to_ASP(tree::StateHole, grammar::AbstractGrammar, node_index::Int64)
     options = join(["node($(node_index),$(ind))" for ind in Base.findall(tree.domain)], ";")
@@ -90,7 +90,7 @@ Transforms a template tree to an ASP form suitable for constraints.
 function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
     tree_facts, additional_facts = "", ""
     tmp_facts, tmp_additional = constraint_node_to_ASP(grammar, tree, node_index, constraint_index::Int64)
-    tree_facts *= tmp_facts
+    tree_facts *= "$(tmp_facts)"
     additional_facts *= join(tmp_additional, "")
     parent_index = node_index
     node_index += 1
@@ -128,7 +128,7 @@ Transforms a [UniformHole] or [DomainRuleNode] into an ASP representation in the
 and the allowed domains of this constraint node.
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::Union{UniformHole,DomainRuleNode}, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index), $x).\n", collect(filter(x -> node.domain[x], 1:length(grammar.rules))))
+    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index),$x).\n", collect(filter(x -> node.domain[x], 1:length(grammar.rules))))
 end
 
 """
@@ -139,5 +139,5 @@ Transforms a [StateHole] into an ASP representation in the form
 and the allowed domains of this constraint node.
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::StateHole, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index), $x).\n", Base.findall(node.domain))
+    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index),$x).\n", Base.findall(node.domain))
 end
