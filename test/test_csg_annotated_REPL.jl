@@ -8,11 +8,12 @@ begin
     num =  quote
         Number = 0
         Number = 1
-        Number = |(2:4)
+        Number = |(2:3)
         Number = x | y
         Number = -Number 
         Number = Number + Number
         Number = Number * Number
+        Number = z
     end
     grammar = HerbGrammar.expr2csgrammar(num)
     @assert length(grammar.constraints)==0
@@ -28,14 +29,15 @@ begin
     num_annotated = quote       
         zero::  Number = 0             
         one::  Number = 1     
-        constants:: Number = |(2:4) 
+        constants:: Number = |(2:3) 
         variables:: Number = x | y               
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+        Number = z
     end
     annotated = HerbConstraints.expr2csgrammar_annotated(num_annotated)
-    @assert length(annotated.grammar.constraints) == 18
+    # println.(annotated.grammar.constraints)
 
     annotated_candidates = Vector{String}()
     for candidate_program ∈ HerbSearch.BFSIterator(annotated.grammar, :Number, max_depth=3)
@@ -45,12 +47,6 @@ end
 
 println(length(annotated_candidates))
 println(length(grammar_candidates))
-
-for candidate in annotated_candidates
-    if occursin("3x", "$candidate")
-        println("Found candidate: $candidate")
-    end
-end
 
 # get bad programs
 filtered_by_constraints = Dict{String, Vector{String}}()
@@ -67,17 +63,28 @@ begin
     end
 end
 
-for (constraint, programs) in filtered_by_constraints
-    println("Constraint: $constraint")
-    println("$(programs[round(Int64,length(programs)/4)])")
-    println("$(programs[round(Int64,length(programs)/2)])")
-    println("$(programs[round(Int64,3*length(programs)/4)])")
-    println("$(programs[length(programs)])")
-    println("Total filtered programs: $(length(programs))")
-    println("===================================")
-end
+# for (constraint, programs) in filtered_by_constraints
+#     println("Constraint: $constraint")
+#     samples = 0
+#     for i in 1:samples
+#         println("$(programs[round(Int64,length(programs)*i/samples)])")
+#     end
+#     println("Total filtered programs: $(length(programs))")
+#     println("===================================")
+# end
 
-node = @rulenode 9{9{2,3},10{4,6}}
+
+# for candidate in annotated_candidates
+#     if (occursin("2", "$candidate") && occursin("3", "$candidate") && occursin("z", "$candidate") && !occursin("*", "$candidate")
+#         && !occursin("2z", "$candidate") && !occursin("3z", "$candidate") && !occursin("1z", "$candidate")
+#         && !occursin("-", "$candidate") && !occursin("0", "$candidate") && !occursin("x", "$candidate") && !occursin("y", "$candidate"))
+#         println("Found candidate: \"$candidate\"")
+#     end
+# end
+
+
+# node = @rulenode 9{10{2,4},10{5, 2}}
+node = @rulenode 8{9{4, 5}, 9{5,6}}
 println("Testing program: $(HerbGrammar.rulenode2expr(node, grammar))")
 for c in annotated.grammar.constraints
     if !check_tree(c, node)

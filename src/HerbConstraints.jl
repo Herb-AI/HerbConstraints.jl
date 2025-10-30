@@ -85,6 +85,9 @@ export
     pattern_match,
     check_tree,
 
+    #anotated csg grammar
+    AnnotatedGrammar,
+
     #grammar constraints
     Forbidden,
     Ordered,

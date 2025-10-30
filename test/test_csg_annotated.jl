@@ -40,6 +40,7 @@ end
         Number = -Number 
         Number = Number + Number
         Number = Number * Number
+        Number = a | b | c
     end
 
     num_annotated = quote        
@@ -50,6 +51,7 @@ end
         minus::      Number = -Number           := (identity("zero"))
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+        Number = a | b | c
     end
 
 end
@@ -80,7 +82,6 @@ end
 
 @testitem "check that labels are correctly added" setup=[HerbGrammar, GrammarExpr] begin
     annotated = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
-    println("\n\n\nAnnotated grammar labels:\n $(annotated)")
 
     variables_rules = findall(==(true), annotated.label_domains["variables"])
     @test(annotated.grammar.rules[variables_rules[1]] == :(x))
@@ -110,7 +111,6 @@ end
 @testitem "check annotations are correctly added" setup=[HerbGrammar, GrammarExpr] begin
     annotated = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
 
-    println("\n\n\nAnnotated grammar annotations:\n $(annotated)")
     variables_rules = findall(==(true), annotated.label_domains["variables"])
     @test(annotated.rule_annotations[variables_rules[1]] == [])
     @test(annotated.rule_annotations[variables_rules[2]] == [])
@@ -145,6 +145,15 @@ end
     @test :(distributive_over("plus")) in annotations
 end
 
+#=
+TODO: change constraint testing format.
+Each constraint in the grammar should have:
+  * a filtered case, that is filtered by that constraint only
+  * an equivalent unfiltered case, that is allowed by all constraints
+Also, make sure all constraints that can be in a grammar are tested.
+    For example all combinations of associative, commutative, distributive_over
+=#
+
 @testsnippet Candidates begin
     using HerbSearch
     grammar = HerbGrammar.expr2csgrammar(GrammarExpr.num)
@@ -154,75 +163,85 @@ end
     annotated = HerbConstraints.expr2csgrammar_annotated(GrammarExpr.num_annotated)
     annotated_candidates = ["$(HerbGrammar.rulenode2expr(c, annotated.grammar))" 
         for c ∈ HerbSearch.BFSIterator(annotated.grammar, :Number, max_depth=3)]
-
-    macro in_both(candidate) 
-        :( @test ($candidate ∈ grammar_candidates) )
-        :( @test ($candidate ∈ annotated_candidates) )
+  
+    function in_both(candidate)
+        @test (candidate ∈ grammar_candidates)
+        @test (candidate ∈ annotated_candidates)
     end
-    macro filtered(candidate) 
-        :( @test ($candidate ∈ grammar_candidates) )
-        :( @test ($candidate ∉ annotated_candidates) )
+    function filtered(candidate) 
+        @test (candidate ∈ grammar_candidates)
+        @test (candidate ∉ annotated_candidates) 
     end
 end
 
 @testitem "check constraints" setup=[HerbGrammar, GrammarExpr, Candidates] begin
     @test length(grammar.constraints)==0
-    @test length(annotated.grammar.constraints) == 18
+    @test length(annotated.grammar.constraints) == 19
 
-    @test length(annotated_candidates) == 1633
-    @test length(grammar_candidates) == 25207
+    @test length(annotated_candidates) == 4741
+    @test length(grammar_candidates) == 97030
 
     # minus identity("zero")
-    @in_both("0")
-    @filtered("-0")
+    in_both("0")
+    filtered("-0")
 
     # plus associative 
-    @in_both("2 + (3 + x)")
-    @filtered("(2 + 3) + x")
-    @in_both("(1 + 2) * (3 + y)")
-    @filtered("(2 + 1) * (y + 3)")
-    @filtered("(1 + 2) + (3 + 4)")
+    in_both("2 + (3 + x)")
+    filtered("(2 + 3) + x")
+    filtered("(1 + 1) + (1 + 1)")
 
     # plus associative + commutative
-    @filtered("3 + (2 + x)")
-    @filtered("x + (2 + 3)")
-    @in_both("(1 + 2) + 3x")
-    @filtered("(2 + 1) + 3x")
+    in_both("2 + (3 + 4)")
+    filtered("(3 + 4) + 2")
+    filtered("3 + (2 + 4)")
+    filtered("(2 + 4) + 3")
+    filtered("4 + (2 + 3)")
+    filtered("(2 + 3) + 4")
+    in_both("(b + c) + a")
+    filtered("a + (b + c)")
+    filtered("(a + c) + b")
+    filtered("b + (a + c)")
+    filtered("(a + b) + c")
+    filtered("c + (a + b)")
 
     # plus commutative
-    @in_both("2 + x")
-    @filtered("x + 2")
+    in_both("2 + x")
+    filtered("x + 2")
+    in_both("2 + a")
+    filtered("a + 2")
+    in_both("a + b")
+    filtered("b + a")
 
     # plus identity("zero")
-    @in_both("x")
-    @filtered("0 + x")
+    in_both("x")
+    filtered("0 + x")
 
     # plus inverse("minus")
-    @filtered("y + -y")
+    filtered("y + -y")
 
     # times associative
-    @in_both("2 * (x * y)")
-    @filtered("(2 * x) * y")
-    @filtered("(1 * 2) * (3 * 4)")
+    in_both("2 * (x * y)")
+    filtered("(2x) * y")
+    filtered("(1 * 2) * (3 * 4)")
 
     # times associative + commutative
-    @filtered("x * (2 * y)")
-    @filtered("y * (2 * x)")
+    filtered("x * (2y)")
+    filtered("y * (2x)")
     
     # times commutative
-    @in_both("4y")
-    @filtered("y * 4")
+    in_both("4y")
+    filtered("y * 4")
 
     # times identity("one")
-    @in_both("x")
-    @filtered("1 * x")
+    in_both("x")
+    filtered("1x")
     
     # times distributive_over("plus")
-    @in_both("2 * (x + y)")
-    @filtered("2x + 2y")
-    @filtered("2x + 3x")
+    in_both("2 * (x + y)")
+    filtered("2x + 2y")
+    filtered("2x + 3x")
 
     # times distributive_over("plus") + plus commutative
-    @filtered("(x * 2) + 2y")
-    @filtered("2x + (y * 2)")
+    filtered("2 * 3 + 3x")
+    filtered("3x + x * y")
 end

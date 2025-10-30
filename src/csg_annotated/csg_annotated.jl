@@ -1,6 +1,44 @@
 
+
 """
-@csgrammar_annotated
+    expr2csgrammar(expression::Expr)::AnnotatedGrammar  
+
+A function for converting an `Expr` to a [`AnnotatedGrammar`](@ref).
+If the expression is hardcoded, you should use the [`@csgrammar_annotated`](@ref) macro.
+Only expressions in the correct format (see [`csgrammar_annotated`](@ref)) can be converted.
+
+# Examples
+```julia-repl
+    num_annotated = quote        
+        zero::  Number = 0             
+        one::  Number = 1     
+        constants:: Number = |(2:4) 
+        variables:: Number = x | y              
+        minus::      Number = -Number           := (identity("zero"))
+        plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
+        times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+    end
+    annotated_grammar = HerbConstraints.expr2csgrammar_annotated(num_annotated)
+"""
+function expr2csgrammar_annotated(expression::Expr)::AnnotatedGrammar  
+    grammar, bylabel, rule_annotations = _process_expression(expression)
+
+    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != "")
+
+    annotated_grammar = AnnotatedGrammar(grammar, labels, rule_annotations)
+    for rule_index in keys(rule_annotations)
+        for annotation in rule_annotations[rule_index]
+            _annotation2constraints!(annotated_grammar, rule_index, annotation)
+        end
+    end
+
+    return annotated_grammar
+end
+
+"""    
+    @csgrammar_annotated ex
+
+A macro wrapper for the [`expr2csgrammar`](@ref) function.
 Define an annotated grammar and return it as a ContextSensitiveGrammar.
 Allows for adding optional annotations per rule.
 As well as that, allows for adding optional labels per rule, which can be referenced in annotations. 
@@ -13,7 +51,7 @@ Supported annotations:
 - inverse(label1): creates Forbidden constraints for applying the rule on an an element and its inverse from the specified domain (assumes inverses a single child)
 - distributive_over(label): creates Forbidden constraints for applying the specified domain on (two) children of the rule with a common child (in same position, unless commutative)
 
-Examples:
+# Examples
 
 ```julia-repl
 g₁ = @csgrammar_annotated begin
@@ -38,42 +76,13 @@ g₁ = @csgrammar_annotated begin
 end
 ```
 """
-function csgrammar_annotated(expression)
-    expr = deepcopy(expression)
-    grammar, bylabel, rule_annotations = _process_expression(expr)
-
-    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != "")
-
-    annotated_grammar = AnnotatedGrammar(grammar, labels, rule_annotations)
-    for rule_index in keys(rule_annotations)
-        for annotation in rule_annotations[rule_index]
-            _annotation2constraints!(annotated_grammar, rule_index, annotation)
-        end
-    end
-
-    return annotated_grammar
-end
-
-"""    
-    @csgrammar_annotated ex
-A macro wrapper for the `csgrammar_annotated` function.
-"""
 macro csgrammar_annotated(ex)
-    return :(csgrammar_annotated($(QuoteNode(ex))))
-end
-
-"""
-    expr2csgrammar(ex::Expr)::AnnotatedGrammar  
-A function for converting an `Expr` to a [`AnnotatedGrammar`](@ref).
-If the expression is hardcoded, you should use the [`@csgrammar_annotated`](@ref) macro.
-Only expressions in the correct format (see [`csgrammar_annotated`](@ref)) can be converted.
-"""
-function expr2csgrammar_annotated(ex::Expr)::AnnotatedGrammar
-    return csgrammar_annotated(ex)
+    return :(expr2csgrammar_annotated($(QuoteNode(ex))))
 end
 
 """
    AnnotatedGrammar
+
 A struct for holding an annotated context-sensitive grammar.
 Fields:
 - grammar: The underlying ContextSensitiveGrammar
@@ -86,6 +95,35 @@ struct AnnotatedGrammar
    rule_annotations::Dict{Int,Vector{Any}}
 end
 
+# FIXME: get function for each feild with a docstring
+"""
+    get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
+
+Returns the underlying ContextSensitiveGrammar.
+"""
+function get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
+    return annotated_grammar.grammar
+end
+
+"""
+    get_label_domains(annotated_grammar::AnnotatedGrammar)::Dict{String, BitArray}
+
+Returns the label domains dictionary.
+"""
+function get_label_domains(annotated_grammar::AnnotatedGrammar)::Dict{String, BitArray}
+    return annotated_grammar.label_domains
+end
+
+"""
+    get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vector{Any}}
+
+Returns the rule annotations dictionary.
+"""
+function get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vector{Any}}
+    return annotated_grammar.rule_annotations
+end
+
+# FIXME: use MLStyle and Base.remove_linenums!()
 function _process_expression(expression)::Tuple{
         ContextSensitiveGrammar, 
         Dict{String,Vector{Int}},
@@ -94,10 +132,10 @@ function _process_expression(expression)::Tuple{
     grammar = ContextSensitiveGrammar()
     bylabel = Dict{String,Vector{Int}}()
     rule_annotations = Dict{Int,Vector{Any}}()
-    for e in expression.args
-        if !(e isa Expr && e.head == :(=))
-            continue
-        end
+
+    expr = deepcopy(expression)
+    Base.remove_linenums!(expr)
+    for e in expr.args
         if !(e.head == :(=))
             error("Expected rule definition of the form lhs = rhs, got: $e (rule $(length(grammar.rules)+1))")
         end
@@ -212,6 +250,7 @@ function _inverse_constraints!(
     addconstraint!(annotated_grammar.grammar,
         Forbidden(RuleNode(rule_index, [VarNode(:x), RuleNode(label_index, [VarNode(:x)])]))
     )
+    #TODO: make sure this always holds (mathematically, by definition)
     addconstraint!(annotated_grammar.grammar,
         Forbidden(RuleNode(label_index, [RuleNode(label_index, [VarNode(:a)])]))
     )
@@ -237,11 +276,14 @@ function _distributive_over_constraints!(
     )
     if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
         addconstraint!(annotated_grammar.grammar,
-            Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_xb]))
+            Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_xb]))
         )
-        addconstraint!(annotated_grammar.grammar,
-            Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_bx]))
-        )
+        if :commutative ∉ annotated_grammar.rule_annotations[label_index]
+            # otherwise, in addition to x<= a and b<=x, we also have x<=b implying b==x
+            addconstraint!(annotated_grammar.grammar,
+                Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_bx]))
+            )
+        end
     end
     if :identity ∈ annotated_grammar.rule_annotations[rule_index]
         addconstraint!(annotated_grammar.grammar,
@@ -254,12 +296,13 @@ function _commutative_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
 )
-     addconstraint!(annotated_grammar.grammar,
-                Ordered(
-                RuleNode(rule_index, [VarNode(:x), VarNode(:y)]),
-                [:x, :y],
-                )
-            ) 
+    #TODO: preformance wise, add one domain constraint for all commutative rules
+    addconstraint!(annotated_grammar.grammar,
+        Ordered(
+        RuleNode(rule_index, [VarNode(:x), VarNode(:y)]),
+        [:x, :y],
+        )
+    ) 
 end
 
 function _associativity_constraints!(
@@ -278,7 +321,7 @@ function _associativity_constraints!(
                 ))
         addconstraint!(annotated_grammar.grammar, Ordered(
                     RuleNode(rule_index, [child, VarNode(:x)]),
-                    [:y, :x],
+                    [:x, :y],
                 ))
     end
 end
