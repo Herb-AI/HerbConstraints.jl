@@ -151,7 +151,7 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    issame
+    issame,
 
     #asp uniform solver
     tree_to_ASP,

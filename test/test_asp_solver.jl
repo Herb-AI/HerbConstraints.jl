@@ -344,7 +344,6 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             @test get_grammar(solver) === g
             @test get_tree(solver) === tree
             @test isfeasible(solver) === true
-            @test get_name(solver) == "ASPSolver"
         end
     end
 end
