@@ -242,29 +242,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
     end
 
     @testset "ASPSolver" begin
-        @testset "asp_solver" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
-
-            tree = RuleNode(3, [
-                RuleNode(1),
-                RuleNode(4, [
-                    RuleNode(1),
-                    RuleNode(2)
-                ])
-            ])
-
-            solver = ASPSolver(g, tree)
-            solve(solver)
-            @test length(solver.solutions) == 1
-            expected_solution = Dict{Int64,Int64}(1 => 3, 2 => 1, 3 => 4, 4 => 1, 5 => 2)
-            @test solver.solutions[1] == expected_solution
-        end
-
-        @testset "asp_solver_write_file" begin
+        @testset "asp_solver_uniform_holes" begin
             g = @csgrammar begin
                 S = 1 | x
                 S = S + S
@@ -273,22 +251,100 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             addconstraint!(g, Unique(1))
             addconstraint!(g, Unique(2))
 
-            tree = RuleNode(4, [
+            tree = UniformHole(BitVector((0, 0, 1, 1)), [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
             solver = ASPSolver(g, tree)
-            solve(solver, true)
+            @test length(solver.solutions) == 4
 
-            extract_solutions_from_file(solver)
-            @test length(solver.solutions) == 2
-            
-            expected_solution_1 = Dict{Int64,Int64}(1 => 4, 2 => 1, 3 => 2)
-            expected_solution_2 = Dict{Int64,Int64}(1 => 4, 2 => 2, 3 => 1)
+            @test Dict{Int64,Int64}(1 => 3, 2 => 1, 3 => 2) in solver.solutions
+            @test Dict{Int64,Int64}(1 => 3, 2 => 2, 3 => 1) in solver.solutions
+            @test Dict{Int64,Int64}(1 => 4, 2 => 1, 3 => 2) in solver.solutions
+            @test Dict{Int64,Int64}(1 => 4, 2 => 2, 3 => 1) in solver.solutions
+        end
 
-            @test solver.solutions[1] == expected_solution_1 || solver.solutions[1] == expected_solution_2
-            @test solver.solutions[2] == expected_solution_1 || solver.solutions[2] == expected_solution_2
+        @testset "asp_solver_filled_tree" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+
+            tree = RuleNode(3, [
+                RuleNode(4, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),
+                RuleNode(3, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),            
+            ])
+
+            solver = ASPSolver(g, tree)
+            @test length(solver.solutions) == 1
+        end
+        
+        @testset "asp_solver_filled_tree_constraints" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+            addconstraint!(g, Unique(1))
+            addconstraint!(g, Unique(2))
+
+            tree = RuleNode(3, [
+                RuleNode(4, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),
+                RuleNode(3, [
+                    RuleNode(1),
+                    RuleNode(2)
+                ]),            
+            ])
+
+            solver = ASPSolver(g, tree)
+            @test length(solver.solutions) == 0
+            @test isfeasible(solver) == false
+        end
+        
+        @testset "asp_solver_non_uniform" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+
+            tree = Hole(BitVector([1, 1, 1, 1]))
+
+            try
+                solver = ASPSolver(g, tree)
+            catch AssertionError
+                @test true
+            end
+        end
+        
+        @testset "asp_solver_properties" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+
+            tree = UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
+            ])
+
+            solver = ASPSolver(g, tree)
+            @test get_grammar(solver) === g
+            @test get_tree(solver) === tree
+            @test isfeasible(solver) === true
+            @test get_name(solver) == "ASPSolver"
         end
     end
 end

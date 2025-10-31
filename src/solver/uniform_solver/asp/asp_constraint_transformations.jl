@@ -95,6 +95,7 @@ is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), 
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(Y,Z).
 """
 function to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
+    # TODO use order property of constraint
     output = "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV < YV.\n"
     output *= "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV = YV,S = #sum { Z : child(X,Z,XC),child(Y,Z,YC),is_smaller(XC,YC) }, M = #max { Z : child(X,Z,XC) }, S = M.\n"
 

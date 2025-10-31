@@ -60,10 +60,6 @@ include("solver/uniform_solver/uniform_solver.jl")
 include("solver/uniform_solver/uniform_treemanipulations.jl")
 include("solver/domainutils.jl")
 
-include("solver/uniform_solver/asp/asp_tree_transformations.jl")
-include("solver/uniform_solver/asp/asp_constraint_transformations.jl")
-include("solver/uniform_solver/asp/asp_uniform_tree_solver.jl")
-
 include("patternmatch.jl")
 include("lessthanorequal.jl")
 include("makeequal.jl")
@@ -81,6 +77,10 @@ include("grammarconstraints/contains.jl")
 include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
+
+include("solver/uniform_solver/asp/asp_tree_transformations.jl")
+include("solver/uniform_solver/asp/asp_constraint_transformations.jl")
+include("solver/uniform_solver/asp/asp_uniform_tree_solver.jl")
 
 export
     AbstractGrammarConstraint,
