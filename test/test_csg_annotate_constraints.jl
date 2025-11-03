@@ -472,7 +472,6 @@ end
         RN(c)
     ]))
 
-
     check_constraints_module.check_constraints(
         annotated.grammar,
         good,
