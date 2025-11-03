@@ -7,7 +7,7 @@ To make sure that constraints are tested properly:
     * At least one "good" program that is equivalent should pass all constraints
 Use "Run Tests with Coverage" to ensure that all constraints are covered by the tests.
 Make sure all tests have Total != 0 tests (that you did not forget to call the testing function).
-Recommended to turn on notice_prints when developing tests.
+Recommended to turn on notice_prints by default when developing tests.
 """
 
 #=
@@ -77,7 +77,7 @@ Recommended to turn on notice_prints when developing tests.
             && (length(tested_constraints) != length(annotated_grammar.constraints)))
             println()
             if !forgive_missing_constraints
-                @test !forgive_missing_constraints || notice_prints
+                @test (length(tested_constraints) == length(annotated_grammar.constraints))
                 println("Fail information:") 
             else
                 println("Notice:")
@@ -310,33 +310,33 @@ end
     ]))
     push!(bad, RN(plus, [
         RN(times, [
-            RN(z),
-            RN(x)
+            RN(x),
+            RN(y)
         ]),
         RN(times, [
-            RN(z),
-            RN(y)
+            RN(x),
+            RN(z)
         ])
     ]))
 
     push!(bad, RN(plus, [
         RN(times, [
             RN(x),
-            RN(z)
-        ]),
-        RN(times, [
-            RN(z),
             RN(y)
-        ])
-    ]))
-    push!(bad, RN(plus, [
-        RN(times, [
-            RN(z),
-            RN(x)
         ]),
         RN(times, [
             RN(y),
             RN(z)
+        ])
+    ]))
+    push!(bad, RN(plus, [
+        RN(times, [
+            RN(y),
+            RN(z)
+        ]),
+        RN(times, [
+            RN(x),
+            RN(y)
         ])
     ]))
 
@@ -360,7 +360,6 @@ end
         bigvars:: Number = a | b | c
     end
     annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-    println(annotated)
   
     plus = only(findall(==(true), annotated.label_domains["plus"]))
     consts = findall(==(true), annotated.label_domains["constants"])
