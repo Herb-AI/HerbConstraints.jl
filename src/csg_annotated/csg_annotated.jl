@@ -1,5 +1,3 @@
-
-
 """
     expr2csgrammar(expression::Expr)::AnnotatedGrammar  
 
@@ -122,7 +120,6 @@ function get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vec
     return annotated_grammar.rule_annotations
 end
 
-# FIXME: use MLStyle
 function _process_expression(expression)::Tuple{
         ContextSensitiveGrammar, 
         Dict{String,Vector{Int}},
@@ -199,25 +196,21 @@ function _annotation2constraints!(
     rule_index::Int,
     annotation::Any,
 )
-    if annotation isa Expr && annotation.head == :call
-        annotation_name = annotation.args[1]
-        labels_domain = annotated_grammar.label_domains[String(annotation.args[2])]
-        label_index = only(findall(==(true), labels_domain))
-        if annotation_name == :identity
-            _identity_constraints!(annotated_grammar, rule_index, label_index)
-        elseif annotation_name == :inverse
-            _inverse_constraints!(annotated_grammar, rule_index, label_index)
-        elseif annotation_name == :distributive_over
-            _distributive_over_constraints!(annotated_grammar, rule_index, label_index)
-        else
-            throw(ArgumentError("Annotation call $(annotation) not found! (rule $(rule_index))")) 
+    @match annotation begin
+        Expr(:call, name_, arg_) => begin
+            annotation_name = name_
+            labels_domain = annotated_grammar.label_domains[String(arg_)]
+            label_index = only(findall(==(true), labels_domain))
+            @match annotation_name begin
+                :identity => _identity_constraints!(annotated_grammar, rule_index, label_index)
+                :inverse => _inverse_constraints!(annotated_grammar, rule_index, label_index)
+                :distributive_over => _distributive_over_constraints!(annotated_grammar, rule_index, label_index)
+                _ => throw(ArgumentError("Annotation call $(annotation) not found! (rule $(rule_index))")) 
+            end
         end
-    elseif annotation == :commutative
-        _commutative_constraints!(annotated_grammar, rule_index)
-    elseif annotation == :associative
-        _associativity_constraints!(annotated_grammar, rule_index)
-    else
-        throw(ArgumentError("Annotation $(annotation) not found! (rule $(rule_index))"))
+        :commutative => _commutative_constraints!(annotated_grammar, rule_index)
+        :associative => _associativity_constraints!(annotated_grammar, rule_index)
+        _ => throw(ArgumentError("Annotation $(annotation) not found! (rule $(rule_index))"))
     end
 end
 
