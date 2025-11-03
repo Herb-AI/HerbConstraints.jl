@@ -477,7 +477,9 @@ end
         annotated.grammar,
         good,
         bad,
-        forgive_missing_constraints=true # parallel plus will entail infinite depth - so we want the constraint but can't test it
+        # parallel plus will entail infinite depth - so we want the constraint but can't test it
+        forgive_missing_constraints=true,
+        notice_prints=false
     )
 end
 
