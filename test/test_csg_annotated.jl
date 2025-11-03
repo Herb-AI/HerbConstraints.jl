@@ -7,7 +7,7 @@ using TestItems
         one::  Number = 1     
         constants:: Number = |(2:4) 
         variables:: Number = x | y              
-        minus::      Number = -Number           := (identity("zero"))
+        minus::      Number = -Number           := identity("zero")
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
         Number = a | b | c
@@ -18,7 +18,7 @@ using TestItems
         one::  Number = 1     
         constants:: Number = |(2:4) 
         variables:: Number = x | y              
-        minus::      Number = -Number           := (identity("zero"))
+        minus::      Number = -Number           := identity("zero")
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
         Number = a | b | c
@@ -50,7 +50,7 @@ end
         one::  Number = 1     
         constants:: Number = |(2:4) 
         variables:: Number = x | y              
-        minus::      Number = -Number           := (identity("zero"))
+        minus::      Number = -Number           := identity("zero")
         plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
         Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
     end
@@ -179,7 +179,7 @@ end
 
 @testitem "candidates generation" setup=[HerbSearch, GrammarExpr] begin
     @test length(GrammarExpr.grammar.constraints)==0
-    @test length(GrammarExpr.annotated.grammar.constraints) == 24
+    @test length(GrammarExpr.annotated.grammar.constraints) == 25
 
     @test length(HerbSearch.BFSIterator(GrammarExpr.grammar, :Number, max_depth=3)) == 25207
     @test length(HerbSearch.BFSIterator(GrammarExpr.annotated.grammar, :Number, max_depth=3)) == 1172

@@ -281,18 +281,16 @@ function _distributive_over_constraints!(
         addconstraint!(annotated_grammar.grammar,
             Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_xb]))
         )
-        if :commutative ∉ annotated_grammar.rule_annotations[label_index]
-            # otherwise, in addition to x<= a and b<=x, we also have x<=b implying b==x
-            addconstraint!(annotated_grammar.grammar,
-                Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_bx]))
-            )
-        end
-    end
-    if :identity ∈ annotated_grammar.rule_annotations[rule_index]
         addconstraint!(annotated_grammar.grammar,
-            Forbidden(RuleNode(label_index, [VarNode(:x), VarNode(:x)]))
+            Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_bx]))
         )
     end
+    # TODO: we should add this only if the 2(*identity) is in the grammar
+    # if :identity ∈ annotated_grammar.rule_annotations[rule_index]
+    #     addconstraint!(annotated_grammar.grammar,
+    #         Forbidden(RuleNode(label_index, [VarNode(:x), VarNode(:x)]))
+    #     )
+    # end
 end
 
 function _commutative_constraints!(
