@@ -10,16 +10,6 @@ Make sure all tests have Total != 0 tests (that you did not forget to call the t
 Recommended to turn on notice_prints by default when developing tests.
 """
 
-#=
-    TODO: change constraint testing format.
-    Each constraint in the grammar should have:
-    * a baded case, that is baded by that constraint only
-    * an equivalent unbaded case, that is allowed by all constraints
-    Also, make sure all constraints that can be in a grammar are tested.
-    For example all combinations of associative, commutative, distributive_over
-    Use test coverage tools to ensure.
-=#
-
 @testmodule check_constraints_module begin
     using HerbConstraints
     using HerbGrammar

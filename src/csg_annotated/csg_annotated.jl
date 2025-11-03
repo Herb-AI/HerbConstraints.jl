@@ -337,6 +337,7 @@ function _associativity_constraints!(
                 ]))
                 )
         end
+        # TODO: if we also have an unary inverse, make the inverse invisible to the ordering
     else
         # allow only to repeat the operation in a left leaning path formation
         addconstraint!(annotated_grammar.grammar, 
@@ -347,3 +348,11 @@ function _associativity_constraints!(
             )
     end
 end
+
+
+
+## Ideas for future annotations
+# - minus multiplication relationship
+# - minus is comutative over plus
+# - boolean algebra annotations
+# - lists annotations
