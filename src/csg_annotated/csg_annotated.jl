@@ -23,7 +23,7 @@ Only expressions in the correct format (see [`csgrammar_annotated`](@ref)) can b
 function expr2csgrammar_annotated(expression::Expr)::AnnotatedGrammar  
     grammar, bylabel, rule_annotations = _process_expression(expression)
 
-    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != "")
+    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != NaN)
 
     annotated_grammar = AnnotatedGrammar(grammar, labels, rule_annotations)
     for rule_index in keys(rule_annotations)
@@ -95,7 +95,6 @@ struct AnnotatedGrammar
    rule_annotations::Dict{Int,Vector{Any}}
 end
 
-# FIXME: get function for each feild with a docstring
 """
     get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
 
@@ -123,7 +122,7 @@ function get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vec
     return annotated_grammar.rule_annotations
 end
 
-# FIXME: use MLStyle and Base.remove_linenums!()
+# FIXME: use MLStyle
 function _process_expression(expression)::Tuple{
         ContextSensitiveGrammar, 
         Dict{String,Vector{Int}},
@@ -146,10 +145,14 @@ function _process_expression(expression)::Tuple{
         numrules_before = length(grammar.rules)
         add_rule!(grammar, e)
         numrules_after = length(grammar.rules)
+        new_rules = collect(numrules_before+1:numrules_after)
 
-        bylabel[label] = numrules_before+1:numrules_after
+        if label != nothing
+            @assert label ∉ keys(bylabel) "Label $label used for multiple rules!"
+            bylabel[label] = new_rules
+        end
 
-        for rule in bylabel[label]
+        for rule in new_rules
             rule_annotations[rule] = annotations
         end
     end
@@ -157,10 +160,10 @@ function _process_expression(expression)::Tuple{
 end
 
 # gets the label from an expression
-function _get_label!(e)::String
+function _get_label!(e)::Union{String, Nothing}
     # get the left hand side of a rule
     lhs = e.args[1]
-    label = ""
+    label = nothing
     # parse label if present, i.e., of the form label::rule_lhs
     if lhs isa Expr && lhs.head == :(::)
         label = string(lhs.args[1])
@@ -309,19 +312,47 @@ function _associativity_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
 )
-    addconstraint!(annotated_grammar.grammar, Forbidden(RuleNode(rule_index, [
-                                RuleNode(rule_index, [VarNode(:a), VarNode(:b)]),
-                                RuleNode(rule_index, [VarNode(:c), VarNode(:d)])
-                            ])))
     if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
-        child = RuleNode(rule_index, [VarNode(:y), VarNode(:a)])
-        addconstraint!(annotated_grammar.grammar, Ordered(
-                    RuleNode(rule_index, [VarNode(:x), child]),
-                    [:x, :y],
-                ))
-        addconstraint!(annotated_grammar.grammar, Ordered(
-                    RuleNode(rule_index, [child, VarNode(:x)]),
-                    [:x, :y],
-                ))
+        # allow only to repeat the operation in a path formation with ordered operands
+        #   * will lean right while smaller then the rule, and then left
+        addconstraint!(annotated_grammar.grammar, 
+            Forbidden(RuleNode(rule_index, [
+                RuleNode(rule_index, [VarNode(:a), VarNode(:b)]),
+                RuleNode(rule_index, [VarNode(:c), VarNode(:d)])
+            ]))
+            )
+        child = RuleNode(rule_index, [VarNode(:x), VarNode(:y)])
+        addconstraint!(annotated_grammar.grammar, 
+            Ordered(
+                RuleNode(rule_index, [VarNode(:w), child]),
+                [:w, :x],
+            ))
+        addconstraint!(annotated_grammar.grammar, 
+            Ordered(
+                RuleNode(rule_index, [child, VarNode(:w)]),
+                [:y, :w],
+            ))
+        # TODO: combine to one constraint when we allow constraints on VarNodes
+        num_children = length.(annotated_grammar.grammar.childtypes)
+        for n in Set(num_children[1:rule_index-1])
+            dom = BitVector([i<rule_index && n == num_children[i] for i in 1:length(annotated_grammar.grammar.rules)])
+            addconstraint!(annotated_grammar.grammar, 
+                Forbidden(RuleNode(rule_index, [
+                    RuleNode(rule_index, [
+                        DomainRuleNode(dom, [VarNode(Symbol("var_$(i)")) for i in 1:n]),
+                        VarNode(:y)
+                    ]),
+                    VarNode(:w)
+                ]))
+                )
+        end
+    else
+        # allow only to repeat the operation in a left leaning path formation
+        addconstraint!(annotated_grammar.grammar, 
+            Forbidden(RuleNode(rule_index, [
+                VarNode(:c),
+                RuleNode(rule_index, [VarNode(:a), VarNode(:b)])
+            ]))
+            )
     end
 end
