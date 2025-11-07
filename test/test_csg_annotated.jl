@@ -106,7 +106,7 @@ end
         zero::  Number = 0   
         zero::  Number = 1
     end
-    @test_throws AssertionError HerbConstraints.expr2csgrammar_annotated(expr)
+    @test_throws ErrorException HerbConstraints.expr2csgrammar_annotated(expr)
 end
 
 @testitem "annotations" setup=[GrammarExpr] begin

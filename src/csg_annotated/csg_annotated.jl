@@ -132,20 +132,24 @@ function _process_expression(expression)::Tuple{
     expr = deepcopy(expression)
     Base.remove_linenums!(expr)
     for e in expr.args
-        if !(e.head == :(=))
-            error("Expected rule definition of the form lhs = rhs, got: $e (rule $(length(grammar.rules)+1))")
+        label, annotations, rule_lhs, rule_rhs = @match e begin
+            :($lhs = $rhs) => begin
+                label, rule_lhs = _get_label(lhs)
+                annotations, rule_rhs = _get_annotations(rhs)
+                label, annotations, rule_lhs, rule_rhs
+            end
+            _ => error("Expected rule definition of the form lhs = rhs, got: $e (rule $(length(grammar.rules)+1))")
         end
 
-        label = _get_label!(e)
-        annotations = _get_annotations!(e)
-
         numrules_before = length(grammar.rules)
-        add_rule!(grammar, e)
+        add_rule!(grammar, :($rule_lhs = $rule_rhs))
         numrules_after = length(grammar.rules)
         new_rules = collect(numrules_before+1:numrules_after)
 
         if label != nothing
-            @assert label ∉ keys(bylabel) "Label $label used for multiple rules!"
+            if label ∈ keys(bylabel)
+                error("Label $label used for multiple rules!")
+            end
             bylabel[label] = new_rules
         end
 
@@ -157,38 +161,20 @@ function _process_expression(expression)::Tuple{
 end
 
 # gets the label from an expression
-function _get_label!(e)::Union{String, Nothing}
-    # get the left hand side of a rule
-    lhs = e.args[1]
-    label = nothing
-    # parse label if present, i.e., of the form label::rule_lhs
-    if lhs isa Expr && lhs.head == :(::)
-        label = string(lhs.args[1])
-
-        # discard rule name
-        e.args[1] = lhs.args[2]
+function _get_label(lhs) #::Tuple{Union{String, Nothing}, Any}
+    @match lhs begin
+        :($label_name :: $rule_lhs) => return string(label_name), rule_lhs
+        _ => return nothing, lhs
     end
-    return label
 end
 
 # gets the annotation from an expression
-function _get_annotations!(e)::Vector{Any}
-    # get the right hand side of a rule
-    rhs = e.args[2]
-    annotations = Expr[]
-    # parse annotations if present, i.e., of the form rule_rhs := annotations
-    if rhs isa Expr && rhs.head == :(:=)
-        annotations = rhs.args[2]
-        if annotations isa Expr && annotations.head == :tuple
-            annotations = annotations.args
-        else
-            annotations = [annotations]
-        end
-
-        # discard rule name
-        e.args[2] = rhs.args[1]
+function _get_annotations(rhs) #::Tuple{Vector{Any}, Any}
+    @match rhs begin
+        :($rule_rhs := ($(annotations...),)) => return [annotations...], rule_rhs
+        :($rule_rhs := $annotations) => return [annotations], rule_rhs
+        _ => return [], rhs
     end
-    return annotations
 end
 
 function _annotation2constraints!(
@@ -199,7 +185,7 @@ function _annotation2constraints!(
     @match annotation begin
         Expr(:call, name_, arg_) => begin
             annotation_name = name_
-            labels_domain = annotated_grammar.label_domains[String(arg_)]
+            labels_domain = get_label_domains(annotated_grammar)[String(arg_)]
             label_index = only(findall(==(true), labels_domain))
             @match annotation_name begin
                 :identity => _identity_constraints!(annotated_grammar, rule_index, label_index)
@@ -229,7 +215,7 @@ function _identity_constraints!(
     for i in 1:num_rule_children
         rule_children = Vector{AbstractRuleNode}(copy(rule_non_label_children))
         insert!(rule_children, i,label_node)
-        addconstraint!(annotated_grammar.grammar,
+        addconstraint!(annotated_grammar,
             Forbidden(RuleNode(rule_index, rule_children))
         )
     end
@@ -240,14 +226,14 @@ function _inverse_constraints!(
     rule_index::Int,
     label_index::Int,
 )
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Forbidden(RuleNode(rule_index, [RuleNode(label_index, [VarNode(:x)]), VarNode(:x)]))
     )
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Forbidden(RuleNode(rule_index, [VarNode(:x), RuleNode(label_index, [VarNode(:x)])]))
     )
     #TODO: make sure this always holds (mathematically, by definition)
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Forbidden(RuleNode(label_index, [RuleNode(label_index, [VarNode(:a)])]))
     )
     # TODO: if has identity, add constraint for inverse of identity
@@ -264,23 +250,23 @@ function _distributive_over_constraints!(
     rulenode_xa = RuleNode(rule_index, [VarNode(:x), VarNode(:a)])
     rulenode_xb = RuleNode(rule_index, [VarNode(:x), VarNode(:b)])
 
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_bx]))
     )
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_xb]))
     )
     if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
-        addconstraint!(annotated_grammar.grammar,
+        addconstraint!(annotated_grammar,
             Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_xb]))
         )
-        addconstraint!(annotated_grammar.grammar,
+        addconstraint!(annotated_grammar,
             Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_bx]))
         )
     end
     # TODO: we should add this only if the 2(*identity) is in the grammar
     # if :identity ∈ annotated_grammar.rule_annotations[rule_index]
-    #     addconstraint!(annotated_grammar.grammar,
+    #     addconstraint!(annotated_grammar,
     #         Forbidden(RuleNode(label_index, [VarNode(:x), VarNode(:x)]))
     #     )
     # end
@@ -291,7 +277,7 @@ function _commutative_constraints!(
     rule_index::Int,
 )
     #TODO: preformance wise, add one domain constraint for all commutative rules
-    addconstraint!(annotated_grammar.grammar,
+    addconstraint!(annotated_grammar,
         Ordered(
         RuleNode(rule_index, [VarNode(:x), VarNode(:y)]),
         [:x, :y],
@@ -306,19 +292,19 @@ function _associativity_constraints!(
     if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
         # allow only to repeat the operation in a path formation with ordered operands
         #   * will lean right while smaller then the rule, and then left
-        addconstraint!(annotated_grammar.grammar, 
+        addconstraint!(annotated_grammar, 
             Forbidden(RuleNode(rule_index, [
                 RuleNode(rule_index, [VarNode(:a), VarNode(:b)]),
                 RuleNode(rule_index, [VarNode(:c), VarNode(:d)])
             ]))
             )
         child = RuleNode(rule_index, [VarNode(:x), VarNode(:y)])
-        addconstraint!(annotated_grammar.grammar, 
+        addconstraint!(annotated_grammar, 
             Ordered(
                 RuleNode(rule_index, [VarNode(:w), child]),
                 [:w, :x],
             ))
-        addconstraint!(annotated_grammar.grammar, 
+        addconstraint!(annotated_grammar, 
             Ordered(
                 RuleNode(rule_index, [child, VarNode(:w)]),
                 [:y, :w],
@@ -327,7 +313,7 @@ function _associativity_constraints!(
         num_children = length.(annotated_grammar.grammar.childtypes)
         for n in Set(num_children[1:rule_index-1])
             dom = BitVector([i<rule_index && n == num_children[i] for i in 1:length(annotated_grammar.grammar.rules)])
-            addconstraint!(annotated_grammar.grammar, 
+            addconstraint!(annotated_grammar, 
                 Forbidden(RuleNode(rule_index, [
                     RuleNode(rule_index, [
                         DomainRuleNode(dom, [VarNode(Symbol("var_$(i)")) for i in 1:n]),
@@ -340,7 +326,7 @@ function _associativity_constraints!(
         # TODO: if we also have an unary inverse, make the inverse invisible to the ordering
     else
         # allow only to repeat the operation in a left leaning path formation
-        addconstraint!(annotated_grammar.grammar, 
+        addconstraint!(annotated_grammar, 
             Forbidden(RuleNode(rule_index, [
                 VarNode(:c),
                 RuleNode(rule_index, [VarNode(:a), VarNode(:b)])
@@ -349,6 +335,13 @@ function _associativity_constraints!(
     end
 end
 
+"""
+    addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::Constraint)
+Adds a constraint to the underlying ContextSensitiveGrammar.
+"""
+function HerbGrammar.addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::Constraint)
+    addconstraint!(annotated_grammar.grammar, constraint)
+end
 
 
 ## Ideas for future annotations
