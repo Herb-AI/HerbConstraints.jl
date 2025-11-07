@@ -339,7 +339,7 @@ end
     addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::Constraint)
 Adds a constraint to the underlying ContextSensitiveGrammar.
 """
-function HerbGrammar.addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::Constraint)
+function HerbGrammar.addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::HerbCore.AbstractConstraint)
     addconstraint!(annotated_grammar.grammar, constraint)
 end
 
