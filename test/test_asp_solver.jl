@@ -31,7 +31,6 @@ node(5,2).
             @test asp == expected_asp
         end
 
-
         @testset "uniformhole_to_ASP" begin
             g = @csgrammar begin
                 S = 1 | x
@@ -54,7 +53,6 @@ child(1,2,3).
 """
             @test asp == expected_asp
         end
-
 
         @testset "statehole_to_ASP" begin
             g = @csgrammar begin
@@ -160,6 +158,27 @@ allowed(c1x3,3).
 allowed(c1x3,4).
 """
             @test additional == expected_domains
+        end
+
+        @testset "constraint_varnode_to_ASP" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+            tree = UniformHole(BitVector((0, 0, 1, 1)), [
+                VarNode(:a),
+                VarNode(:b)
+            ])
+            asp_tree, additional = constraint_tree_to_ASP(g, tree, 1, 1)
+            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,A),child(X1,2,B)"
+            @test asp_tree == expected_asp
+
+            expected_domains = """
+allowed(c1x1,3).
+allowed(c1x1,4).
+"""
+            @test additional == expected_domains
         end        
     end
 
@@ -175,8 +194,7 @@ allowed(c1x3,4).
             constraint = Forbidden(RuleNode(5, [RuleNode(3), RuleNode(3)]))
 
             asp = to_ASP(g, constraint, 1)
-            expected_asp = ":- node(X1,5),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).\n"
-
+            expected_asp = "subtree(c1) :- node(X1,5),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).\n:- subtree(c1).\n"
             @test asp == expected_asp
         end
 
@@ -241,7 +259,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
         end
     end
 
-    @testset "ASPSolver" begin
+    @testset "Solver struct" begin
         @testset "asp_solver_uniform_holes" begin
             g = @csgrammar begin
                 S = 1 | x
@@ -345,5 +363,92 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             @test get_tree(solver) === tree
             @test isfeasible(solver) === true
         end
+    end
+
+    @testset "No solutions (ordered constraint)" begin
+        grammar = @csgrammar begin
+            Number = 1
+            Number = x
+            Number = Number + Number
+            Number = Number - Number
+        end
+        constraint1 = Ordered(RuleNode(3, [
+            VarNode(:a),
+            VarNode(:b)
+        ]), [:a, :b])
+        constraint2 = Ordered(RuleNode(4, [
+            VarNode(:a),
+            VarNode(:b)
+        ]), [:a, :b])
+        addconstraint!(grammar, constraint1)
+        addconstraint!(grammar, constraint2)
+        
+        tree = UniformHole(BitVector((0, 0, 1, 1)), [
+            UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
+            ]),
+            UniformHole(BitVector((1, 1, 0, 0)), [])
+        ])
+        asp_solver = ASPSolver(grammar, tree)
+        @test !isfeasible(asp_solver)
+        @test length(asp_solver.solutions) == 0
+    end
+
+    @testset "No solutions (forbidden constraint)" begin
+        grammar = @csgrammar begin
+            Number = 1
+            Number = x
+            Number = Number + Number
+            Number = Number - Number
+        end
+        constraint1 = Forbidden(RuleNode(3, [
+            VarNode(:a),
+            VarNode(:b)
+        ]))
+        constraint2 = Forbidden(RuleNode(4, [
+            VarNode(:a),
+            VarNode(:b)
+        ]))
+        addconstraint!(grammar, constraint1)
+        addconstraint!(grammar, constraint2)
+
+        constraint_tree_asp = to_ASP(grammar)
+        expected_asp_constraints = """
+% Forbidden(3{a,b})
+subtree(c1) :- node(X1,3),child(X1,1,A),child(X1,2,B).
+:- subtree(c1).
+
+% Forbidden(4{a,b})
+subtree(c2) :- node(X1,4),child(X1,1,A),child(X1,2,B).
+:- subtree(c2).
+\n"""
+        @test constraint_tree_asp == expected_asp_constraints
+
+        tree = UniformHole(BitVector((0, 0, 1, 1)), [
+            UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
+            ]),
+            UniformHole(BitVector((1, 1, 0, 0)), [])
+        ])
+
+        asp_tree, _ = tree_to_ASP(tree, grammar, 1)
+        expected_asp_tree = """
+1 { node(1,3);node(1,4) } 1.
+child(1,1,2).
+1 { node(2,3);node(2,4) } 1.
+child(2,1,3).
+1 { node(3,1);node(3,2) } 1.
+child(2,2,4).
+1 { node(4,1);node(4,2) } 1.
+child(1,2,5).
+1 { node(5,1);node(5,2) } 1.
+"""
+        @test asp_tree == expected_asp_tree
+
+        asp_solver = ASPSolver(grammar, tree)
+        @test !isfeasible(asp_solver)
+        @test length(asp_solver.solutions) == 0
     end
 end

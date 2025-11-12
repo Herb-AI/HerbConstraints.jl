@@ -83,9 +83,9 @@ end
 
 Transforms a template tree to an ASP form suitable for constraints.
 
-@rulenode 5{3,3} -> node(X1,5), child(X1,1,X2),node(X2,3), child(X1,2,X3),node(X3,3)
+@rulenode 5{3,3} -> node(X1,5),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3)
 
-@rulenode [4,5]{3,3} -> allowed(x1,1). node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
+@rulenode [4,5]{3,3} -> allowed(x1,1).node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
 """
 function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
     tree_facts, additional_facts = "", ""
@@ -97,7 +97,9 @@ function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode
 
     for (child_ind, child) in enumerate(tree.children)
         if isa(child, VarNode)
-            tree_facts *= ",child(X$(parent_index),$(child_ind),$(child.name))"
+            # Create a variable (uppercase) of the node name, which is a symbol
+            node_name = titlecase(string(child.name))
+            tree_facts *= ",child(X$(parent_index),$(child_ind),$(node_name))"
         else
             tmp_facts, tmp_additional = constraint_tree_to_ASP(grammar, child, node_index, constraint_index)
             tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index))"

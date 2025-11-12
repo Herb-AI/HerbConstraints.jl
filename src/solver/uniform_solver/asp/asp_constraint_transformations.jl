@@ -30,10 +30,8 @@ allowed(c1x3,3).
 """
 function to_ASP(grammar::AbstractGrammar, constraint::Forbidden, constraint_index::Int64)
     tree_facts, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
-
     output = domains
-
-    output *= ":- $(tree_facts).\n"
+    output *= "subtree(c$(constraint_index)) :- $(tree_facts).\n:- subtree(c$(constraint_index)).\n"
     return output
 end
 
@@ -70,11 +68,8 @@ subtree(c1) :- node(X1,5), child(X1,1,X2), node(X2,1), child(X1,2,X3), node(X3,2
 """
 function to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
     tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
-    output = ""
-    output *= domains
-
+    output = domains
     output *= "subtree(c$(constraint_index)) :- $(tree).\n:- not subtree(c$(constraint_index)).\n"
-
     return output
 end
 
@@ -95,12 +90,10 @@ is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), 
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(Y,Z).
 """
 function to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
-    # TODO use order property of constraint
     output = "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV < YV.\n"
     output *= "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV = YV,S = #sum { Z : child(X,Z,XC),child(Y,Z,YC),is_smaller(XC,YC) }, M = #max { Z : child(X,Z,XC) }, S = M.\n"
 
     tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
-
     output *= domains
 
     # create ordered constraints, for each consecutive pair of ordered vars
