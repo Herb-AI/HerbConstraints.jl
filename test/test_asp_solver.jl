@@ -89,16 +89,16 @@ child(1,2,3).
                 S = S * S
             end
 
-            tree = RuleNode(3, [
-                RuleNode(1),
-                RuleNode(4, [
-                    RuleNode(1),
-                    RuleNode(2)
-                ])
+            tree = UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
+            c = Unique(4)
+            addconstraint!(g, c)
+
             asp, next_index, _ = constraint_tree_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,3),child(X1,1,X2),node(X2,1),child(X1,2,X3),node(X3,4),child(X3,1,X4),node(X4,1),child(X3,2,X5),node(X5,2)"
+            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp == expected_asp
         end
         
@@ -114,6 +114,11 @@ child(1,2,3).
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
+            c = ContainsSubtree(UniformHole(BitVector((0,0,1,1)), [
+                RuleNode(1),
+                RuleNode(2)
+            ]))
+            addconstraint!(g, c)
             asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
@@ -142,6 +147,12 @@ allowed(c1x3,2).
             ])
             sm = HerbConstraints.StateManager()
             statehole = HerbConstraints.StateHole(sm, tree)
+            
+            c = ContainsSubtree(RuleNode(4, [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 1, 1)), [])                
+            ]))
+            addconstraint!(g, c)
 
             asp_tree, additional, _ = constraint_tree_to_ASP(g, statehole, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
@@ -166,17 +177,60 @@ allowed(c1x3,4).
                 S = S + S
                 S = S * S
             end
+
             tree = UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 1, 1)), [])
+            ])
+
+            c = Forbidden(UniformHole(BitVector((0, 0, 1, 1)), [
                 VarNode(:a),
                 VarNode(:b)
-            ])
+            ]))
+            addconstraint!(g, c)
             asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,A),child(X1,2,X3),node(X3,B)"
+            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
 
             expected_domains = """
 allowed(c1x1,3).
 allowed(c1x1,4).
+allowed(c1x2,1).
+allowed(c1x2,2).
+allowed(c1x3,1).
+allowed(c1x3,2).
+allowed(c1x3,3).
+allowed(c1x3,4).
+"""
+            @test additional == expected_domains
+        end
+
+        @testset "constraint_single_varnode_to_ASP" begin
+            g = @csgrammar begin
+                S = 1 | x
+                S = S + S
+                S = S * S
+            end
+            tree = UniformHole(BitVector((0, 0, 1, 1)), [
+                UniformHole(BitVector((1, 1, 0, 0)), []),
+                UniformHole(BitVector((1, 1, 1, 1)), [])
+            ])
+            c = Forbidden(VarNode(:a))
+            addconstraint!(g, c)
+
+            asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
+            @test asp_tree == expected_asp
+
+            expected_domains = """
+allowed(c1x1,3).
+allowed(c1x1,4).
+allowed(c1x2,1).
+allowed(c1x2,2).
+allowed(c1x3,1).
+allowed(c1x3,2).
+allowed(c1x3,3).
+allowed(c1x3,4).
 """
             @test additional == expected_domains
         end

@@ -122,6 +122,20 @@ function constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_i
 end
 
 """
+    constraint_node_to_ASP(grammar::AbstractGrammar, node::VarNode, node_index::Int64, constraint_index::Int64)
+
+Transforms a [VarNode] into an ASP representation in the form
+`node(X_node_index, node_name).`
+
+This is only used when a constraint takes the form of just one VarNode, otherwise, VarNodes are already caught in case of the tree children in the `constraint_tree_to_ASP` call.
+"""
+function constraint_node_to_ASP(grammar::AbstractGrammar, node::VarNode, node_index::Int64, constraint_index::Int64)
+    # Create a variable (uppercase) of the node name, which is a symbol
+    node_name = titlecase(string(child.name))    
+    return "node(X$(node_index),$(node_name))", []
+end
+
+"""
     constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNodUnion{UniformHole,DomainRuleNode}, node_index::Int64, constrain_index::Int64)
 
 Transforms a [UniformHole] or [DomainRuleNode] into an ASP representation in the form
