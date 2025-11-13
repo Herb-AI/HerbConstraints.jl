@@ -91,7 +91,7 @@ function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode
     # VarNode does not have any children, so just return the node
     if isa(tree, VarNode)
         # Create a variable (uppercase) of the node name, which is a symbol
-        node_name = titlecase(string(child.name))
+        node_name = titlecase(string(tree.name))
         return "node(X$(node_index),$(node_name))"
     end
     tree_facts, additional_facts = "", ""
