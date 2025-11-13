@@ -131,7 +131,7 @@ This is only used when a constraint takes the form of just one VarNode, otherwis
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::VarNode, node_index::Int64, constraint_index::Int64)
     # Create a variable (uppercase) of the node name, which is a symbol
-    node_name = titlecase(string(child.name))    
+    node_name = titlecase(string(node.name))    
     return "node(X$(node_index),$(node_name))", []
 end
 
