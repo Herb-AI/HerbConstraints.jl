@@ -88,6 +88,12 @@ Transforms a template tree to an ASP form suitable for constraints.
 @rulenode [4,5]{3,3} -> allowed(x1,1).node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
 """
 function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
+    # VarNode does not have any children, so just return the node
+    if isa(tree, VarNode)
+        # Create a variable (uppercase) of the node name, which is a symbol
+        node_name = titlecase(string(child.name))
+        return "node(X$(node_index),$(node_name))"
+    end
     tree_facts, additional_facts = "", ""
     tmp_facts, tmp_additional = constraint_node_to_ASP(grammar, tree, node_index, constraint_index::Int64)
     tree_facts *= "$(tmp_facts)"
@@ -119,20 +125,6 @@ Transforms a [RuleNode] into an ASP representation in the form
 """
 function constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constraint_index::Int64)
     return "node(X$(node_index),$(get_rule(node)))", []
-end
-
-"""
-    constraint_node_to_ASP(grammar::AbstractGrammar, node::VarNode, node_index::Int64, constraint_index::Int64)
-
-Transforms a [VarNode] into an ASP representation in the form
-`node(X_node_index, node_name).`
-
-This is only used when a constraint takes the form of just one VarNode, otherwise, VarNodes are already caught in case of the tree children in the `constraint_tree_to_ASP` call.
-"""
-function constraint_node_to_ASP(grammar::AbstractGrammar, node::VarNode, node_index::Int64, constraint_index::Int64)
-    # Create a variable (uppercase) of the node name, which is a symbol
-    node_name = titlecase(string(node.name))    
-    return "node(X$(node_index),$(node_name))", []
 end
 
 """
