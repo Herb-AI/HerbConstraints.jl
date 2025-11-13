@@ -76,29 +76,33 @@ end
 """
     to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
 
-Transforms the Ordered constraint into ASP format.
+Transforms the Ordered constraint into ASP format. 
 
 Ordered(5{NodeVar(:X),NodeVar(:Y)}, [:X, :Y]) ->
-is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
-is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), child(Y,Z,YC), is_smaller(XC, YC)}, M = #max {Z: child(X,Z,XC)}, S = M.
+is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV < OrderedYV.
+is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV = OrderedYV, OrderedS = #sum {OrderedZ: child(OrderedX,OrderedZ,OrderedXC), child(OrderedY,OrderedZ,OrderedYC), is_smaller(OrderedXC, OrderedYC)}, OrderedM = #max {OrderedZ: child(OrderedX,OrderedZ,OrderedXC)}, OrderedS = OrderedM.
 :- node(X1,5),child(X1,1,X),child(X1,2,Y), not is_smaller(X,Y).
 
 Ordered(5{NodeVar(:X),NodeVar(:Y),NodeVar(:Z)}, [:X, :Y, :Z]) ->
-is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
-is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV = YV, S = #sum {Z: child(X,Z,XC), child(Y,Z,YC), is_smaller(XC, YC)}, M = #max {Z: child(X,Z,XC)}, S = M.
+is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV < OrderedYV.
+is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV = OrderedYV, OrderedS = #sum {OrderedZ: child(OrderedX,OrderedZ,OrderedXC), child(OrderedY,OrderedZ,OrderedYC), is_smaller(OrderedXC, OrderedYC)}, OrderedM = #max {OrderedZ: child(OrderedX,OrderedZ,OrderedXC)}, OrderedS = OrderedM.
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(X,Y).
 :- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(Y,Z).
 """
 function to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
-    output = "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV < YV.\n"
-    output *= "is_smaller(X,Y) :- node(X,XV),node(Y,YV),XV = YV,S = #sum { Z : child(X,Z,XC),child(Y,Z,YC),is_smaller(XC,YC) }, M = #max { Z : child(X,Z,XC) }, S = M.\n"
+    # Use Ordered{Var} in the is_smaller construct, to prevent same naming as other constraint VarNodes.
+    # Use the Values in the head, because the VarNodes are converted to: child(Parent,Index,Node), node(Node,VarNodeName)
+    output = "is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV < OrderedYV.\n"
+    output *= "is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV = OrderedYV,OrderedS = #sum { OrderedZ : child(OrderedX,OrderedZ,OrderedXC),child(OrderedY,OrderedZ,OrderedYC),is_smaller(OrderedXC,OrderedYC) },OrderedM = #max { OrderedZ : child(OrderedX,OrderedZ,OrderedXC) },OrderedS = OrderedM.\n"
 
     tree, domains, _ = constraint_tree_to_ASP(grammar, constraint.tree, 1, constraint_index)
     output *= domains
 
     # create ordered constraints, for each consecutive pair of ordered vars
     for i in 1:length(constraint.order)-1
-        output *= ":- $(tree),not is_smaller($(constraint.order[i]),$(constraint.order[i+1])).\n"
+        node_name1 = titlecase(string(constraint.order[i]))
+        node_name2 = titlecase(string(constraint.order[i+1]))
+        output *= ":- $(tree),not is_smaller($(node_name1),$(node_name2)).\n"
     end
 
     return output

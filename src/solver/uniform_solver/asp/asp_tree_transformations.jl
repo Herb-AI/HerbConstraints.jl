@@ -94,12 +94,12 @@ function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode
     additional_facts *= join(tmp_additional, "")
     parent_index = node_index
     node_index += 1
-
     for (child_ind, child) in enumerate(tree.children)
         if isa(child, VarNode)
             # Create a variable (uppercase) of the node name, which is a symbol
             node_name = titlecase(string(child.name))
-            tree_facts *= ",child(X$(parent_index),$(child_ind),$(node_name))"
+            tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index)),node(X$(node_index),$(node_name))"
+            node_index += 1
         else
             tmp_facts, tmp_additional = constraint_tree_to_ASP(grammar, child, node_index, constraint_index)
             tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index))"
@@ -108,12 +108,11 @@ function constraint_tree_to_ASP(grammar::AbstractGrammar, tree::AbstractRuleNode
             node_index += 1
         end
     end
-
     return tree_facts, additional_facts, node_index
 end
 
 """
-    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constrain_index::Int64)
+    constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constraint_index::Int64)
 
 Transforms a [RuleNode] into an ASP representation in the form
 `node(X_node_index, RuleNode_index).`
