@@ -206,11 +206,11 @@ function _identity_constraints!(
     rule_index::Int,
     label_index::Int,
 )
-    num_label_children = length(annotated_grammar.grammar.childtypes[label_index])
+    num_label_children = length(get_grammar(annotated_grammar).childtypes[label_index])
     label_children = [VarNode(Symbol("y_$(i)")) for i in 1:num_label_children]
     label_node = RuleNode(label_index, label_children)
 
-    num_rule_children = length(annotated_grammar.grammar.childtypes[rule_index])
+    num_rule_children = length(get_grammar(annotated_grammar).childtypes[rule_index])
     rule_non_label_children = [VarNode(Symbol("x_$(i)")) for i in 1:num_rule_children-1]
     for i in 1:num_rule_children
         rule_children = Vector{AbstractRuleNode}(copy(rule_non_label_children))
@@ -256,7 +256,7 @@ function _distributive_over_constraints!(
     addconstraint!(annotated_grammar,
         Forbidden(RuleNode(label_index, [rulenode_xa, rulenode_xb]))
     )
-    if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
+    if :commutative ∈ get_rule_annotations(annotated_grammar)[rule_index]
         addconstraint!(annotated_grammar,
             Forbidden(RuleNode(label_index, [rulenode_ax, rulenode_xb]))
         )
@@ -265,7 +265,7 @@ function _distributive_over_constraints!(
         )
     end
     # TODO: we should add this only if the 2(*identity) is in the grammar
-    # if :identity ∈ annotated_grammar.rule_annotations[rule_index]
+    # if :identity ∈ get_rule_annotations(annotated_grammar)[rule_index]
     #     addconstraint!(annotated_grammar,
     #         Forbidden(RuleNode(label_index, [VarNode(:x), VarNode(:x)]))
     #     )
@@ -289,7 +289,7 @@ function _associativity_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int,
 )
-    if :commutative ∈ annotated_grammar.rule_annotations[rule_index]
+    if :commutative ∈ get_rule_annotations(annotated_grammar)[rule_index]
         # allow only to repeat the operation in a path formation with ordered operands
         #   * will lean right while smaller then the rule, and then left
         addconstraint!(annotated_grammar, 
@@ -310,9 +310,9 @@ function _associativity_constraints!(
                 [:y, :w],
             ))
         # TODO: combine to one constraint when we allow constraints on VarNodes
-        num_children = length.(annotated_grammar.grammar.childtypes)
+        num_children = length.(get_grammar(annotated_grammar).childtypes)
         for n in Set(num_children[1:rule_index-1])
-            dom = BitVector([i<rule_index && n == num_children[i] for i in 1:length(annotated_grammar.grammar.rules)])
+            dom = BitVector([i<rule_index && n == num_children[i] for i in 1:length(get_grammar(annotated_grammar).rules)])
             addconstraint!(annotated_grammar, 
                 Forbidden(RuleNode(rule_index, [
                     RuleNode(rule_index, [
@@ -340,7 +340,7 @@ end
 Adds a constraint to the underlying ContextSensitiveGrammar.
 """
 function HerbGrammar.addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::HerbCore.AbstractConstraint)
-    addconstraint!(annotated_grammar.grammar, constraint)
+    addconstraint!(get_grammar(annotated_grammar), constraint)
 end
 
 
