@@ -1,5 +1,3 @@
-using TestItems
-
 @testitem "macro vs from expressions" begin
     
     direct = HerbConstraints.@csgrammar_annotated begin        
@@ -29,7 +27,7 @@ using TestItems
     @test "$(direct)" == "$(from_expr)"
 end
 
-@testmodule GrammarExpr begin
+@testsetup module GrammarExpr 
     using HerbGrammar
     using HerbConstraints
 
@@ -155,7 +153,7 @@ end
     @test_throws ArgumentError HerbConstraints.expr2csgrammar_annotated(expr)
 end 
 
-@testitem "undefined label in call annotation" begin
+@testitem "no label in call annotation" begin
     expr = quote        
         Number = Number + Number := (unknown_annotation(arg))
     end
@@ -169,11 +167,11 @@ end
     @test_throws ArgumentError HerbConstraints.expr2csgrammar_annotated(expr)
 end
 
-@testmodule HerbSearch begin
+@testsetup module HerbSearch 
     using HerbSearch
 end
 
-@testmodule HerbGrammar begin
+@testsetup module HerbGrammar 
     using HerbGrammar
 end
 

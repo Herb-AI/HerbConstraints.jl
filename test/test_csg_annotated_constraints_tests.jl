@@ -1,16 +1,14 @@
-using TestItems
+# """
+# This test file tests that constraints in annotated grammars work as intended. 
+# To make sure that constraints are tested properly:
+#     * Each constraint should bad out at least one "bad" program uniquely
+#     * At least one "good" program that is equivalent should pass all constraints
+# Use "Run Tests with Coverage" to ensure that all constraints are covered by the tests.
+# Make sure all tests have Total != 0 tests (that you did not forget to call the testing function).
+# Recommended to turn on notice_prints by default when developing tests.
+# """
 
-"""
-This test file tests that constraints in annotated grammars work as intended. 
-To make sure that constraints are tested properly:
-    * Each constraint should bad out at least one "bad" program uniquely
-    * At least one "good" program that is equivalent should pass all constraints
-Use "Run Tests with Coverage" to ensure that all constraints are covered by the tests.
-Make sure all tests have Total != 0 tests (that you did not forget to call the testing function).
-Recommended to turn on notice_prints by default when developing tests.
-"""
-
-@testmodule check_constraints_module begin
+@testsetup module check_constraints_module
     using HerbConstraints
     using HerbGrammar
     using Test
@@ -350,7 +348,7 @@ end
         bigvars:: Number = a | b | c
     end
     annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-  
+
     plus = only(findall(==(true), annotated.label_domains["plus"]))
     consts = findall(==(true), annotated.label_domains["constants"])
     x,y = findall(==(true), annotated.label_domains["smallvars"])
