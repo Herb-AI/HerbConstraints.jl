@@ -1,4 +1,6 @@
-@testset verbose = false "Forbidden Sequence" begin
+@testitem "Forbidden Sequence" begin
+    using HerbCore, HerbGrammar
+
     function dummy_tree(sequence)::AbstractRuleNode
         # returns a tree that contains the specified sequence and some noise.
         # holes can be represented by tuples of indices

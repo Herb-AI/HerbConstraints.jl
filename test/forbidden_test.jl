@@ -1,4 +1,6 @@
-@testset verbose = false "Forbidden" begin
+@testitem "Forbidden" begin
+    using HerbCore, HerbGrammar
+
     forbidden = Forbidden(RuleNode(4, [
         VarNode(:a),
         VarNode(:a)

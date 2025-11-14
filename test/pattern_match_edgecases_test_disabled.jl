@@ -1,8 +1,6 @@
-using HerbCore
-using HerbGrammar
-
 #These test contain edgecases that fail in the current implemention
-@testset verbose=false "PatternMatch Edgecase" begin
+@testitem "PatternMatch Edgecase" begin
+    using HerbCore, HerbGrammar
 
     @testset "3 VarNodes: pairwise Softfail, triplewise HardFail" begin
         rn = RuleNode(4, [

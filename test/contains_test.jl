@@ -1,6 +1,8 @@
-@testset verbose = false "Contains" begin
-    contains = Contains(2)
+@testitem "Contains" begin
+    using HerbGrammar, HerbCore
 
+    contains = Contains(2)
+   
     @testset "check_tree true" begin
         tree1 = RuleNode(2)
         tree2 = RuleNode(2, [
