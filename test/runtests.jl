@@ -1,6 +1,16 @@
-using Aqua
-using HerbCore
+
+@testitem "Aqua.jl" begin
+    using Aqua
+    Aqua.test_all(HerbConstraints)
+end
+
+using ReTestItems
 using HerbConstraints
+runtests(HerbConstraints)
+
+###
+
+using HerbCore
 using HerbGrammar
 using Test
 
