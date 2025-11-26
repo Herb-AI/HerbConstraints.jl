@@ -1,4 +1,5 @@
-@testset verbose = false "ContainsSubtree" begin
+@testitem "ContainsSubtree" begin
+    using HerbCore, HerbGrammar
 
     function has_active_constraints(solver::UniformSolver)::Bool
         for c ∈ keys(solver.isactive)

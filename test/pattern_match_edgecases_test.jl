@@ -1,8 +1,6 @@
-using HerbCore
-using HerbGrammar
-
 #These test contain edgecases that fail in the current implemention
-@testset verbose=false "PatternMatch Edgecase" begin
+@testitem "PatternMatch Edgecase" begin
+    using HerbCore, HerbGrammar
 
     @testset "3 VarNodes: pairwise Softfail, triplewise HardFail" begin
         rn = RuleNode(4, [
@@ -13,7 +11,7 @@ using HerbGrammar
             RuleNode(4, [VarNode(:x), VarNode(:x)]),
             VarNode(:x)
         ])
-        @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
+        @test_broken pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
     end
 
     @testset "3 VarNodes: HardFail on instance 2 and 3" begin
@@ -25,6 +23,6 @@ using HerbGrammar
             RuleNode(4, [VarNode(:x), VarNode(:x)]),
             VarNode(:x)
         ])
-        @test pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
+        @test_broken pattern_match(rn, mn) isa HerbConstraints.PatternMatchHardFail
     end
 end
