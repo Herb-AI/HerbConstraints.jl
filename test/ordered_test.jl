@@ -1,4 +1,6 @@
-@testset verbose = false "Ordered" begin
+@testitem "Ordered" begin
+    using HerbCore, HerbGrammar
+    
     @testset "check_tree true, length(order)=2" begin
         ordered = Ordered(RuleNode(4, [
                 VarNode(:a),
