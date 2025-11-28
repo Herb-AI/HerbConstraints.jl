@@ -42,14 +42,14 @@ Numbers = quote
 end
 
 Booleans = quote
-    false:: Boolean = false
-    true::  Boolean = true
+    # false:: Boolean = false
+    # true::  Boolean = true
     and::   Boolean = Boolean & Boolean  := (
         commutative, 
         associative, 
         idempotent,
-        identity("true"), 
-        annihilator("false"),
+        # identity("true"), 
+        # annihilator("false"),
         distributive_over("or"),
         absorptive_over("or"),
         inverse("not")
@@ -58,8 +58,8 @@ Booleans = quote
         commutative, 
         associative, 
         idempotent,
-        identity("false"), 
-        annihilator("true"),
+        # identity("false"), 
+        # annihilator("true"),
         distributive_over("and"),
         absorptive_over("and"),
         inverse("not")
