@@ -60,11 +60,12 @@
         end
         if ((!forgive_missing_constraints || notice_prints) 
             && (length(tested_constraints) != length(annotated_grammar.constraints)))
-            println()
             if !forgive_missing_constraints
                 @test (length(tested_constraints) == length(annotated_grammar.constraints))
+                println()
                 println("Fail information:") 
             else
+                println()
                 println("Notice:")
             end
             println("Not all constraints were tested.")
@@ -156,6 +157,37 @@
             RuleNode(minus, [
                 RuleNode(y)
             ])
+        ]))
+
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad
+        )
+    end
+
+    @testset "commutative" begin
+        annotated_grammar = quote        
+            var::       Number = x | y 
+            plus::      Number = Number + Number    := (commutative)
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+        x,y = findall(==(true), annotated.label_domains["var"])
+        plus = only(findall(==(true), annotated.label_domains["plus"]))
+        
+        
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        # plus commutative
+        push!(good, RuleNode(plus, [
+            RuleNode(x), 
+            RuleNode(y)
+        ]))
+
+        push!(bad, RuleNode(plus, [
+            RuleNode(y), 
+            RuleNode(x)
         ]))
 
         check_constraints(
@@ -349,9 +381,6 @@
         x,y = findall(==(true), annotated.label_domains["smallvars"])
         a,b,c = findall(==(true), annotated.label_domains["bigvars"])
 
-
-        
-
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
 
@@ -482,35 +511,118 @@
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
 
-        # check for x<y<a all orders
-        push!(good, RuleNode(mult, [
-            RuleNode(mult, [
-                RuleNode(x), 
-                RuleNode(y)
-            ]),
+        mult_xy = RuleNode(mult, [
+            RuleNode(x), 
+            RuleNode(y)
+        ])
+        mult_ya = RuleNode(mult, [
+            RuleNode(y), 
             RuleNode(a)
+        ])
+
+        # check for x<y<a all orders
+        push!(good, RuleNode(mult, [mult_xy, RuleNode(a)]))
+        push!(good, RuleNode(mult, [mult_ya, RuleNode(x)]))
+        push!(bad,  RuleNode(mult, [RuleNode(x), mult_ya]))
+        push!(bad,  RuleNode(mult, [RuleNode(a), mult_xy]))
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad
+        )
+    end
+
+    @testset "annihilator" begin
+        annotated_grammar = quote        
+            zero::      Number = 0
+            var::       Number = x 
+            times::     Number = Number * Number    := (annihilator("zero"))
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+        zero = only(findall(==(true), annotated.label_domains["zero"]))
+        x = only(findall(==(true), annotated.label_domains["var"]))
+        times = only(findall(==(true), annotated.label_domains["times"]))
+        
+        
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        # times annihilator("zero")
+        push!(good, RuleNode(zero))
+        push!(bad, RuleNode(times, [
+            RuleNode(x), 
+            RuleNode(zero)
         ]))
-        push!(good, RuleNode(mult, [
-            RuleNode(mult, [
-                RuleNode(y), 
-                RuleNode(a)
-            ]),
+        push!(bad, RuleNode(times, [
+            RuleNode(zero), 
             RuleNode(x)
         ]))
-        push!(bad, RuleNode(mult, [
+
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad
+        )
+    end
+
+    @testset "idempotent" begin
+        annotated_grammar = quote        
+            var::       Bool = x 
+            and::      Bool = Bool && Bool    := (idempotent)
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+        x = only(findall(==(true), annotated.label_domains["var"]))
+        and = only(findall(==(true), annotated.label_domains["and"]))
+        
+        
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        # and idempotent
+        push!(good, RuleNode(x))
+        push!(bad, RuleNode(and, [
             RuleNode(x), 
-            RuleNode(mult, [
-                RuleNode(y), 
-                RuleNode(a)
-            ])
+            RuleNode(x)
         ]))
-        push!(bad, RuleNode(mult, [
-            RuleNode(a), 
-            RuleNode(mult, [
-                RuleNode(x), 
-                RuleNode(y)
-            ])
-        ]))
+
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad
+        )
+    end
+
+    @testset "absorptive_over" begin
+        annotated_grammar = quote        
+            var::       Bool = x | y 
+            and::      Bool = Bool && Bool    
+            or::     Bool = Bool || Bool    := (absorptive_over("and"))
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+        x,y = findall(==(true), annotated.label_domains["var"])
+        and = only(findall(==(true), annotated.label_domains["and"]))
+        or = only(findall(==(true), annotated.label_domains["or"]))
+        
+        
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        # or absorptive_over("and")
+        push!(good, RuleNode(x))
+
+        and_xy = RuleNode(and, [
+            RuleNode(x), 
+            RuleNode(y)
+        ])
+        and_yx = RuleNode(and, [
+            RuleNode(y), 
+            RuleNode(x)
+        ])
+
+        push!(bad, RuleNode(or, [and_xy, RuleNode(x)]))
+        push!(bad, RuleNode(or, [and_yx, RuleNode(x)]))
+        push!(bad, RuleNode(or, [RuleNode(x), and_xy]))
+        push!(bad, RuleNode(or, [RuleNode(x), and_yx]))
 
         check_constraints(
             annotated.grammar,

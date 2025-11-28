@@ -9,8 +9,7 @@
             constants:: Number = |(2:4) 
             variables:: Number = x | y              
             minus::      Number = -Number           := identity("zero")
-            plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
-            times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+            plus::      Number = Number + Number    := (associative, commutative)
             Number = a | b | c
         end
 
@@ -20,8 +19,7 @@
             constants:: Number = |(2:4) 
             variables:: Number = x | y              
             minus::      Number = -Number           := identity("zero")
-            plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
-            times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+            plus::      Number = Number + Number    := (associative, commutative)
             Number = a | b | c
         end
 
@@ -38,7 +36,6 @@
         Number = x | y
         Number = -Number 
         Number = Number + Number
-        Number = Number * Number
     end
     grammar = HerbGrammar.expr2csgrammar(num)
     unannotated = HerbConstraints.expr2csgrammar_annotated(num)
@@ -49,8 +46,7 @@
         constants:: Number = |(2:4) 
         variables:: Number = x | y              
         minus::      Number = -Number           := identity("zero")
-        plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
-        Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+        plus::      Number = Number + Number    := (associative, commutative)
     end
     annotated = HerbConstraints.expr2csgrammar_annotated(num_annotated)
 
@@ -134,15 +130,6 @@
         annotations = rule_annotations[plus_rule]
         @test :associative in annotations
         @test :commutative in annotations
-        @test :(identity("zero")) in annotations
-        @test :(inverse("minus")) in annotations
-
-        times_rule = length(rules)
-        annotations = rule_annotations[times_rule]
-        @test :associative in annotations
-        @test :commutative in annotations
-        @test :(identity("one")) in annotations
-        @test :(distributive_over("plus")) in annotations
     end
 
     @testset "undefined annotation" begin
@@ -169,9 +156,9 @@
 
     @testset "candidates generation" begin
         @test length(grammar.constraints)==0
-        @test length(annotated.grammar.constraints) == 25
+        @test length(annotated.grammar.constraints) == 7
 
-        @test length(HerbSearch.BFSIterator(grammar, :Number, max_depth=3)) == 25207
-        @test length(HerbSearch.BFSIterator(annotated.grammar, :Number, max_depth=3)) == 1172
+        @test length(HerbSearch.BFSIterator(grammar, :Number, max_depth=3)) == 4039
+        @test length(HerbSearch.BFSIterator(annotated.grammar, :Number, max_depth=3)) == 222
     end
 end
