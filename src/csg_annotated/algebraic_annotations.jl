@@ -1,8 +1,8 @@
 ## Defined by https://en.wikipedia.org/wiki/Algebraic_structure
 
 ## Ideas for future annotations
-# - minus multiplication relationship
-# - minus is comutative over plus
+# - minus multiplication relationship (cancellation?
+# - minus over plus (unary distributive_over) - do we want to propogare it up or down?
 
 function _identity_constraints!(
     annotated_grammar::AnnotatedGrammar,
