@@ -85,10 +85,10 @@
             minus::     Number = -Number             := (identity("zero"))
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        zero = only(findall(==(true), annotated.label_domains["zero"]))
-        x = only(findall(==(true), annotated.label_domains["var"]))
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
-        minus = only(findall(==(true), annotated.label_domains["minus"]))
+        zero = only((HerbConstraints.get_bylabel(annotated)["zero"]))
+        x = only((HerbConstraints.get_bylabel(annotated)["var"]))
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
+        minus = only((HerbConstraints.get_bylabel(annotated)["minus"]))
         
         
         good = Vector{RuleNode}()
@@ -124,10 +124,10 @@
             minus::     Number = -Number            
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        zero = only(findall(==(true), annotated.label_domains["zero"]))
-        x,y = findall(==(true), annotated.label_domains["var"])
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
-        minus = only(findall(==(true), annotated.label_domains["minus"]))
+        zero = only((HerbConstraints.get_bylabel(annotated)["zero"]))
+        x,y = (HerbConstraints.get_bylabel(annotated)["var"])
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
+        minus = only((HerbConstraints.get_bylabel(annotated)["minus"]))
         
         
         good = Vector{RuleNode}()
@@ -172,8 +172,8 @@
             plus::      Number = Number + Number    := (commutative)
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        x,y = findall(==(true), annotated.label_domains["var"])
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
+        x,y = (HerbConstraints.get_bylabel(annotated)["var"])
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
         
         
         good = Vector{RuleNode}()
@@ -204,9 +204,9 @@
             times::     Number = Number * Number    := (distributive_over("plus"))
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        x,y,z = findall(==(true), annotated.label_domains["var"])
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
-        times = only(findall(==(true), annotated.label_domains["times"]))
+        x,y,z = (HerbConstraints.get_bylabel(annotated)["var"])
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
+        times = only((HerbConstraints.get_bylabel(annotated)["times"]))
         
         
         good = Vector{RuleNode}()
@@ -289,9 +289,9 @@
             times::     Number = Number * Number    := (distributive_over("plus"), commutative)
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        x,y,z = findall(==(true), annotated.label_domains["var"])
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
-        times = only(findall(==(true), annotated.label_domains["times"]))
+        x,y,z = (HerbConstraints.get_bylabel(annotated)["var"])
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
+        times = only((HerbConstraints.get_bylabel(annotated)["times"]))
         
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
@@ -376,10 +376,10 @@
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
 
-        plus = only(findall(==(true), annotated.label_domains["plus"]))
-        consts = findall(==(true), annotated.label_domains["constants"])
-        x,y = findall(==(true), annotated.label_domains["smallvars"])
-        a,b,c = findall(==(true), annotated.label_domains["bigvars"])
+        plus = only((HerbConstraints.get_bylabel(annotated)["plus"]))
+        consts = (HerbConstraints.get_bylabel(annotated)["constants"])
+        x,y = (HerbConstraints.get_bylabel(annotated)["smallvars"])
+        a,b,c = (HerbConstraints.get_bylabel(annotated)["bigvars"])
 
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
@@ -503,10 +503,10 @@
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
 
-        mult = only(findall(==(true), annotated.label_domains["mult"]))
-        consts = findall(==(true), annotated.label_domains["constants"])
-        x,y = findall(==(true), annotated.label_domains["smallvars"])
-        a,b,c = findall(==(true), annotated.label_domains["bigvars"])
+        mult = only((HerbConstraints.get_bylabel(annotated)["mult"]))
+        consts = (HerbConstraints.get_bylabel(annotated)["constants"])
+        x,y = (HerbConstraints.get_bylabel(annotated)["smallvars"])
+        a,b,c = (HerbConstraints.get_bylabel(annotated)["bigvars"])
 
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
@@ -539,9 +539,9 @@
             times::     Number = Number * Number    := (annihilator("zero"))
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        zero = only(findall(==(true), annotated.label_domains["zero"]))
-        x = only(findall(==(true), annotated.label_domains["var"]))
-        times = only(findall(==(true), annotated.label_domains["times"]))
+        zero = only((HerbConstraints.get_bylabel(annotated)["zero"]))
+        x = only((HerbConstraints.get_bylabel(annotated)["var"]))
+        times = only((HerbConstraints.get_bylabel(annotated)["times"]))
         
         
         good = Vector{RuleNode}()
@@ -571,8 +571,8 @@
             and::      Bool = Bool && Bool    := (idempotent)
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        x = only(findall(==(true), annotated.label_domains["var"]))
-        and = only(findall(==(true), annotated.label_domains["and"]))
+        x = only((HerbConstraints.get_bylabel(annotated)["var"]))
+        and = only((HerbConstraints.get_bylabel(annotated)["and"]))
         
         
         good = Vector{RuleNode}()
@@ -599,9 +599,9 @@
             or::     Bool = Bool || Bool    := (absorptive_over("and"))
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
-        x,y = findall(==(true), annotated.label_domains["var"])
-        and = only(findall(==(true), annotated.label_domains["and"]))
-        or = only(findall(==(true), annotated.label_domains["or"]))
+        x,y = (HerbConstraints.get_bylabel(annotated)["var"])
+        and = only((HerbConstraints.get_bylabel(annotated)["and"]))
+        or = only((HerbConstraints.get_bylabel(annotated)["or"]))
         
         
         good = Vector{RuleNode}()

@@ -63,8 +63,7 @@ function _annotation2constraints!(
     @match annotation begin
         Expr(:call, name_, arg_) => begin
             annotation_name = name_
-            labels_domain = get_label_domains(annotated_grammar)[String(arg_)]
-            label_index = only(findall(==(true), labels_domain))
+            label_index = only(get_bylabel(annotated_grammar)[String(arg_)])
             @match annotation_name begin
                 :identity => _identity_constraints!(annotated_grammar, rule_index, label_index)
                 :annihilator => _annihilator_constraints!(annotated_grammar, rule_index, label_index)

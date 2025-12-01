@@ -1,4 +1,29 @@
 """
+   AnnotatedGrammar
+
+Represents an annotated context-sensitive grammar.
+Fields:
+- grammar: The underlying ContextSensitiveGrammar
+- bylabel: A dictionary mapping labels to their corresponding rules
+- rule_annotations: A dictionary mapping rule indices to their corresponding annotations
+"""
+mutable struct AnnotatedGrammar
+   grammar::ContextSensitiveGrammar
+   bylabel::Dict{String, Vector{Int}}
+   rule_annotations::Dict{Int,Vector{Any}}
+
+    function AnnotatedGrammar(grammar::ContextSensitiveGrammar, bylabel::Dict{String, Vector{Int}}, rule_annotations::Dict{Int,Vector{Any}})
+        annotated_grammar = new(grammar, bylabel, rule_annotations)
+        for rule_index in keys(rule_annotations)
+            for annotation in rule_annotations[rule_index]
+                _annotation2constraints!(annotated_grammar, rule_index, annotation)
+            end
+        end
+        return annotated_grammar
+    end
+end
+
+"""
     expr2csgrammar(expression::Expr)::AnnotatedGrammar  
 
 A function for converting an `Expr` to a [`AnnotatedGrammar`](@ref).
@@ -19,19 +44,9 @@ Only expressions in the correct format (see [`csgrammar_annotated`](@ref)) can b
     annotated_grammar = HerbConstraints.expr2csgrammar_annotated(num_annotated)
 ```
 """
-function expr2csgrammar_annotated(expression::Expr)::AnnotatedGrammar  
-    grammar, bylabel, rule_annotations = _process_expression(expression)
-
-    labels = Dict(label => BitArray(r ∈ bylabel[label] for r ∈ 1:length(grammar.rules)) for label ∈ keys(bylabel) if label != NaN)
-
-    annotated_grammar = AnnotatedGrammar(grammar, labels, rule_annotations)
-    for rule_index in keys(rule_annotations)
-        for annotation in rule_annotations[rule_index]
-            _annotation2constraints!(annotated_grammar, rule_index, annotation)
-        end
-    end
-
-    return annotated_grammar
+function expr2csgrammar_annotated(expr::Expr)::AnnotatedGrammar
+    grammar, bylabel, rule_annotations = _process_expression(expr)
+    return AnnotatedGrammar(grammar, bylabel, rule_annotations)
 end
 
 """    
@@ -80,23 +95,6 @@ macro csgrammar_annotated(ex)
 end
 
 """
-   AnnotatedGrammar
-
-A [`ContextSensitiveGrammar`](@ref) with optional labels and annotations. Use [`@csgrammar_annotated`](@ref) to construct.
-
-See [`@csgrammar_annotated`](@ref) for details on valid labels and annotations.
-Fields:
-- grammar: The underlying ContextSensitiveGrammar
-- label_domains: A dictionary mapping labels to their corresponding domain BitVectors
-- rule_annotations: A dictionary mapping rule indices to their corresponding annotations
-"""
-struct AnnotatedGrammar
-   grammar::ContextSensitiveGrammar
-   label_domains::Dict{String, BitArray}
-   rule_annotations::Dict{Int,Vector{Any}}
-end
-
-"""
     get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
 
 Returns the underlying ContextSensitiveGrammar.
@@ -106,12 +104,12 @@ function get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGramm
 end
 
 """
-    get_label_domains(annotated_grammar::AnnotatedGrammar)::Dict{String, BitArray}
+    get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
 
-Returns the label domains dictionary.
+Returns the bylabel dictionary.
 """
-function get_label_domains(annotated_grammar::AnnotatedGrammar)::Dict{String, BitArray}
-    return annotated_grammar.label_domains
+function get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
+    return annotated_grammar.bylabel
 end
 
 """

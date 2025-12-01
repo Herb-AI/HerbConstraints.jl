@@ -69,28 +69,28 @@
     end
 
     @testset "labels" begin
-        label_domains = annotated.label_domains
+        bylabel = HerbConstraints.get_bylabel(annotated)
         rules = annotated.grammar.rules
         
-        variables_rules = findall(==(true), label_domains["variables"])
+        variables_rules = (bylabel["variables"])
         @test(rules[variables_rules[1]] == :(x))
         @test(rules[variables_rules[2]] == :(y))
 
-        zero_rule = only(findall(==(true), label_domains["zero"]))
+        zero_rule = only((bylabel["zero"]))
         @test(rules[zero_rule] == :(0))
 
-        one_rule = only(findall(==(true), label_domains["one"]))
+        one_rule = only((bylabel["one"]))
         @test(rules[one_rule] == :(1))
 
-        constants_rules = findall(==(true), label_domains["constants"])
+        constants_rules = (bylabel["constants"])
         for c in 2:4
             @test(rules[constants_rules[c-1]] == :($c))
         end
 
-        minus_rule = only(findall(==(true), label_domains["minus"]))
+        minus_rule = only((bylabel["minus"]))
         @test(rules[minus_rule] == :(-Number))
 
-        plus_rule = only(findall(==(true), label_domains["plus"]))
+        plus_rule = only((bylabel["plus"]))
         @assert(rules[plus_rule] == :(Number + Number))
     end
 
@@ -103,30 +103,30 @@
     end
 
     @testset "annotations" begin
-        label_domains = annotated.label_domains
+        bylabel = HerbConstraints.get_bylabel(annotated)
         rule_annotations = annotated.rule_annotations
         rules = annotated.grammar.rules
 
-        variables_rules = findall(==(true), label_domains["variables"])
+        variables_rules = (bylabel["variables"])
         @test(rule_annotations[variables_rules[1]] == [])
         @test(rule_annotations[variables_rules[2]] == [])
 
-        zero_rule = only(findall(==(true), label_domains["zero"]))
+        zero_rule = only((bylabel["zero"]))
         @test(rule_annotations[zero_rule] == [])
 
-        one_rule = only(findall(==(true), label_domains["one"]))
+        one_rule = only((bylabel["one"]))
         @test(rule_annotations[one_rule] == [])
 
-        constants_rules = findall(==(true), label_domains["constants"])
+        constants_rules = (bylabel["constants"])
         for r in constants_rules
             @test(rule_annotations[r] == [])
         end
 
-        minus_rule = only(findall(==(true), label_domains["minus"]))
+        minus_rule = only((bylabel["minus"]))
         annotations = rule_annotations[minus_rule]
         @test :(identity("zero")) in annotations
 
-        plus_rule = only(findall(==(true), label_domains["plus"]))
+        plus_rule = only((bylabel["plus"]))
         annotations = rule_annotations[plus_rule]
         @test :associative in annotations
         @test :commutative in annotations
