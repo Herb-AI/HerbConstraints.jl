@@ -82,7 +82,9 @@ end
 """
    AnnotatedGrammar
 
-A struct for holding an annotated context-sensitive grammar.
+A [`ContextSensitiveGrammar`](@ref) with optional labels and annotations. Use [`@csgrammar_annotated`](@ref) to construct.
+
+See [`@csgrammar_annotated`](@ref) for details on valid labels and annotations.
 Fields:
 - grammar: The underlying ContextSensitiveGrammar
 - label_domains: A dictionary mapping labels to their corresponding domain BitVectors
