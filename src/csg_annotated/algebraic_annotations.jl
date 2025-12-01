@@ -2,7 +2,8 @@
 
 ## Ideas for future annotations
 # - minus multiplication relationship (cancellation?
-# - minus over plus (unary distributive_over) - do we want to propogare it up or down?
+# - minus over plus (unary distributive_over) - propogare down?
+# - allow location based labels
 
 function _identity_constraints!(
     annotated_grammar::AnnotatedGrammar,
