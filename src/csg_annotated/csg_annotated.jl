@@ -37,7 +37,7 @@ end
 """    
     @csgrammar_annotated ex
 
-A macro wrapper for the [`expr2csgrammar`](@ref) function.
+Construct an [`AnnotatedGammar`](@ref).
 Define an annotated grammar and return it as a ContextSensitiveGrammar.
 Allows for adding optional annotations per rule.
 As well as that, allows for adding optional labels per rule, which can be referenced in annotations. 
