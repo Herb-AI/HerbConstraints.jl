@@ -75,6 +75,14 @@ function _associativity_constraints!(
                 RuleNode(rule_index, [child, VarNode(:w)]),
                 [:y, :w],
             ))
+        if :idempotent ∈get_rule_annotations(annotated_grammar)[rule_index]
+            addconstraint!(annotated_grammar, 
+                Forbidden(RuleNode(rule_index, [VarNode(:x), child]))
+                )
+            addconstraint!(annotated_grammar, 
+                Forbidden(RuleNode(rule_index, [child, VarNode(:y)]))
+                )
+        end
         # TODO: combine to one constraint when we allow constraints on VarNodes
         num_children = length.(get_grammar(annotated_grammar).childtypes)
         for n in Set(num_children[1:rule_index-1])
@@ -92,12 +100,15 @@ function _associativity_constraints!(
         # TODO: if we also have an unary inverse, make the inverse invisible to the ordering
     else
         # allow only to repeat the operation in a left leaning path formation
+        child = RuleNode(rule_index, [VarNode(:a), VarNode(:b)])
         addconstraint!(annotated_grammar, 
-            Forbidden(RuleNode(rule_index, [
-                VarNode(:c),
-                RuleNode(rule_index, [VarNode(:a), VarNode(:b)])
-            ]))
+            Forbidden(RuleNode(rule_index, [VarNode(:c), child]))
             )
+        if :idempotent ∈get_rule_annotations(annotated_grammar)[rule_index]
+            addconstraint!(annotated_grammar, 
+                Forbidden(RuleNode(rule_index, [child, VarNode(:b)]))
+                )
+        end
     end
 end
 

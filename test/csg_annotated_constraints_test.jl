@@ -367,6 +367,44 @@
         )
     end
 
+    @testset "associativeity" begin
+        annotated_grammar = quote        
+            constants:: Number = |(1:4) 
+            smallvars:: Number = x | y 
+            mult::      Number = Number * Number    := associative
+            bigvars:: Number = a | b | c
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+
+        mult = only((HerbConstraints.get_bylabel(annotated)["mult"]))
+        consts = (HerbConstraints.get_bylabel(annotated)["constants"])
+        x,y = (HerbConstraints.get_bylabel(annotated)["smallvars"])
+        a,b,c = (HerbConstraints.get_bylabel(annotated)["bigvars"])
+
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        mult_xy = RuleNode(mult, [
+            RuleNode(x), 
+            RuleNode(y)
+        ])
+        mult_ya = RuleNode(mult, [
+            RuleNode(y), 
+            RuleNode(a)
+        ])
+
+        # check for x<y<a all orders
+        push!(good, RuleNode(mult, [mult_xy, RuleNode(a)]))
+        push!(good, RuleNode(mult, [mult_ya, RuleNode(x)]))
+        push!(bad,  RuleNode(mult, [RuleNode(x), mult_ya]))
+        push!(bad,  RuleNode(mult, [RuleNode(a), mult_xy]))
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad
+        )
+    end
+
     @testset "associativity+commutative" begin
         annotated_grammar = quote        
             constants:: Number = |(1:4) 
@@ -494,41 +532,154 @@
         )
     end
 
-    @testset "associativeity-commutative" begin
+    @testset "associativity+idempotent" begin
         annotated_grammar = quote        
-            constants:: Number = |(1:4) 
-            smallvars:: Number = x | y 
-            mult::      Number = Number * Number    := associative
-            bigvars:: Number = a | b | c
+            smallvars:: Boolean = x | y |z
+            and::  Boolean = Boolean && Boolean    := (associative, idempotent)
+            bigvars:: Boolean = a | b | c
         end
         annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
 
-        mult = only((HerbConstraints.get_bylabel(annotated)["mult"]))
-        consts = (HerbConstraints.get_bylabel(annotated)["constants"])
-        x,y = (HerbConstraints.get_bylabel(annotated)["smallvars"])
+        and = only((HerbConstraints.get_bylabel(annotated)["and"]))
+        x,y,z = (HerbConstraints.get_bylabel(annotated)["smallvars"])
         a,b,c = (HerbConstraints.get_bylabel(annotated)["bigvars"])
 
         good = Vector{RuleNode}()
         bad = Vector{RuleNode}()
 
-        mult_xy = RuleNode(mult, [
-            RuleNode(x), 
-            RuleNode(y)
-        ])
-        mult_ya = RuleNode(mult, [
-            RuleNode(y), 
-            RuleNode(a)
-        ])
+        push!(good, RuleNode(and, [
+            RuleNode(a), 
+            RuleNode(b)
+        ]))
+        push!(good, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]),
+            RuleNode(c)
+        ]))
 
-        # check for x<y<a all orders
-        push!(good, RuleNode(mult, [mult_xy, RuleNode(a)]))
-        push!(good, RuleNode(mult, [mult_ya, RuleNode(x)]))
-        push!(bad,  RuleNode(mult, [RuleNode(x), mult_ya]))
-        push!(bad,  RuleNode(mult, [RuleNode(a), mult_xy]))
+        #associative
+        push!(bad, RuleNode(and, [
+            RuleNode(a),
+            RuleNode(and, [
+                RuleNode(b), 
+                RuleNode(c)
+            ])
+        ]))
+        
+        # idempotent
+        push!(bad, RuleNode(and, [
+            RuleNode(a), 
+            RuleNode(a)
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ])
+            RuleNode(b)
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(b), 
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ])
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]),
+            RuleNode(b)
+        ]))
+
         check_constraints(
             annotated.grammar,
             good,
             bad
+        )
+    end
+
+    @testset "associativity+commutative+idempotent" begin
+        annotated_grammar = quote        
+            smallvars:: Boolean = x | y |z
+            and::  Boolean = Boolean && Boolean    := (associative, commutative, idempotent)
+            bigvars:: Boolean = a | b | c
+        end
+        annotated = HerbConstraints.expr2csgrammar_annotated(annotated_grammar)
+
+        and = only((HerbConstraints.get_bylabel(annotated)["and"]))
+        x,y,z = (HerbConstraints.get_bylabel(annotated)["smallvars"])
+        a,b,c = (HerbConstraints.get_bylabel(annotated)["bigvars"])
+
+        good = Vector{RuleNode}()
+        bad = Vector{RuleNode}()
+
+        push!(good, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]),
+            RuleNode(c)
+        ]))
+        push!(good, RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]))
+
+        #associative
+        push!(bad, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(b), 
+                RuleNode(c)
+            ]),
+            RuleNode(a)
+        ]))
+
+        #associative+commutative
+        push!(bad, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]),
+            RuleNode(a)
+        ]))
+        
+        # idempotent
+        push!(bad, RuleNode(and, [
+            RuleNode(x), 
+            RuleNode(x)
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(x), 
+            RuleNode(and, [
+                RuleNode(x), 
+                RuleNode(y)
+            ])
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(y), 
+            RuleNode(and, [
+                RuleNode(x), 
+                RuleNode(y)
+            ])
+        ]))
+        push!(bad, RuleNode(and, [
+            RuleNode(and, [
+                RuleNode(a), 
+                RuleNode(b)
+            ]),
+            RuleNode(b)
+        ]))
+
+        check_constraints(
+            annotated.grammar,
+            good,
+            bad,
+            # parallel plus will entail infinite depth - so we want the constraint but can't test it
+            forgive_missing_constraints=true
         )
     end
 
