@@ -106,10 +106,23 @@ end
 """
     get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
 
-Returns the bylabel dictionary.
+Returns a dictionary of the rules associated with each label.
 """
 function get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
     return annotated_grammar.bylabel
+end
+
+
+"""
+    get_labeldomain(annotated_grammar::AnnotatedGrammar)::Dict{String, BitVector}
+
+Returns a dictionary with the domain BitVector of each label.
+"""
+function get_labeldomain(annotated_grammar::AnnotatedGrammar)::Dict{String, BitVector}
+    return Dict(
+        label => BitArray(r ∈ rules for r ∈ 1:length(get_grammar(annotated_grammar).rules))
+        for (label, rules) in get_bylabel(annotated_grammar)
+    )
 end
 
 """
