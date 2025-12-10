@@ -78,9 +78,7 @@ include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
-include("solver/uniform_solver/asp/asp_tree_transformations.jl")
-include("solver/uniform_solver/asp/asp_constraint_transformations.jl")
-include("solver/uniform_solver/asp/asp_uniform_tree_solver.jl")
+function ASPSolver end
 
 export
     AbstractGrammarConstraint,
@@ -153,10 +151,6 @@ export
     update_rule_indices!,
     issame,
 
-    #asp uniform solver
-    tree_to_ASP,
-    constraint_tree_to_ASP,
-    to_ASP,
     ASPSolver
 
 end # module HerbConstraints

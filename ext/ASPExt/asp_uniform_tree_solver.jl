@@ -1,5 +1,3 @@
-using Clingo_jll
-
 mutable struct ASPSolver <: Solver
     grammar::AbstractGrammar
     tree::Union{RuleNode,UniformHole,StateHole}

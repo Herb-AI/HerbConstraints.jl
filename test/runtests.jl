@@ -29,5 +29,9 @@ using Test
     include("test_domainrulenode.jl")
     include("test_grammarconstraints.jl")
 
-    include("test_asp_solver.jl")
+    @testset verbose = true "ASP extension" begin
+        using Clingo_jll # Load the extension
+
+        include("test_asp_solver.jl")
+    end
 end
