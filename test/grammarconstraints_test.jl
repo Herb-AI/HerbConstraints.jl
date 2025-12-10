@@ -1,4 +1,6 @@
-@testset verbose = true "AbstractGrammarConstraint" begin
+@testitem "AbstractGrammarConstraint" begin
+    using HerbCore, HerbGrammar
+
     @testset "add_rule! to grammar and update constraints" begin
         # define grammar
         grammar = @cfgrammar begin

@@ -1,9 +1,10 @@
-ASPExt = Base.get_extension(HerbConstraints, :ASPExt)
-using .ASPExt: 
-    grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP, constraint_rulenode_to_ASP, ASPSolver, is_feasible, get_grammar, get_rulenode
+@testitem "ASPSolver" begin
+    using HerbCore, HerbGrammar
+    using Clingo_jll
 
-
-@testset verbose=false "ASPSolver" begin
+    ASPExt = Base.get_extension(HerbConstraints, :ASPExt)
+    using .ASPExt: 
+        grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP, constraint_rulenode_to_ASP, ASPSolver, is_feasible, get_grammar, get_rulenode
 
     @testset "rulenode_transformations" begin
         @testset "rulenode_to_ASP" begin
