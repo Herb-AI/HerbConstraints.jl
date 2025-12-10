@@ -1,22 +1,36 @@
+"""
+    An ASPSolver is a UniformSolver that uses Answer Set Programming to yield all solutions for the `ruleNode`.
+        `grammar`: this is the grammar of the program we are solving, likely with constraints
+        `ruleNode`: this is the current RuleNode/UniformHole/StateHole of the program we are solving
+        `solutions`: this vector is filled with all possible solutions for the current `ruleNode` given the grammar and constraints
+        `statistics`: gives the statistics of the ASP solver
+    An ASPSolver is instantiated with a `grammar` and a `ruleNode`, automatically calling the `solve` function to retrieve all `solutions`.
+    The constraints of the `grammar` and the `ruleNode` are transformed to ASP rules. Then, Clingo_jll is used to generate all solutions for this Answer Set Program. These `solutions` can then be iterated. 
+    
+    To use the ASP Solver, Clingo_jll must be manually specified to be used, which automaticlaly loads the ASPExt extension module of HerbConstraints.
+    ```bash
+        julia> using Clingo_jll
+    ```
+"""
 mutable struct ASPSolver <: Solver
     grammar::AbstractGrammar
-    tree::Union{RuleNode,UniformHole,StateHole}
+    ruleNode::Union{RuleNode,UniformHole,StateHole}
     solutions::Vector{Dict{Int64,Int64}} #vector of dictionaries with key=node and value=matching rule index
     isfeasible::Bool
     statistics::Union{TimerOutput, Nothing}
 end
 
 """
-    ASPSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
+    ASPSolver(grammar::AbstractGrammar, fixed_shaped_rulenode::AbstractRuleNode)
 """
-function ASPSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
-    @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
+function ASPSolver(grammar::AbstractGrammar, fixed_shaped_rulenode::AbstractRuleNode; with_statistics=false)
+    @assert !contains_nonuniform_hole(fixed_shaped_rulenode) "$(fixed_shaped_rulenode) contains non-uniform holes"
     statistics = @match with_statistics begin
         ::TimerOutput => with_statistics
         ::Bool => with_statistics ? TimerOutput("ASP Solver") : nothing
         ::Nothing => nothing
     end
-    solver = ASPSolver(grammar, fixed_shaped_tree,  Vector{Dict{Int32,Int32}}(), false, statistics)
+    solver = ASPSolver(grammar, fixed_shaped_rulenode, Vector{Dict{Int32,Int32}}(), false, statistics)
     solve(solver)
     return solver
 end
@@ -33,12 +47,12 @@ function get_grammar(solver::ASPSolver)::AbstractGrammar
 end
 
 """
-    get_tree(solver::ASPSolver)
+    get_rulenode(solver::ASPSolver)
 
-Get the root of the tree. This remains the same instance throughout the entire search.
+Get the RuleNode of the current program. This remains the same instance throughout the entire search.
 """
-function get_tree(solver::ASPSolver)::AbstractRuleNode
-    return solver.tree
+function get_rulenode(solver::ASPSolver)::AbstractRuleNode
+    return solver.ruleNode
 end
 
 """
@@ -53,15 +67,15 @@ end
 """
     solve(solver::ASPSolver)
 
-Generate all solutions for the given tree using ASP solver Clingo.
+Generate all solutions for the given rulenode using ASP solver Clingo.
 """
 function solve(solver::ASPSolver)
-    @timeit_debug solver.statistics "generate ASP tree" begin end
-    string_tree, _ = tree_to_ASP(get_tree(solver), get_grammar(solver), 1)
-    constraints = to_ASP(get_grammar(solver))
+    @timeit_debug solver.statistics "generate ASP RuleNode" begin end
+    string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
+    constraints = grammar_to_ASP(get_grammar(solver))
     asp_input = """
-%%% Tree
-$string_tree
+%%% RuleNode
+$string_rulenode
 
 %%% Constraints
 $constraints

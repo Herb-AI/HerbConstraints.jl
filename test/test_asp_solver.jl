@@ -1,11 +1,11 @@
 ASPExt = Base.get_extension(HerbConstraints, :ASPExt)
 using .ASPExt: 
-    to_ASP, tree_to_ASP, constraint_tree_to_ASP, ASPSolver, is_feasible, get_grammar, get_tree
+    grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP, constraint_rulenode_to_ASP, ASPSolver, is_feasible, get_grammar, get_rulenode
 
 
 @testset verbose=false "ASPSolver" begin
 
-    @testset "tree_transformations" begin
+    @testset "rulenode_transformations" begin
         @testset "rulenode_to_ASP" begin
             g = @csgrammar begin
                 S = 1 | x
@@ -21,7 +21,7 @@ using .ASPExt:
                 ])
             ])
 
-            asp, next_index = tree_to_ASP(tree, g, 1)
+            asp, next_index = rulenode_to_ASP(tree, g, 1)
             expected_asp = """
 node(1,3).
 child(1,1,2).
@@ -48,7 +48,7 @@ node(5,2).
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
-            asp, next_index = tree_to_ASP(tree, g, 1)
+            asp, next_index = rulenode_to_ASP(tree, g, 1)
             expected_asp = """
 1 { node(1,3);node(1,4) } 1.
 child(1,1,2).
@@ -73,7 +73,7 @@ child(1,2,3).
             sm = HerbConstraints.StateManager()
             statehole = HerbConstraints.StateHole(sm, tree)
 
-            asp, next_index = tree_to_ASP(statehole, g, 1)
+            asp, next_index = rulenode_to_ASP(statehole, g, 1)
             expected_asp = """
 1 { node(1,4);node(1,3) } 1.
 child(1,1,2).
@@ -102,7 +102,7 @@ child(1,2,3).
             c = Unique(4)
             addconstraint!(g, c)
 
-            asp, next_index, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            asp, next_index, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp == expected_asp
         end
@@ -124,7 +124,7 @@ child(1,2,3).
                 RuleNode(2)
             ]))
             addconstraint!(g, c)
-            asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
 
@@ -159,7 +159,7 @@ allowed(c1x3,2).
             ]))
             addconstraint!(g, c)
 
-            asp_tree, additional, _ = constraint_tree_to_ASP(g, statehole, 1, 1)
+            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, statehole, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
 
@@ -193,7 +193,7 @@ allowed(c1x3,4).
                 VarNode(:b)
             ]))
             addconstraint!(g, c)
-            asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
 
@@ -223,7 +223,7 @@ allowed(c1x3,4).
             c = Forbidden(VarNode(:a))
             addconstraint!(g, c)
 
-            asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
 
@@ -252,7 +252,7 @@ allowed(c1x3,4).
 
             constraint = Forbidden(RuleNode(5, [RuleNode(3), RuleNode(3)]))
 
-            asp = to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = "subtree(c1) :- node(X1,5),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).\n:- subtree(c1).\n"
             @test asp == expected_asp
         end
@@ -265,7 +265,7 @@ allowed(c1x3,4).
                 Number = Number * Number
             end
             constraint = Contains(4)
-            asp = to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = ":- not node(_,4).\n"
 
             @test asp == expected_asp
@@ -279,7 +279,7 @@ allowed(c1x3,4).
                 Number = Number * Number
             end
             constraint = Unique(5)
-            asp = to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = "{ node(X,5) : node(X,5) } 1.\n"
 
             @test asp == expected_asp
@@ -293,13 +293,12 @@ allowed(c1x3,4).
                 Number = Number * Number
             end
             constraint = Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y)]), [:X, :Y])
-            asp = to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = """
 is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV < OrderedYV.
 is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV = OrderedYV,OrderedS = #sum { OrderedZ : child(OrderedX,OrderedZ,OrderedXC),child(OrderedY,OrderedZ,OrderedYC),is_smaller(OrderedXC,OrderedYC) },OrderedM = #max { OrderedZ : child(OrderedX,OrderedZ,OrderedXC) },OrderedS = OrderedM.
 :- node(X1,5),child(X1,1,X2),node(X2,X),child(X1,2,X3),node(X3,Y),not is_smaller(X,Y).
 """
-
             @test asp == expected_asp
         end
 
@@ -311,7 +310,7 @@ is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,Ordere
                 Number = Number * Number
             end
             constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
-            asp = to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = """
 allowed(c1x2,1).
 allowed(c1x2,2).
@@ -346,7 +345,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             @test Dict{Int64,Int64}(1 => 4, 2 => 2, 3 => 1) in solver.solutions
         end
 
-        @testset "asp_solver_filled_tree" begin
+        @testset "asp_solver_filled_rulenode" begin
             g = @csgrammar begin
                 S = 1 | x
                 S = S + S
@@ -368,7 +367,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             @test length(solver.solutions) == 1
         end
         
-        @testset "asp_solver_filled_tree_constraints" begin
+        @testset "asp_solver_filled_rulenode_constraints" begin
             g = @csgrammar begin
                 S = 1 | x
                 S = S + S
@@ -423,7 +422,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
 
             solver = ASPSolver(g, tree)
             @test ASPExt.get_grammar(solver) === g
-            @test ASPExt.get_tree(solver) === tree
+            @test ASPExt.get_rulenode(solver) === tree
             @test ASPExt.isfeasible(solver) === true
         end
     end
@@ -476,7 +475,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             addconstraint!(grammar, constraint1)
             addconstraint!(grammar, constraint2)
 
-            constraint_tree_asp = to_ASP(grammar)
+            constraint_tree_asp = grammar_to_ASP(grammar)
             expected_asp_constraints = """
 % Forbidden(3{a,b})
 subtree(c1) :- node(X1,3),child(X1,1,X2),node(X2,A),child(X1,2,X3),node(X3,B).
@@ -496,7 +495,7 @@ subtree(c2) :- node(X1,4),child(X1,1,X2),node(X2,A),child(X1,2,X3),node(X3,B).
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
-            asp_tree, _ = tree_to_ASP(tree, grammar, 1)
+            asp_tree, _ = rulenode_to_ASP(tree, grammar, 1)
             expected_asp_tree = """
 1 { node(1,3);node(1,4) } 1.
 child(1,1,2).
@@ -525,7 +524,7 @@ child(1,2,5).
                 VarNode(:a),
                 VarNode(:a)
             ])
-            asp_tree, additional, _ = constraint_tree_to_ASP(g, tree, 1, 1)
+            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,3),child(X1,1,X2),node(X2,A),child(X1,2,X3),node(X3,A)"
             @test asp_tree == expected_asp
         end
@@ -546,7 +545,7 @@ child(1,2,5).
                 VarNode(:c)
             ]), [:b, :c, :a])
             addconstraint!(g, c1)
-            asp_tree = to_ASP(g)
+            asp_tree = grammar_to_ASP(g)
             expected_asp = """
 % Ordered(4{a,b,c}, [:b, :c, :a])
 is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV < OrderedYV.
@@ -586,7 +585,7 @@ is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,Ordere
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
             
-            asp_tree = to_ASP(grammar)
+            asp_tree = grammar_to_ASP(grammar)
             expected_asp = """
 % Ordered(3{a,b}, [:a, :b])
 is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV < OrderedYV.
