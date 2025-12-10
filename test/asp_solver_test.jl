@@ -1,10 +1,10 @@
 @testitem "ASPSolver" begin
     using HerbCore, HerbGrammar
     using Clingo_jll
-
+ 
     ASPExt = Base.get_extension(HerbConstraints, :ASPExt)
     using .ASPExt: 
-        grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP, constraint_rulenode_to_ASP, ASPSolver, is_feasible, get_grammar, get_rulenode
+        grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP, constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar, get_rulenode
 
     @testset "rulenode_transformations" begin
         @testset "rulenode_to_ASP" begin
@@ -390,7 +390,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
 
             solver = ASPSolver(g, tree)
             @test length(solver.solutions) == 0
-            @test ASPExt.isfeasible(solver) == false
+            @test isfeasible(solver) == false
         end
         
         @testset "asp_solver_non_uniform" begin
@@ -424,7 +424,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
             solver = ASPSolver(g, tree)
             @test ASPExt.get_grammar(solver) === g
             @test ASPExt.get_rulenode(solver) === tree
-            @test ASPExt.isfeasible(solver) === true
+            @test isfeasible(solver) === true
         end
     end
     @testset "Full pipeline" begin
@@ -454,7 +454,7 @@ subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
             asp_solver = ASPSolver(grammar, tree)
-            @test !ASPExt.isfeasible(asp_solver)
+            @test !isfeasible(asp_solver)
             @test length(asp_solver.solutions) == 0
         end
 
@@ -511,7 +511,7 @@ child(1,2,5).
             @test asp_tree == expected_asp_tree
 
             asp_solver = ASPSolver(grammar, tree)
-            @test !ASPExt.isfeasible(asp_solver)
+            @test !isfeasible(asp_solver)
             @test length(asp_solver.solutions) == 0
         end
 
