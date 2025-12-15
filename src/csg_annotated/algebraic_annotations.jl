@@ -171,6 +171,7 @@ function _idempotent_constraints!(
     annotated_grammar::AnnotatedGrammar,
     rule_index::Int
 )
+    #TODO: preformance wise, add one domain constraint for all idempotent rules
     addconstraint!(annotated_grammar,
         Forbidden(RuleNode(rule_index, [VarNode(:x), VarNode(:x)]))
     )
