@@ -5,6 +5,7 @@ using HerbGrammar
 using DataStructures
 using MLStyle
 using TimerOutputs
+using DocStringExtensions
 
 
 """
@@ -78,8 +79,9 @@ include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
-function ASPSolver end
-
+include("solver/asp_solver/asp_solver.jl")
+include("asp/rulenodes.jl")
+include("asp/constraints.jl")
 export
     AbstractGrammarConstraint,
     AbstractLocalConstraint, DomainRuleNode,
@@ -152,5 +154,7 @@ export
     issame,
 
     ASPSolver
+
+public solve
 
 end # module HerbConstraints
