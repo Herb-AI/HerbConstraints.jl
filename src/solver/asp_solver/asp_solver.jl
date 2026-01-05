@@ -7,9 +7,9 @@ solutions for a given uniform tree.
 
 $(TYPEDFIELDS)
 
-An ASPSolver is instantiated with a `grammar` and a `ruleNode`, automatically
+An ASPSolver is instantiated with a `grammar` and a `uniform_rulenode`, automatically
 calling the `solve` function to retrieve all `solutions`. The constraints of
-the `grammar` and the `ruleNode` are transformed to ASP rules. Then, Clingo_jll
+the `grammar` and the `uniform_rulenode` are transformed to ASP rules. Then, Clingo_jll
 is used to generate all solutions for this Answer Set Program. These
 `solutions` can then be iterated. 
     
@@ -24,8 +24,8 @@ mutable struct ASPSolver <: Solver
     "The grammar of the program we are solving. It likely has constraints."
     grammar::AbstractGrammar
     "The root of the uniform tree."
-    ruleNode::Union{RuleNode,UniformHole,StateHole}
-    "All solutions (concrete programs) for the current `ruleNode` given the
+    uniform_rulenode::Union{RuleNode,UniformHole,StateHole}
+    "All solutions (concrete programs) for the current `uniform_rulenode` given the
     `grammar` and its constraints."
     solutions::Vector{Dict{Int64,Int64}} #vector of dictionaries with key=node and value=matching rule index
     "Whether the solver is in a feasible state."
@@ -78,7 +78,7 @@ end
 Get the RuleNode of the current program. This remains the same instance throughout the entire search.
 """
 function get_rulenode(solver::ASPSolver)::AbstractRuleNode
-    return solver.ruleNode
+    return solver.uniform_rulenode
 end
 
 """
