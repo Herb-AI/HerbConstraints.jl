@@ -44,7 +44,7 @@ Initialize and solve an `ASPSolver` with a `grammar` and `uniform_rulenode`.
     Note that this might mean that the time taken to return the first solution is
     significant for large uniform trees.
 """
-function HerbConstraints.ASPSolver(grammar::AbstractGrammar, uniform_rulenode::AbstractRuleNode; with_statistics=false)
+function ASPSolver(grammar::AbstractGrammar, uniform_rulenode::AbstractRuleNode; with_statistics=false)
     if contains_nonuniform_hole(uniform_rulenode)
         error("$(uniform_rulenode) contains non-uniform holes. The ASPSolver only works with uniform trees.")
     end
@@ -55,7 +55,7 @@ function HerbConstraints.ASPSolver(grammar::AbstractGrammar, uniform_rulenode::A
         ::Nothing => nothing
     end
 
-    solver = new(grammar, uniform_rulenode, Vector{Dict{Int32,Int32}}(), false, statistics)
+    solver = ASPSolver(grammar, uniform_rulenode, Vector{Dict{Int32,Int32}}(), false, statistics)
     solve(solver)
 
     return solver
