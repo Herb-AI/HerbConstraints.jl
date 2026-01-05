@@ -90,6 +90,10 @@ function isfeasible(solver::ASPSolver)
     return solver.isfeasible
 end
 
+function get_tree(solver::ASPSolver)
+    return solver.uniform_rulenode
+end
+
 """
     solve(solver::ASPSolver)
 
