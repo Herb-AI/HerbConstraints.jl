@@ -155,6 +155,6 @@ export
 
     ASPSolver
 
-public solve
+# public solve
 
 end # module HerbConstraints

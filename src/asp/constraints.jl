@@ -78,22 +78,42 @@ end
 
 Transforms the Ordered constraint into ASP format. 
 
-Ordered(5{NodeVar(:X),NodeVar(:Y)}, [:X, :Y]) ->
-is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV < OrderedYV.
-is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV = OrderedYV, OrderedS = #sum {OrderedZ: child(OrderedX,OrderedZ,OrderedXC), child(OrderedY,OrderedZ,OrderedYC), is_smaller(OrderedXC, OrderedYC)}, OrderedM = #max {OrderedZ: child(OrderedX,OrderedZ,OrderedXC)}, OrderedS = OrderedM.
+# Examples
+
+```jldoctest
+g = @csgrammar begin
+    Int = 1 | 2 | 3 | 4
+    Int = Int + Int
+end
+
+julia> println(constraint_to_ASP(g, Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y)]), [:X, :Y]), 1))
+is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
+is_smaller(X,Y) :-
+    node(X,XV), node(Y,YV),
+    XV = YV, X != Y,
+    is_smaller(XC, YC) : child(X,N,XC), child(Y,N,YC). 
 :- node(X1,5),child(X1,1,X),child(X1,2,Y), not is_smaller(X,Y).
 
-Ordered(5{NodeVar(:X),NodeVar(:Y),NodeVar(:Z)}, [:X, :Y, :Z]) ->
-is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV < OrderedYV.
-is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV), node(OrderedY,OrderedYV), OrderedXV = OrderedYV, OrderedS = #sum {OrderedZ: child(OrderedX,OrderedZ,OrderedXC), child(OrderedY,OrderedZ,OrderedYC), is_smaller(OrderedXC, OrderedYC)}, OrderedM = #max {OrderedZ: child(OrderedX,OrderedZ,OrderedXC)}, OrderedS = OrderedM.
-:- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(X,Y).
-:- node(X1,5),child(X1,1,X),child(X1,2,Y),child(X1,3,Z) not is_smaller(Y,Z).
+julia> println(constraint_to_ASP(g, Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y), VarNode(:Z)]), [:X, :Y, :Z]), 1))
+is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
+is_smaller(X,Y) :-
+    node(X,XV), node(Y,YV),
+    XV = YV, X != Y,
+    is_smaller(XC, YC) : child(X,N,XC), child(Y,N,YC). 
+:- node(X1,5),child(X1,1,X2),node(X2,X),child(X1,2,X3),node(X3,Y),child(X1,3,X4),node(X4,Z),not is_smaller(X,Y).
+:- node(X1,5),child(X1,1,X2),node(X2,X),child(X1,2,X3),node(X3,Y),child(X1,3,X4),node(X4,Z),not is_smaller(Y,Z).
+```
 """
 function constraint_to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
-    # Use Ordered{Var} in the is_smaller construct, to prevent same naming as other constraint VarNodes.
-    # Use the Values in the head, because the VarNodes are converted to: child(Parent,Index,Node), node(Node,VarNodeName)
-    output = "is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV < OrderedYV.\n"
-    output *= "is_smaller(OrderedXV,OrderedYV) :- node(OrderedX,OrderedXV),node(OrderedY,OrderedYV),OrderedXV = OrderedYV,OrderedS = #sum { OrderedZ : child(OrderedX,OrderedZ,OrderedXC),child(OrderedY,OrderedZ,OrderedYC),is_smaller(OrderedXC,OrderedYC) },OrderedM = #max { OrderedZ : child(OrderedX,OrderedZ,OrderedXC) },OrderedS = OrderedM.\n"
+    # X is smaller than Y if the rule index of X is < Y's 
+    # X is smaller than Y if their indices are equal but "is_smaller" holds for each of X and Y's children
+    output = """
+    is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
+    is_smaller(X,Y) :-
+        node(X,XV), node(Y,YV),
+        XV = YV, X != Y,
+        is_smaller(XC, YC) : child(X,N,XC), child(Y,N,YC). 
+    """
 
     tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
     output *= domains
