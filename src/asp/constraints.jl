@@ -107,23 +107,34 @@ is_smaller(X,Y) :-
 function constraint_to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
     # X is smaller than Y if the rule index of X is < Y's 
     # X is smaller than Y if their indices are equal but "is_smaller" holds for each of X and Y's children
+    output = ""
+
+    tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
+    output *= domains
+
+    _, varnode_map = map_varnodes_to_asp_indices(constraint.tree)
+
+    # create ordered constraints, for each consecutive pair of ordered vars
+    for (x, y) in zip(constraint.order[1:end-1], constraint.order[2:end])
+        output *= ":- $(tree),not is_smaller(X$(only(varnode_map[x])),X$(only(varnode_map[y]))).\n"
+    end
+
+    return output
+end
+
+function rulenode_comparisons_asp()
     output = """
     is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
     is_smaller(X,Y) :-
         node(X,XV), node(Y,YV),
         XV = YV, X != Y,
         is_smaller(XC, YC) : child(X,N,XC), child(Y,N,YC). 
+
+    is_same(X,Y) :-
+        node(X,XV), node(Y,YV),
+        XV = YV, X != Y,
+        is_same(XC, YC) : child(X,N,XC), child(Y, N, YC).
     """
-
-    tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
-    output *= domains
-
-    # create ordered constraints, for each consecutive pair of ordered vars
-    for i in 1:length(constraint.order)-1
-        node_name1 = titlecase(string(constraint.order[i]))
-        node_name2 = titlecase(string(constraint.order[i+1]))
-        output *= ":- $(tree),not is_smaller($(node_name1),$(node_name2)).\n"
-    end
 
     return output
 end
