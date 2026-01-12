@@ -138,3 +138,12 @@ function rulenode_comparisons_asp()
 
     return output
 end
+
+function rulenode_comparisons_asp(solver::ASPSolver)
+    # No need to include comparisons if there is a single rulenode in the tree 
+    if length(get_rulenode(solver)) == 1
+        return ""
+    else
+        return rulenode_comparisons_asp()
+    end
+end

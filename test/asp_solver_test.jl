@@ -10,6 +10,21 @@
     using TestSetExtensions: ExtendedTestSet
 
     @testset "rulenode_transformations" begin
+        @testset ExtendedTestSet "single rule no children" begin
+            g = @csgrammar begin
+                S = 1
+            end
+
+            tree = RuleNode(1)
+
+            asp, _ = rulenode_to_ASP(tree, g, 1)
+
+            expected_asp = """
+            node(1,1).
+            """
+
+            @test asp == expected_asp
+        end
         @testset "rulenode_to_ASP" begin
             g = @csgrammar begin
                 S = 1 | x
@@ -27,16 +42,16 @@
 
             asp, next_index = rulenode_to_ASP(tree, g, 1)
             expected_asp = """
-node(1,3).
-child(1,1,2).
-node(2,1).
-child(1,2,3).
-node(3,4).
-child(3,1,4).
-node(4,1).
-child(3,2,5).
-node(5,2).
-"""
+            node(1,3).
+            child(1,1,2).
+            node(2,1).
+            child(1,2,3).
+            node(3,4).
+            child(3,1,4).
+            node(4,1).
+            child(3,2,5).
+            node(5,2).
+            """
             @test asp == expected_asp
         end
 
@@ -54,12 +69,12 @@ node(5,2).
 
             asp, next_index = rulenode_to_ASP(tree, g, 1)
             expected_asp = """
-1 { node(1,3);node(1,4) } 1.
-child(1,1,2).
-1 { node(2,1);node(2,2) } 1.
-child(1,2,3).
-1 { node(3,1);node(3,2) } 1.
-"""
+            1 { node(1,3);node(1,4) } 1.
+            child(1,1,2).
+            1 { node(2,1);node(2,2) } 1.
+            child(1,2,3).
+            1 { node(3,1);node(3,2) } 1.
+            """
             @test asp == expected_asp
         end
 
@@ -79,12 +94,12 @@ child(1,2,3).
 
             asp, next_index = rulenode_to_ASP(statehole, g, 1)
             expected_asp = """
-1 { node(1,4);node(1,3) } 1.
-child(1,1,2).
-1 { node(2,1);node(2,2) } 1.
-child(1,2,3).
-1 { node(3,1);node(3,2);node(3,3);node(3,4) } 1.
-"""
+            1 { node(1,4);node(1,3) } 1.
+            child(1,1,2).
+            1 { node(2,1);node(2,2) } 1.
+            child(1,2,3).
+            1 { node(3,1);node(3,2);node(3,3);node(3,4) } 1.
+            """
             @test asp == expected_asp
         end
     end
@@ -133,13 +148,13 @@ child(1,2,3).
             @test asp_tree == expected_asp
 
             expected_domains = """
-allowed(c1x1,3).
-allowed(c1x1,4).
-allowed(c1x2,1).
-allowed(c1x2,2).
-allowed(c1x3,1).
-allowed(c1x3,2).
-"""
+            allowed(c1x1,3).
+            allowed(c1x1,4).
+            allowed(c1x2,1).
+            allowed(c1x2,2).
+            allowed(c1x3,1).
+            allowed(c1x3,2).
+            """
             @test additional == expected_domains
         end
 
@@ -168,15 +183,15 @@ allowed(c1x3,2).
             @test asp_tree == expected_asp
 
             expected_domains = """
-allowed(c1x1,4).
-allowed(c1x1,3).
-allowed(c1x2,1).
-allowed(c1x2,2).
-allowed(c1x3,1).
-allowed(c1x3,2).
-allowed(c1x3,3).
-allowed(c1x3,4).
-"""
+            allowed(c1x1,4).
+            allowed(c1x1,3).
+            allowed(c1x2,1).
+            allowed(c1x2,2).
+            allowed(c1x3,1).
+            allowed(c1x3,2).
+            allowed(c1x3,3).
+            allowed(c1x3,4).
+            """
             @test additional == expected_domains
         end
 
@@ -202,15 +217,15 @@ allowed(c1x3,4).
             @test asp_tree == expected_asp
 
             expected_domains = """
-allowed(c1x1,3).
-allowed(c1x1,4).
-allowed(c1x2,1).
-allowed(c1x2,2).
-allowed(c1x3,1).
-allowed(c1x3,2).
-allowed(c1x3,3).
-allowed(c1x3,4).
-"""
+            allowed(c1x1,3).
+            allowed(c1x1,4).
+            allowed(c1x2,1).
+            allowed(c1x2,2).
+            allowed(c1x3,1).
+            allowed(c1x3,2).
+            allowed(c1x3,3).
+            allowed(c1x3,4).
+            """
             @test additional == expected_domains
         end
 
@@ -232,15 +247,15 @@ allowed(c1x3,4).
             @test asp_tree == expected_asp
 
             expected_domains = """
-allowed(c1x1,3).
-allowed(c1x1,4).
-allowed(c1x2,1).
-allowed(c1x2,2).
-allowed(c1x3,1).
-allowed(c1x3,2).
-allowed(c1x3,3).
-allowed(c1x3,4).
-"""
+            allowed(c1x1,3).
+            allowed(c1x1,4).
+            allowed(c1x2,1).
+            allowed(c1x2,2).
+            allowed(c1x3,1).
+            allowed(c1x3,2).
+            allowed(c1x3,3).
+            allowed(c1x3,4).
+            """
             @test additional == expected_domains
         end
     end
@@ -429,6 +444,19 @@ allowed(c1x3,4).
         end
     end
     @testset "Full pipeline" begin
+        @testset ExtendedTestSet "Single solution, single derivation rule" begin
+            g = @csgrammar begin
+                S = 1
+            end
+
+            tree = UniformHole(BitVector((1,)))
+
+            asp_solver = @test_nowarn ASPSolver(g, tree)
+            @test isfeasible(asp_solver)
+            @test length(asp_solver.solutions) == 1
+            @test asp_solver.solutions[1] == Dict(1 => 1)
+        end
+
         @testset ExtendedTestSet "No solutions (ordered constraint)" begin
             grammar = @csgrammar begin
                 Number = 1
@@ -454,7 +482,7 @@ allowed(c1x3,4).
                 ]),
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
-            asp_solver = ASPSolver(grammar, tree)
+            asp_solver = @test_nowarn ASPSolver(grammar, tree)
             @test !isfeasible(asp_solver)
             @test length(asp_solver.solutions) == 0
         end
@@ -512,7 +540,7 @@ allowed(c1x3,4).
             """
             @test asp_tree == expected_asp_tree
 
-            asp_solver = ASPSolver(grammar, tree)
+            asp_solver = @test_nowarn ASPSolver(grammar, tree)
             @test !isfeasible(asp_solver)
             @test length(asp_solver.solutions) == 0
         end
@@ -559,7 +587,7 @@ allowed(c1x3,4).
             """
             @test expected_asp == asp_tree
 
-            solver = ASPSolver(g, tree)
+            solver = @test_nowarn ASPSolver(g, tree)
             @test 10 == length(solver.solutions)
             @testset "Check order" for sol in solver.solutions
                 @test sol[1] == 4
@@ -602,7 +630,7 @@ allowed(c1x3,4).
             """
             @test asp_tree == expected_asp
 
-            solver = ASPSolver(grammar, tree)
+            solver = @test_nowarn ASPSolver(grammar, tree)
             @test length(solver.solutions) == 1
             @test solver.solutions[1] == Dict(1 => 3, 2 => 1, 3 => 2)
         end
@@ -632,7 +660,7 @@ allowed(c1x3,4).
             """
             @test asp_tree == expected_asp
 
-            solver = ASPSolver(grammar, tree)
+            solver = @test_nowarn ASPSolver(grammar, tree)
             @test length(solver.solutions) == 2
             @test Dict(1 => 3, 2 => 1, 3 => 2) ∈ solver.solutions
             @test Dict(1 => 3, 2 => 2, 3 => 1) ∈ solver.solutions
