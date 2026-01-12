@@ -2,18 +2,24 @@ module ASPExt
 
 import Clingo_jll
 import HerbConstraints
-import HerbConstraints: ASPSolver, rulenode_to_ASP, get_rulenode, get_grammar, grammar_to_ASP, extract_solutions
+import HerbConstraints: ASPSolver, extract_solutions, get_grammar, get_rulenode,
+    grammar_to_ASP, rulenode_comparisons_asp, rulenode_to_ASP
 import TimerOutputs: @timeit_debug
+
 
 # docstring in src/solver/asp_solver/asp_solver.jl
 function HerbConstraints.solve(solver::ASPSolver)
     @timeit_debug solver.statistics "generate ASP RuleNode" begin
         string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
         constraints = grammar_to_ASP(get_grammar(solver))
+        comparisons = rulenode_comparisons_asp()
 
         asp_input = """
         %%% RuleNode
         $string_rulenode
+
+        %%% Comparisons
+        $comparisons
 
         %%% Constraints
         $constraints
