@@ -20,9 +20,9 @@ automaticlaly loads the ASPExt extension module of HerbConstraints.
 julia> using Clingo_jll
 ```
 """
-mutable struct ASPSolver <: Solver
+mutable struct ASPSolver{G<:AbstractGrammar} <: Solver
     "The grammar of the program we are solving. It likely has constraints."
-    grammar::AbstractGrammar
+    grammar::G
     "The root of the uniform tree."
     uniform_rulenode::Union{RuleNode,UniformHole,StateHole}
     "All solutions (concrete programs) for the current `uniform_rulenode` given the
