@@ -55,7 +55,7 @@ function ASPSolver(grammar::AbstractGrammar, uniform_rulenode::AbstractRuleNode;
         ::Nothing => nothing
     end
 
-    solver = ASPSolver(grammar, uniform_rulenode, Vector{Dict{Int32,Int32}}(), false, statistics)
+    solver = ASPSolver(grammar, uniform_rulenode, Vector{Dict{Int,Int}}(), false, statistics)
     solve(solver)
 
     return solver
