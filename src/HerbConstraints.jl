@@ -3,6 +3,7 @@ module HerbConstraints
 using HerbCore
 using HerbGrammar
 using DataStructures
+using DocStringExtensions
 using MLStyle
 using TimerOutputs
 
@@ -76,6 +77,7 @@ include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
+include("solver/asp.jl")
 include("csg_annotated/csg_annotated.jl")
 include("csg_annotated/process_annotated_rules.jl")
 include("csg_annotated/algebraic_annotations.jl")
@@ -152,6 +154,6 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    issame
+    issame, ASPSolver
 
 end # module HerbConstraints
