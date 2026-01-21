@@ -1,217 +1,144 @@
+"""
+   AnnotatedGrammar
+
+Represents an annotated context-sensitive grammar.
+Fields:
+- grammar: The underlying ContextSensitiveGrammar
+- bylabel: A dictionary mapping labels to their corresponding rules
+- rule_annotations: A dictionary mapping rule indices to their corresponding annotations
+"""
+mutable struct AnnotatedGrammar
+   grammar::ContextSensitiveGrammar
+   bylabel::Dict{String, Vector{Int}}
+   rule_annotations::Dict{Int,Vector{Any}}
+
+    function AnnotatedGrammar(grammar::ContextSensitiveGrammar, bylabel::Dict{String, Vector{Int}}, rule_annotations::Dict{Int,Vector{Any}})
+        annotated_grammar = new(grammar, bylabel, rule_annotations)
+        for rule_index in keys(rule_annotations)
+            for annotation in rule_annotations[rule_index]
+                _annotation2constraints!(annotated_grammar, rule_index, annotation)
+            end
+        end
+        return annotated_grammar
+    end
+end
 
 """
-@csgrammar_annotated
+    expr2csgrammar(expression::Expr)::AnnotatedGrammar  
+
+A function for converting an `Expr` to a [`AnnotatedGrammar`](@ref).
+If the expression is hardcoded, you should use the [`@csgrammar_annotated`](@ref) macro.
+Only expressions in the correct format (see [`csgrammar_annotated`](@ref)) can be converted.
+
+# Examples
+```julia-repl
+    num_annotated = quote        
+        zero::  Number = 0             
+        one::  Number = 1     
+        constants:: Number = |(2:4) 
+        variables:: Number = x | y              
+        minus::      Number = -Number           := (identity("zero"))
+        plus::      Number = Number + Number    := (associative, commutative, identity("zero"), inverse("minus"))
+        times::     Number = Number * Number    := (associative, commutative, identity("one"), distributive_over("plus"))
+    end
+    annotated_grammar = HerbConstraints.expr2csgrammar_annotated(num_annotated)
+```
+"""
+function expr2csgrammar_annotated(expr::Expr)::AnnotatedGrammar
+    grammar, bylabel, rule_annotations = _process_expression(expr)
+    return AnnotatedGrammar(grammar, bylabel, rule_annotations)
+end
+
+"""    
+    @csgrammar_annotated ex
+
+Construct an [`AnnotatedGammar`](@ref).
 Define an annotated grammar and return it as a ContextSensitiveGrammar.
 Allows for adding optional annotations per rule.
 As well as that, allows for adding optional labels per rule, which can be referenced in annotations. 
-Syntax is backwards-compatible with @csgrammar.
-Examples:
+Syntax is backwards-compatible with @csgrammar.Converts an annotation to constraints.
+
+Supported annotations:
+- commutative: creates an Ordered constraint on the (two) children of the rule
+- associative: creates Forbidden constraints, such that rule can only be applied in a path formation (no sub trees of the rule r{r,r} allowed)
+- identity(label): creates Forbidden constraints for applying the rule on an identity element from the specified domain
+- inverse(label1): creates Forbidden constraints for applying the rule on an an element and its inverse from the specified domain (assumes inverses a single child)
+- distributive_over(label): creates Forbidden constraints for applying the specified domain on (two) children of the rule with a common child (in same position, unless commutative)
+
+# Examples
+
 ```julia-repl
 g₁ = @csgrammar_annotated begin
     Element = 1
     Element = x
     Element = Element + Element := commutative
-    Element = Element * Element := (commutative, transitive)
+    Element = Element * Element := (commutative, associativity)
 end
 ```
 
 ```julia-repl
 g₁ = @csgrammar_annotated begin
-    Element = 1
-    Element = x
-    Element = Element + Element := forbidden_path([3, 1])
-    Element = Element * Element := (commutative, transitive)
-end
-```
-
-```julia-repl
-g₁ = @csgrammar_annotated begin
+    zero::           Element = 0
     one::            Element = 1
     variable::       Element = x
     addition::       Element = Element + Element := (
                                                        commutative,
-                                                       transitive,
-                                                       forbidden_path([:addition, :one]) || forbidden_path([:one, :variable])
+                                                       associativity,
+                                                       identity("zero"),
                                                     )
-    multiplication:: Element = Element * Element := (commutative, transitive)
+    multiplication:: Element = Element * Element := (commutative, associativity, identity("one"), distributive_over("addition"))
 end
 ```
 """
-macro csgrammar_annotated(expression)
-    # collect and remove labels
-    labels = _get_labels!(expression)
+macro csgrammar_annotated(ex)
+    return :(expr2csgrammar_annotated($(QuoteNode(ex))))
+end
 
-    # parse rules, get constraints from annotations
-    rules = Any[]
-    types = Symbol[]
-    bytype = Dict{Symbol,Vector{Int}}()
-    constraints = Vector{AbstractConstraint}()
+"""
+    get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
 
-    rule_index = 1
+Returns the underlying ContextSensitiveGrammar.
+"""
+function get_grammar(annotated_grammar::AnnotatedGrammar)::ContextSensitiveGrammar
+    return annotated_grammar.grammar
+end
 
-    for (e, label) in zip(expression.args, labels)
-        # only consider if e is of type ... = ...
-        if !(e isa Expr && e.head == :(=))
-            continue
-        end
+"""
+    get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
 
-        # get the left and right hand side of a rule
-        lhs = e.args[1]
-        rhs = e.args[2]
+Returns a dictionary of the rules associated with each label.
+"""
+function get_bylabel(annotated_grammar::AnnotatedGrammar)::Dict{String, Vector{Int}}
+    return annotated_grammar.bylabel
+end
 
-        # parse annotations if present
-        if rhs isa Expr && rhs.head == :(:=)
-            # get new annotations as a list
-            annotations = rhs.args[2]
-            if annotations isa Expr && annotations.head == :tuple
-                annotations = annotations.args
-            else
-                annotations = [annotations]
-            end
 
-            # convert annotations, append to constraints
-            append!(constraints, annotation2constraint(a, rule_index, labels) for a ∈ annotations)
+"""
+    get_labeldomain(annotated_grammar::AnnotatedGrammar)::Dict{String, BitVector}
 
-            # discard annotation
-            rhs = rhs.args[1]
-        end
-
-        # parse rules
-        new_rules = Any[]
-        parse_rule!(new_rules, rhs)
-
-        @assert (length(new_rules) == 1 || label == "") "Cannot give rule name $(label) to multiple rules!"
-
-        # add new rules to data
-        for new_rule ∈ new_rules
-            push!(rules, new_rule)
-            push!(types, lhs)
-            bytype[lhs] = push!(get(bytype, lhs, Int[]), rule_index)
-
-            rule_index += 1
-        end
-    end
-
-    # determine parameters
-    alltypes = collect(keys(bytype))
-    is_terminal = [isterminal(rule, alltypes) for rule ∈ rules]
-    is_eval = [iseval(rule) for rule ∈ rules]
-    childtypes = [get_childtypes(rule, alltypes) for rule ∈ rules]
-    bychildtypes = [
-        BitVector([childtypes[i1] == childtypes[i2] for i2 ∈ 1:length(rules)]) for
-        i1 ∈ 1:length(rules)
-    ]
-    domains = Dict(type => BitArray(r ∈ bytype[type] for r ∈ 1:length(rules)) for type ∈ alltypes)
-
-    return ContextSensitiveGrammar(
-        rules,
-        types,
-        is_terminal,
-        is_eval,
-        bytype,
-        domains,
-        childtypes,
-        bychildtypes,
-        nothing,
-        constraints,
+Returns a dictionary with the domain BitVector of each label.
+"""
+function get_labeldomain(annotated_grammar::AnnotatedGrammar)::Dict{String, BitVector}
+    return Dict(
+        label => BitArray(r ∈ rules for r ∈ 1:length(get_grammar(annotated_grammar).rules))
+        for (label, rules) in get_bylabel(annotated_grammar)
     )
 end
 
+"""
+    get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vector{Any}}
 
-# gets the labels from an expression
-function _get_labels!(expression::Expr)::Vector{String}
-    labels = Vector{String}()
-
-    for e in expression.args
-        # only consider if e is of type ... = ...
-        if !(e isa Expr && e.head == :(=))
-            continue
-        end
-
-        lhs = e.args[1]
-
-        label = ""
-        if lhs isa Expr && lhs.head == :(::)
-            label = string(lhs.args[1])
-
-            # discard rule name
-            e.args[1] = lhs.args[2]
-        end
-
-        push!(labels, label)
-    end
-
-    # flatten linenums into expression
-    Base.remove_linenums!(expression)
-
-    return labels
+Returns the rule annotations dictionary.
+"""
+function get_rule_annotations(annotated_grammar::AnnotatedGrammar)::Dict{Int,Vector{Any}}
+    return annotated_grammar.rule_annotations
 end
 
-
 """
-Converts an annotation to a constraint.
-commutative: creates an Ordered constraint
-transitive: creates an (incorrect) Forbidden constraint
-forbidden_path(path::Vector{Union{Symbol, Int}}): creates a `ForbiddenSequence`` constraint with the original rule included
-... || ...: creates a OneOf constraint (also works with ... || ... || ... et cetera, though not very performant)
-
-!!! warning
-    This function is untested and probably broken. Tests are a really good idea. 
+    addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::Constraint)
+Adds a constraint to the underlying ContextSensitiveGrammar.
 """
-function annotation2constraint(
-    annotation::Any,
-    rule_index::Int,
-    labels::Vector{String},
-)::AbstractConstraint
-    # TODO: tracking issue https://github.com/Herb-AI/HerbConstraints.jl/issues/74
-    if annotation isa Expr
-        # function-like annotations
-        if annotation.head == :call
-            func_name = annotation.args[1]
-            func_args = annotation.args[2:end]
-
-            if func_name == :forbidden_path
-                string_args = eval(func_args[1])
-                index_args = [
-                    arg isa Symbol ? _get_rule_index(labels, string(arg)) : arg for
-                    arg in string_args
-                ]
-
-                return ForbiddenSequence(
-                    [rule_index; index_args],
-                )
-            end
-        end
-
-        # disjunctive annotations
-        if annotation.head == :||
-            return OneOf(
-                @show [annotation2constraint(a, rule_index, labels) for a in annotation.args]
-            )
-        end
-    end
-
-    # commutative annotations
-    if annotation == :commutative
-        return Ordered(
-            MatchNode(rule_index, [MatchVar(:x), MatchVar(:y)]),
-            [:x, :y],
-        )
-    end
-
-    if annotation == :transitive
-        return Forbidden(
-            MatchNode(
-                rule_index,
-                [MatchVar(:x), MatchNode(rule_index, [MatchVar(:y), MatchVar(:z)])],
-            ),
-        )
-    end
-
-    # unknown constraint
-    throw(ArgumentError("Annotation $(annotation) at rule $(rule_index) not found!"))
+function HerbGrammar.addconstraint!(annotated_grammar::AnnotatedGrammar, constraint::HerbCore.AbstractConstraint)
+    addconstraint!(get_grammar(annotated_grammar), constraint)
 end
 
-
-# helper function for label lookup
-_get_rule_index(labels::Vector{String}, label::String)::Int = findfirst(isequal(label), labels)
