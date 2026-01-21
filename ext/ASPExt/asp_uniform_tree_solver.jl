@@ -23,7 +23,7 @@ end
 """
     ASPSolver(grammar::AbstractGrammar, fixed_shaped_rulenode::AbstractRuleNode)
 """
-function ASPSolver(grammar::AbstractGrammar, fixed_shaped_rulenode::AbstractRuleNode; with_statistics=false)
+function HerbConstraints.ASPSolver(grammar::AbstractGrammar, fixed_shaped_rulenode::AbstractRuleNode; with_statistics=false)
     @assert !contains_nonuniform_hole(fixed_shaped_rulenode) "$(fixed_shaped_rulenode) contains non-uniform holes"
     statistics = @match with_statistics begin
         ::TimerOutput => with_statistics
@@ -70,23 +70,25 @@ end
 Generate all solutions for the given rulenode using ASP solver Clingo.
 """
 function solve(solver::ASPSolver)
-    @timeit_debug solver.statistics "generate ASP RuleNode" begin end
-    string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
-    constraints = grammar_to_ASP(get_grammar(solver))
-    asp_input = """
-%%% RuleNode
-$string_rulenode
+    @timeit_debug solver.statistics "generate ASP RuleNode" begin
+        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
+        constraints = grammar_to_ASP(get_grammar(solver))
+        asp_input = """
+    %%% RuleNode
+    $string_rulenode
 
-%%% Constraints
-$constraints
+    %%% Constraints
+    $constraints
 
-%%% Query
-#show node/2.
-"""
-    buffer = IOBuffer(asp_input)
+    %%% Query
+    #show node/2.
+    """
+        buffer = IOBuffer(asp_input)
+    end
     asp_output = IOBuffer()
-    @timeit_debug solver.statistics "run Clingo" begin end
-    run(pipeline(ignorestatus(`$(Clingo_jll.clingo()) --models 0`), stdin=buffer, stdout=asp_output))
+    @timeit_debug solver.statistics "run Clingo" begin
+        run(pipeline(ignorestatus(`$(Clingo_jll.clingo()) --models 0`), stdin=buffer, stdout=asp_output))
+    end
     extract_solutions(solver, split(String(take!(asp_output)), "\n"))
 end
 
@@ -95,22 +97,23 @@ end
 Extract solutions from the output of Clingo and store them in the `solutions` field of the solver.
 """
 function extract_solutions(solver::ASPSolver, output_lines)
-    @timeit_debug solver.statistics "extract solutions" begin end
-    for line in output_lines
-        if startswith(line, "node")
-            current_solution = Dict{Int64,Int64}()
-            node_assignments = split(line, " ")
-            for node in node_assignments
-                m = match(r"node\((\d+),(\d+)\)", node)
-                current_solution[parse(Int, m.captures[1])] = parse(Int, m.captures[2])
+    @timeit_debug solver.statistics "extract solutions" begin
+        for line in output_lines
+            if startswith(line, "node")
+                current_solution = Dict{Int64,Int64}()
+                node_assignments = split(line, " ")
+                for node in node_assignments
+                    m = match(r"node\((\d+),(\d+)\)", node)
+                    current_solution[parse(Int, m.captures[1])] = parse(Int, m.captures[2])
+                end
+                push!(solver.solutions, current_solution)
+            elseif startswith(line, "SATISFIABLE")
+                solver.isfeasible = true
+                break
+            elseif startswith(line, "UNSATISFIABLE")
+                solver.isfeasible = false
+                break
             end
-            push!(solver.solutions, current_solution)
-        elseif startswith(line, "SATISFIABLE")
-            solver.isfeasible = true
-            break
-        elseif startswith(line, "UNSATISFIABLE")
-            solver.isfeasible = false
-            break
         end
     end
 end
