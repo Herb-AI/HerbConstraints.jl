@@ -4,7 +4,7 @@ UTILITIES for RuleNode -> ASP transformations
 
 
 """
-  rulenode_to_ASP(ruleNode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
+    rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
 
 Transforms a [AbstractRuleNode] into an ASP program.
 Nodes get their IDs based on the in-order traversal.
@@ -34,12 +34,12 @@ child(1,2,3).
 1 { node(3,1);node(3,2);node(3,3) } 1.
 
 """
-function rulenode_to_ASP(ruleNode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
+function rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
     output = ""
-    output *= _node_to_ASP(ruleNode, grammar, node_index)
+    output *= _node_to_ASP(rulenode, grammar, node_index)
     parent_index = node_index
     node_index = node_index + 1
-    for (child_ind, child) in enumerate(ruleNode.children)
+    for (child_ind, child) in enumerate(get_children(rulenode))
         output *= "child($(parent_index),$(child_ind),$(node_index)).\n"
         ch_output, node_index = rulenode_to_ASP(child, grammar, node_index)
         output *= ch_output
@@ -48,41 +48,41 @@ function rulenode_to_ASP(ruleNode::AbstractRuleNode, grammar::AbstractGrammar, n
 end
 
 """
-  _node_to_ASP(node::RuleNode, grammar::AbstractGrammar, node_index::Int64)
+    _node_to_ASP(rulenode::RuleNode, ::AbstractGrammar, node_index::Int64)
 
-Transforms a [RuleNode] into an ASP representation in the form `node(node_index, rule_id)`.
+Transforms a [`RuleNode`](@ref) into an ASP representation in the form `node(node_index, rule_id)`.
 Used internally to transform an AST rulenode.
 """
-function _node_to_ASP(node::RuleNode, grammar::AbstractGrammar, node_index::Int64)
-    return "node($(node_index),$(get_rule(node))).\n"
+function _node_to_ASP(rulenode::RuleNode, ::AbstractGrammar, node_index::Int64)
+    return "node($(node_index),$(get_rule(rulenode))).\n"
 end
 
 """
-  _node_to_ASP(node::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
+    _node_to_ASP(rulenode::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
 
-Transforms a [UniformHole] or [DomainRuleNode] into an ASP representation in the form
+Transforms a [`UniformHole`](@ref) or [`DomainRuleNode`](@ref) into an ASP representation in the form
 `1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...} 1.`.
 Used internally to transform an AST rulenode.
 """
-function _node_to_ASP(node::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
-    options = join(["node($(node_index),$(ind))" for ind in filter(x -> node.domain[x], 1:length(grammar.rules))], ";")
+function _node_to_ASP(rulenode::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
+    options = join(["node($(node_index),$(ind))" for ind in filter(x -> rulenode.domain[x], 1:length(grammar.rules))], ";")
     return "1 { $(options) } 1.\n"
 end
 
 """
-  _node_to_ASP(node::StateHole, grammar::AbstractGrammar, node_index::Int64)
+    _node_to_ASP(rulenode::StateHole, ::AbstractGrammar, node_index::Int64)
 
-Transform a [StateHole] into an ASP representation in the form
+Transform a [`StateHole`](@ref) into an ASP representation in the form
 `1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...} 1.`
 Used internally to transform an AST rulenode.
 """
-function _node_to_ASP(node::StateHole, grammar::AbstractGrammar, node_index::Int64)
-    options = join(["node($(node_index),$(ind))" for ind in Base.findall(node.domain)], ";")
+function _node_to_ASP(rulenode::StateHole, ::AbstractGrammar, node_index::Int64)
+    options = join(["node($(node_index),$(ind))" for ind in Base.findall(rulenode.domain)], ";")
     return "1 { $(options) } 1.\n"
 end
 
 """
-    constraint_rulenode_to_ASP(grammar::AbstractGrammar, ruleNode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
+    constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
 
 Transforms a template RuleNode to an ASP form suitable for constraints.
 
@@ -90,20 +90,20 @@ Transforms a template RuleNode to an ASP form suitable for constraints.
 
 @rulenode [4,5]{3,3} -> allowed(x1,1).node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
 """
-function constraint_rulenode_to_ASP(grammar::AbstractGrammar, ruleNode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
+function constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
     # VarNode does not have any children, so just return the node
-    if isa(ruleNode, VarNode)
+    if isa(rulenode, VarNode)
         # Create a variable (uppercase) of the node name, which is a symbol
-        node_name = titlecase(string(ruleNode.name))
+        node_name = titlecase(string(rulenode.name))
         return "node(X$(node_index),$(node_name))", "", node_index
     end
     tree_facts, additional_facts = "", ""
-    tmp_facts, tmp_additional = _constraint_node_to_ASP(grammar, ruleNode, node_index, constraint_index::Int64)
+    tmp_facts, tmp_additional = _constraint_node_to_ASP(grammar, rulenode, node_index, constraint_index::Int64)
     tree_facts *= "$(tmp_facts)"
     additional_facts *= join(tmp_additional, "")
     parent_index = node_index
     node_index += 1
-    for (child_ind, child) in enumerate(ruleNode.children)
+    for (child_ind, child) in enumerate(rulenode.children)
         if isa(child, VarNode)
             # Create a variable (uppercase) of the node name, which is a symbol
             node_name = titlecase(string(child.name))
@@ -121,14 +121,14 @@ function constraint_rulenode_to_ASP(grammar::AbstractGrammar, ruleNode::Abstract
 end
 
 """
-    _constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constraint_index::Int64)
+    _constraint_node_to_ASP(::AbstractGrammar, rulenode::RuleNode, node_index::Int64, constraint_index::Int64)
 
 Transforms a [RuleNode] into an ASP representation in the form
 `node(X_node_index, RuleNode_index).`
 Used internally to transform an AST rulenode of a constraint.
 """
-function _constraint_node_to_ASP(grammar::AbstractGrammar, node::RuleNode, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),$(get_rule(node)))", []
+function _constraint_node_to_ASP(::AbstractGrammar, rulenode::RuleNode, node_index::Int64, constraint_index::Int64)
+    return "node(X$(node_index),$(get_rule(rulenode)))", []
 end
 
 """
