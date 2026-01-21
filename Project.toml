@@ -1,10 +1,11 @@
 name = "HerbConstraints"
 uuid = "1fa96474-3206-4513-b4fa-23913f296dfc"
-authors = ["Jaap de Jong <jaapdejong15@gmail.com>"]
 version = "0.4.8"
+authors = ["Jaap de Jong <jaapdejong15@gmail.com>"]
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 HerbCore = "2b23ba43-8213-43cb-b5ea-38c12b45bd45"
 HerbGrammar = "4ef9e186-2fe5-4b24-8de7-9f7291f24af7"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
@@ -19,6 +20,7 @@ ASPExt = "Clingo_jll"
 [compat]
 Clingo_jll = "5.7.1"
 DataStructures = "0.19"
+DocStringExtensions = "0.9.5"
 HerbCore = "^0.3.0"
 HerbGrammar = "0.6"
 MLStyle = "^0.4.17"
