@@ -1,56 +1,3 @@
-"""
-    $(TYPEDEF)
-
-A solver that uses [Answer Set
-Programming](https://en.wikipedia.org/wiki/Answer_set_programming) to yield all
-solutions for a given uniform tree.
-
-$(TYPEDFIELDS)
-
-An ASPSolver is instantiated with a `grammar` and a `uniform_rulenode`, automatically
-calling the `solve` function to retrieve all `solutions`. The constraints of
-the `grammar` and the `uniform_rulenode` are transformed to ASP rules. Then, Clingo_jll
-is used to generate all solutions for this Answer Set Program. These
-`solutions` can then be iterated. 
-    
-To use the ASP Solver, Clingo_jll must be manually specified to be used, which
-automaticlaly loads the ASPExt extension module of HerbConstraints.
-
-```julia
-julia> using Clingo_jll
-```
-"""
-mutable struct ASPSolver <: Solver
-    "The grammar of the program we are solving. It likely has constraints."
-    grammar::AbstractGrammar
-    "The root of the uniform tree."
-    uniform_rulenode::Union{RuleNode,UniformHole,StateHole}
-    "All solutions (concrete programs) for the current `uniform_rulenode` given the
-    `grammar` and its constraints."
-    solutions::Vector{Dict{Int64,Int64}} #vector of dictionaries with key=node and value=matching rule index
-    "Whether the solver is in a feasible state."
-    isfeasible::Bool
-    "Statistics about the solving process."
-    statistics::Union{TimerOutput,Nothing}
-end
-
-"""
-    ASPSolver(grammar::AbstractGrammar, uniform_rulenode::AbstractRuleNode)
-"""
-function HerbConstraints.ASPSolver(grammar::AbstractGrammar, uniform_rulenode::AbstractRuleNode; with_statistics=false)
-    if contains_nonuniform_hole(uniform_rulenode)
-        error("$(uniform_rulenode) contains non-uniform holes. The ASPSolver only works with uniform trees.")
-    end
-    statistics = @match with_statistics begin
-        ::TimerOutput => with_statistics
-        ::Bool => with_statistics ? TimerOutput("ASP Solver") : nothing
-        ::Nothing => nothing
-    end
-    solver = ASPSolver(grammar, uniform_rulenode, Vector{Dict{Int32,Int32}}(), false, statistics)
-    solve(solver)
-    return solver
-end
-
 get_name(::ASPSolver) = "ASPSolver"
 
 """
@@ -85,29 +32,41 @@ end
 
 Generate all solutions for the given rulenode using ASP solver Clingo.
 """
-function solve(solver::ASPSolver)
+function HerbConstraints.solve(solver::ASPSolver)
     @timeit_debug solver.statistics "generate ASP RuleNode" begin
         string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
         constraints = grammar_to_ASP(get_grammar(solver))
+        comparisons = rulenode_comparisons_asp(solver)
+
         asp_input = """
-    %%% RuleNode
-    $string_rulenode
-
-    %%% Constraints
-    $constraints
-
-    %%% Query
-    #show node/2.
-    """
-        buffer = IOBuffer(asp_input)
+        %%% RuleNode
+        $string_rulenode
+        %%% Comparisons
+        $comparisons
+        %%% Constraints
+        $constraints
+        %%% Query
+        #show node/2.
+        """
     end
+
+    buffer = IOBuffer(asp_input)
     asp_output = IOBuffer()
     @timeit_debug solver.statistics "run Clingo" begin
-        run(pipeline(ignorestatus(`$(Clingo_jll.clingo()) --models 0`), stdin=buffer, stdout=asp_output))
+        run(pipeline(
+            # Ignore the status of the command because clingo uses the return
+            # code of the CLI to communicate some information about the status
+            # of the solve, and, depending on the status, this makes it appear
+            # as though the command has failed (exit code != 0)
+            #
+            # --models 0 means return _all_ models (solutions), not 0 models
+            ignorestatus(`$(Clingo_jll.clingo()) --models 0`),
+            stdin=buffer,
+            stdout=asp_output
+        ))
     end
     extract_solutions(solver, split(String(take!(asp_output)), "\n"))
 end
-
 """
     extract_solutions(solver::ASPSolver, output_lines)
 Extract solutions from the output of Clingo and store them in the `solutions` field of the solver.
