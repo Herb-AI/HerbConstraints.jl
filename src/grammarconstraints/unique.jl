@@ -17,14 +17,14 @@ end
 
 
 """
-    function _count_occurrences(rule::Int, node::AbstractRuleNode)::Int
+    _count_occurrences(rulenode::AbstractRuleNode, rule::Int)::Int
 
 Recursively counts the number of occurrences of the `rule` in the `node`.
 """
-function _count_occurrences(node::AbstractRuleNode, rule::Int)::Int
-    @assert isfilled(node)
-    count = (get_rule(node) == rule) ? 1 : 0
-    for child ∈ get_children(node)
+function _count_occurrences(rulenode::AbstractRuleNode, rule::Int)::Int
+    @assert isfilled(rulenode)
+    count = (get_rule(rulenode) == rule) ? 1 : 0
+    for child ∈ get_children(rulenode)
         count += _count_occurrences(child, rule)
     end
     return count
