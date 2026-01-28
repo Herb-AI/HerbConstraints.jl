@@ -438,8 +438,10 @@
             ])
 
             solver = ASPSolver(g, tree)
-            @test ASPExt.get_grammar(solver) === g
+            @test get_grammar(solver) === g
             @test ASPExt.get_rulenode(solver) === tree
+            @test get_tree(solver) === tree
+            @test HerbConstraints.get_name(solver) == "ASPSolver"
             @test isfeasible(solver) === true
         end
     end

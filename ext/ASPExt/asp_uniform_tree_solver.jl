@@ -1,11 +1,11 @@
-get_name(::ASPSolver) = "ASPSolver"
+HerbConstraints.get_name(::ASPSolver) = "ASPSolver"
 
 """
     get_grammar(solver::ASPSolver)
 
 Get the grammar.
 """
-function get_grammar(solver::ASPSolver)::AbstractGrammar
+function HerbConstraints.get_grammar(solver::ASPSolver)::AbstractGrammar
     return solver.grammar
 end
 
@@ -18,12 +18,14 @@ function get_rulenode(solver::ASPSolver)::AbstractRuleNode
     return solver.uniform_rulenode
 end
 
+HerbConstraints.get_tree(solver::ASPSolver) = get_rulenode(solver)
+
 """
     isfeasible(solver::ASPSolver)
 
 Returns true if no inconsistency has been detected.
 """
-function isfeasible(solver::ASPSolver)
+function HerbConstraints.isfeasible(solver::ASPSolver)
     return solver.isfeasible
 end
 
