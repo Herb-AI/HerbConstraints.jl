@@ -18,6 +18,8 @@ function get_rulenode(solver::ASPSolver)::AbstractRuleNode
     return solver.uniform_rulenode
 end
 
+HerbConstraints.get_tree(solver::ASPSolver) = get_rulenode(solver)
+
 """
     isfeasible(solver::ASPSolver)
 
