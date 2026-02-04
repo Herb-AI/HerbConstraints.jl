@@ -60,6 +60,30 @@ function notify_new_nodes(solver::UniformSolver, node::AbstractRuleNode, path::V
     end
 end
 
+"""
+    notify_new_constraints(solver::UniformSolver, node::AbstractRuleNode, constraints::Vector{AbstractGrammarConstraint}, path::Vector{Int})
+
+Notify all existing nodes about the new `constraints` at the provided `path`.
+"""
+function notify_new_constraints(solver::UniformSolver, node::AbstractRuleNode, constraints::Vector{AbstractGrammarConstraint}, path::Vector{Int})
+    if !isfeasible(solver) return end
+    for (i, childnode) ∈ enumerate(get_children(node))
+        notify_new_constraints(solver, childnode, constraints, push!(copy(path), i))
+    end
+    for c ∈ constraints
+        on_new_node(solver, c, path)
+    end
+end
+
+"""
+    add_constraints!(solver::UniformSolver, constraints::Vector{AbstractGrammarConstraint})
+
+Add the `constraints` to the solver and schedule them for propagation.
+"""
+function add_constraints!(solver::UniformSolver, constraints::Vector{AbstractGrammarConstraint})
+    notify_new_constraints(solver, get_tree(solver), constraints, Vector{Int}())
+    fix_point!(solver)
+end
 
 """
     get_path(solver::UniformSolver, node::AbstractRuleNode)
@@ -170,7 +194,7 @@ function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if (constraint ∈ keys(solver.isactive))
         @assert solver.isactive[constraint] == 0 "Attempted to post a constraint that is already active: $(constraint). Please verify that the grammar does not contain duplicate constraints."
     else
-        solver.isactive[constraint] = StateInt(solver.sm, 0) #initializing the state int as 0 will deactivate it on backtrack
+        solver.isactive[constraint] = StateInt(solver.sm, 1) #initializing the state int as 0 will deactivate it on backtrack
     end
     set_value!(solver.isactive[constraint], 1)
 end
