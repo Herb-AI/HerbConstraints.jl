@@ -2,10 +2,8 @@
     using HerbCore, HerbGrammar
     using Clingo_jll
 
-    ASPExt = Base.get_extension(HerbConstraints, :ASPExt)
-    using .ASPExt: grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP,
-        constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar,
-        get_rulenode
+    using HerbConstraints: grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP,
+        constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar
     using HerbConstraints
     using TestSetExtensions: ExtendedTestSet
 
@@ -439,7 +437,6 @@
 
             solver = ASPSolver(g, tree)
             @test get_grammar(solver) === g
-            @test ASPExt.get_rulenode(solver) === tree
             @test get_tree(solver) === tree
             @test HerbConstraints.get_name(solver) == "ASPSolver"
             @test isfeasible(solver) === true

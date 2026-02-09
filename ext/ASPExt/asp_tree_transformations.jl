@@ -34,7 +34,7 @@ child(1,2,3).
 1 { node(3,1);node(3,2);node(3,3) } 1.
 
 """
-function rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
+function HerbConstraints.rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
     output = ""
     output *= _node_to_ASP(rulenode, grammar, node_index)
     parent_index = node_index
@@ -81,7 +81,7 @@ function _node_to_ASP(rulenode::StateHole, ::AbstractGrammar, node_index::Int64)
     return "1 { $(options) } 1.\n"
 end
 
-function constraint_rulenode_to_ASP(
+function HerbConstraints.constraint_rulenode_to_ASP(
     ::AbstractGrammar,
     vn::VarNode,
     node_index::Int,
@@ -103,7 +103,7 @@ Transforms a template [`RuleNode`](@ref) to an ASP form suitable for constraints
 @rulenode [4,5]{3,3} -> allowed(x1,1).node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
 ```
 """
-function constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
+function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
     tree_facts, additional_facts = "", ""
     tmp_facts, tmp_additional = _constraint_node_to_ASP(grammar, rulenode, node_index, constraint_index::Int64)
     tree_facts *= "$(tmp_facts)"
@@ -189,7 +189,7 @@ Return an `(index, map)` tuple where `idx` is the largest index assigned in the
 tree. The ASP index of a node in a tree is assigned with a depth-first
 traversal.
 """
-function map_varnodes_to_asp_indices(
+function HerbConstraints.map_varnodes_to_asp_indices(
     rn::AbstractRuleNode;
     idx=1,
     map=Dict{Symbol,Vector{Int}}()
@@ -202,7 +202,7 @@ function map_varnodes_to_asp_indices(
     return idx, map
 end
 
-function map_varnodes_to_asp_indices(
+function HerbConstraints.map_varnodes_to_asp_indices(
     vn::VarNode;
     idx=1,
     map=Dict{Symbol,Vector{Int}}()
@@ -219,8 +219,8 @@ end
 If there are multiple [`VarNode`](@ref)s with the same symbol in `rn`, add
 `is_same(X,Y)` for ASP representation.
 """
-function enforce_varnode_equality(rn::AbstractRuleNode, idx::Int)
-    _, varnodes = map_varnodes_to_asp_indices(rn; idx)
+function HerbConstraints.enforce_varnode_equality(rn::AbstractRuleNode, idx::Int)
+    _, varnodes = HerbConstraints.map_varnodes_to_asp_indices(rn; idx)
     output = ""
 
     for (_, indices) in varnodes

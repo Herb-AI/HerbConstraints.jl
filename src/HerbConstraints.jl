@@ -77,6 +77,15 @@ include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
+# Implemented in ASPExt
+function rulenode_to_ASP end
+function constraint_rulenode_to_ASP end
+function map_varnodes_to_asp_indices end
+function enforce_varnode_equality end
+function grammar_to_ASP end
+function constraint_to_ASP end
+function rulenode_comparisons_asp end
+
 include("solver/asp.jl")
 include("csg_annotated/csg_annotated.jl")
 include("csg_annotated/process_annotated_rules.jl")

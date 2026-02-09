@@ -3,7 +3,7 @@
 
 Transforms each global constraint into ASP format.
 """
-function grammar_to_ASP(grammar::AbstractGrammar)
+function HerbConstraints.grammar_to_ASP(grammar::AbstractGrammar)
     output = ""
     for (const_ind, constraint) in enumerate(grammar.constraints)
         output *= "% $(constraint)\n"
@@ -30,7 +30,7 @@ allowed(c1x3,3).
 :- node(X1,5), child(X1,1,X2), node(X2,D2), allowed(c1x2,D2), child(X1,2,X3), node(X3,D3), allowed(c1x3,D3).
 ```
 """
-function constraint_to_ASP(grammar::AbstractGrammar, constraint::Forbidden, constraint_index::Int64)
+function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::Forbidden, constraint_index::Int64)
     tree_facts, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
     output = domains
     output *= "subtree(c$(constraint_index)) :- $(tree_facts).\n:- subtree(c$(constraint_index)).\n"
@@ -46,7 +46,7 @@ Transforms the contains constraint into ASP format.
 Contains(4) -> :- not node(_,4).
 ```
 """
-function constraint_to_ASP(::AbstractGrammar, constraint::Contains, constraint_index::Int64)
+function HerbConstraints.constraint_to_ASP(::AbstractGrammar, constraint::Contains, constraint_index::Int64)
     return ":- not node(_,$(constraint.rule)).\n"
 end
 
@@ -59,7 +59,7 @@ Transforms the unique constraint into ASP format.
 Unique(4) -> { node(X,4) : node(X,4) } 1.
 ```
 """
-function constraint_to_ASP(::AbstractGrammar, constraint::Unique, constraint_index::Int64)
+function HerbConstraints.constraint_to_ASP(::AbstractGrammar, constraint::Unique, constraint_index::Int64)
     return "{ node(X,$(constraint.rule)) : node(X,$(constraint.rule)) } 1.\n"
 end
 
@@ -74,7 +74,7 @@ subtree(c1) :- node(X1,5), child(X1,1,X2), node(X2,1), child(X1,2,X3), node(X3,2
 :- not subtree(c1).
 ```
 """
-function constraint_to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
+function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
     tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
     output = domains
     output *= "subtree(c$(constraint_index)) :- $(tree).\n:- not subtree(c$(constraint_index)).\n"
@@ -112,7 +112,7 @@ is_smaller(X,Y) :-
 :- node(X1,5),child(X1,1,X2),node(X2,X),child(X1,2,X3),node(X3,Y),child(X1,3,X4),node(X4,Z),not is_smaller(Y,Z).
 ```
 """
-function constraint_to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
+function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::Ordered, constraint_index::Int64)
     # X is smaller than Y if the rule index of X is < Y's 
     # X is smaller than Y if their indices are equal but "is_smaller" holds for each of X and Y's children
     output = ""
@@ -130,7 +130,7 @@ function constraint_to_ASP(grammar::AbstractGrammar, constraint::Ordered, constr
     return output
 end
 
-function rulenode_comparisons_asp()
+function HerbConstraints.rulenode_comparisons_asp()
     output = """
     is_smaller(X,Y) :- node(X,XV), node(Y,YV), XV < YV.
     is_smaller(X,Y) :-
@@ -147,9 +147,9 @@ function rulenode_comparisons_asp()
     return output
 end
 
-function rulenode_comparisons_asp(solver::ASPSolver)
+function HerbConstraints.rulenode_comparisons_asp(solver::ASPSolver)
     # No need to include comparisons if there is a single rulenode in the tree 
-    if length(get_rulenode(solver)) == 1
+    if length(get_tree(solver)) == 1
         return ""
     else
         return rulenode_comparisons_asp()
