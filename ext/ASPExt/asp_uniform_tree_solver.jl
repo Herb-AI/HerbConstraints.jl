@@ -36,8 +36,8 @@ Generate all solutions for the given rulenode using ASP solver Clingo.
 """
 function HerbConstraints.solve(solver::ASPSolver)
     @timeit_debug solver.statistics "generate ASP RuleNode" begin
-        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), get_grammar(solver), 1)
-        constraints = grammar_to_ASP(get_grammar(solver))
+        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), HerbConstraints.get_grammar(solver), 1)
+        constraints = grammar_to_ASP(HerbConstraints.get_grammar(solver))
         comparisons = rulenode_comparisons_asp(solver)
 
         asp_input = """
