@@ -173,8 +173,8 @@
             c = ContainsSubtree(RuleNode(4, [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 1, 1)), [])
-            ]))
-            addconstraint!(g, c)
+            ])) # children are not included
+            addconstraint!(g, c) 
 
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, statehole, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"

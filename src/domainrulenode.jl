@@ -99,3 +99,23 @@ function HerbCore.issame(A::DomainRuleNode, B::DomainRuleNode)
     A.domain == B.domain && length(A.children) == length(B.children) && all(HerbCore.issame(a, b) for (a, b) in zip(A.children, B.children))
 
 end
+
+function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar, expected_type::Symbol)::Bool
+    length(grammar.rules) == length(drn.domain) || return false
+    child_types = grammar.childtypes[drn.domain]
+    drn_children = get_children(drn)
+    isempty(drn_children) && return true
+    for expected_child_types in child_types
+        # not valid if the hole does not have the expected amount of children
+        length(drn_children) == length(expected_child_types) || return false
+        # not valid if any of the children is not valid
+        for (i, child) in enumerate(drn_children)
+            HerbGrammar._is_tree_valid(child, grammar, expected_child_types[i]) || return false
+        end
+    end
+    return true
+end
+
+function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar)::Bool
+    return HerbGrammar._is_tree_valid(drn, grammar, :Any)
+end
