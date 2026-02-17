@@ -63,6 +63,6 @@ HerbCore.is_domain_valid(node::VarNode, n_rules::Integer) = true
 
 HerbCore.issame(A::VarNode, B::VarNode) = A.name == B.name
 
-HerbGrammar._is_tree_valid(vn::VarNode, grammar::AbstractGrammar)::Bool = true
+HerbGrammar._is_tree_valid(vn::VarNode, grammar::AbstractGrammar; allow_empty_children::Bool)::Bool = true
 
-HerbGrammar._is_tree_valid(vn::VarNode, grammar::AbstractGrammar, expected_type::Symbol)::Bool = true
+HerbGrammar._is_tree_valid(vn::VarNode, grammar::AbstractGrammar, expected_type::Symbol; allow_empty_children::Bool)::Bool = true

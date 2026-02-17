@@ -162,4 +162,4 @@ HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar)
 
 HerbCore.issame(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
 
-HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar) = true # need to handle that separately
+HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool) = true # need to handle that separately

@@ -121,4 +121,4 @@ HerbCore.is_domain_valid(c::Unique, grammar::AbstractGrammar) = HerbCore.is_doma
 
 HerbCore.issame(c1::Unique, c2::Unique) = c1 == c2
 
-HerbGrammar.is_constraint_valid(c::Unique, grammar::AbstractGrammar) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)
+HerbGrammar.is_constraint_valid(c::Unique, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)

@@ -100,22 +100,13 @@ function HerbCore.issame(A::DomainRuleNode, B::DomainRuleNode)
 
 end
 
-function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar, expected_type::Symbol)::Bool
+function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar, _expected_type::Symbol; allow_empty_children::Bool)::Bool
     length(grammar.rules) == length(drn.domain) || return false
     child_types = grammar.childtypes[drn.domain]
-    drn_children = get_children(drn)
-    isempty(drn_children) && return true
-    for expected_child_types in child_types
-        # not valid if the hole does not have the expected amount of children
-        length(drn_children) == length(expected_child_types) || return false
-        # not valid if any of the children is not valid
-        for (i, child) in enumerate(drn_children)
-            HerbGrammar._is_tree_valid(child, grammar, expected_child_types[i]) || return false
-        end
-    end
+    HerbGrammar._are_children_valid(drn, grammar, child_types; allow_empty_children=allow_empty_children)
     return true
 end
 
-function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar)::Bool
-    return HerbGrammar._is_tree_valid(drn, grammar, :Any)
+function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar; allow_empty_children::Bool)::Bool
+    return HerbGrammar._is_tree_valid(drn, grammar, :any; allow_empty_children=allow_empty_children)
 end
