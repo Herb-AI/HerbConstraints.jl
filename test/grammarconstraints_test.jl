@@ -14,7 +14,7 @@
         contains = Contains(3)
         forbidden_sequence = ForbiddenSequence([1, 2, 3])
         tree1 = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(2), RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), UniformHole(BitVector((1, 1, 0, 0, 0)), [])])])
-        tree2 = RuleNode(4, [VarNode(:a), RuleNode(1)])
+        tree2 = RuleNode(4, [VarNode(:a), RuleNode(1)]) # the hole should be [0, 0, 0, 1, 1]
         contains_subtree = ContainsSubtree(tree1)
         forbidden = Forbidden(tree2)
 
@@ -51,7 +51,7 @@
 
             forbidden = Forbidden(UniformHole(BitVector((0, 0, 1))))
             ordered = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
-            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)])
+            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)]) # children are not included 
             contains_subtree = ContainsSubtree(tree)
             addconstraint!(merge_to, forbidden)
             addconstraint!(merge_from, ordered)

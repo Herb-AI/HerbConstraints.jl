@@ -1,3 +1,4 @@
 using ReTestItems
 using HerbConstraints
+using HerbGrammar
 runtests(HerbConstraints)
