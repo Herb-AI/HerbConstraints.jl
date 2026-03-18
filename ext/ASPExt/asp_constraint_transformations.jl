@@ -124,8 +124,84 @@ function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint:
 
     # create ordered constraints, for each consecutive pair of ordered vars
     for (x, y) in zip(constraint.order[1:end-1], constraint.order[2:end])
+        @show x,y
+        xi = only(varnode_map[x])
+        yi = only(varnode_map[y])
+        @show xi, yi
+
         output *= ":- $(tree),not is_smaller(X$(only(varnode_map[x])),X$(only(varnode_map[y]))).\n"
     end
+
+    return output
+end
+
+"""
+    constraint_to_ASP(::AbstractGrammar, constraint::ForbiddenSequence, constraint_index::Int64)
+
+Transforms the `ForbiddenSequence` constraint into ASP format.
+
+The encoding matches the semantics of `check_tree`:
+- the forbidden sequence must occur on one vertical path
+- gaps are allowed
+- any `ignore_if` rule on the active segment cancels that attempt
+- except when the sequence is completed at the current node: then it is already a violation
+
+```jldoctest
+julia> println(constraint_to_ASP(g, ForbiddenSequence([1,2,3]), 1))
+ignored_c1(X) :- node(X,R), ignore_c1(R).
+clean_desc_c1(X,Y) :- child(X,N,Y), not ignored_c1(Y).
+clean_desc_c1(X,Z) :- child(X,N,Y), not ignored_c1(Y), clean_desc_c1(Y,Z).
+open_desc_c1(X,Y) :- child(X,N,Y).
+open_desc_c1(X,Z) :- child(X,N,Y), not ignored_c1(Y), open_desc_c1(Y,Z).
+match_c1_1(X) :- node(X,1), not ignored_c1(X).
+match_c1_2(Y) :- match_c1_1(X), clean_desc_c1(X,Y), node(Y,2).
+bad_c1(Y) :- match_c1_2(X), open_desc_c1(X,Y), node(Y,3).
+:- bad_c1(X).
+```
+"""
+function HerbConstraints.constraint_to_ASP(::AbstractGrammar, constraint::ForbiddenSequence, constraint_index::Int64)
+    seq = constraint.sequence
+    ign = constraint.ignore_if
+    cid = "c$(constraint_index)"
+
+    output = ""
+
+    # rules that cancel an in-progress match
+    for r in ign
+        output *= "ignore_$(cid)($(r)).\n"
+    end
+    output *= "ignored_$(cid)(X) :- node(X,R), ignore_$(cid)(R).\n"
+
+    # Length-1 sequence: any occurrence is immediately forbidden.
+    # This matches `check_tree`, where matching the last element violates
+    # before the ignore_if check is reached.
+    if length(seq) == 1
+        output *= ":- node(X,$(seq[1])).\n"
+        return output
+    end
+
+    # strict descendant relation where every node on the path, including the end,
+    # is not ignored
+    output *= "clean_desc_$(cid)(X,Y) :- child(X,N,Y), not ignored_$(cid)(Y).\n"
+    output *= "clean_desc_$(cid)(X,Z) :- child(X,N,Y), not ignored_$(cid)(Y), clean_desc_$(cid)(Y,Z).\n"
+
+    # strict descendant relation where all intermediate nodes are not ignored,
+    # but the endpoint itself may be ignored
+    output *= "open_desc_$(cid)(X,Y) :- child(X,N,Y).\n"
+    output *= "open_desc_$(cid)(X,Z) :- child(X,N,Y), not ignored_$(cid)(Y), open_desc_$(cid)(Y,Z).\n"
+
+    # start matching at any node with the first rule, as long as this start node
+    # itself is not ignored (for sequences of length > 1)
+    output *= "match_$(cid)_1(X) :- node(X,$(seq[1])), not ignored_$(cid)(X).\n"
+
+    # match all intermediate symbols
+    for i in 2:length(seq)-1
+        output *= "match_$(cid)_$(i)(Y) :- match_$(cid)_$(i-1)(X), clean_desc_$(cid)(X,Y), node(Y,$(seq[i])).\n"
+    end
+
+    # complete the forbidden sequence
+    output *= "bad_$(cid)(Y) :- match_$(cid)_$(length(seq)-1)(X), open_desc_$(cid)(X,Y), node(Y,$(seq[end])).\n"
+    output *= ":- bad_$(cid)(X).\n"
 
     return output
 end

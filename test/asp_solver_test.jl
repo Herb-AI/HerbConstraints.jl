@@ -334,6 +334,34 @@
             """
             @test asp == expected_asp
         end
+
+        @testset "constraint_to_ASP" begin
+            # Rule indices in this grammar:
+            # 1 = (S,1), 2 = (S,2), 3 = (S,3), 4 = (S,4), 5 = 9
+            g = @csgrammar begin
+                Number = |(1:2)
+                Number = x
+                Number = Number + Number
+                Number = Number * Number
+            end
+
+            c = ForbiddenSequence([4, 5])
+
+            asp = constraint_to_ASP(g, c, 1)
+            expected_asp = """
+            ignored_c1(X) :- node(X,R), ignore_c1(R).
+            clean_desc_c1(X,Y) :- child(X,N,Y), not ignored_c1(Y).
+            clean_desc_c1(X,Z) :- child(X,N,Y), not ignored_c1(Y), clean_desc_c1(Y,Z).
+            open_desc_c1(X,Y) :- child(X,N,Y).
+            open_desc_c1(X,Z) :- child(X,N,Y), not ignored_c1(Y), open_desc_c1(Y,Z).
+            match_c1_1(X) :- node(X,1), not ignored_c1(X).
+            match_c1_2(Y) :- match_c1_1(X), clean_desc_c1(X,Y), node(Y,2).
+            bad_c1(Y) :- match_c1_2(X), open_desc_c1(X,Y), node(Y,3).
+            :- bad_c1(X).
+            """
+
+            @test asp == expected_asp
+        end
     end
 
     @testset "Solver struct" begin

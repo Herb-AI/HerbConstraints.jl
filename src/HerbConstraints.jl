@@ -78,6 +78,7 @@ include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
 # Implemented in ASPExt
+mutable struct ASPSolver end
 function rulenode_to_ASP end
 function constraint_rulenode_to_ASP end
 function map_varnodes_to_asp_indices end
