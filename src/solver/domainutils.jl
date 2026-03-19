@@ -70,7 +70,7 @@ end
 """
     partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
 
-Partition a [Hole](@ref) into subdomains grouped by childtypes
+Partition a [Hole](@ref) into subdomains grouped by childtypes and the parent type.
 """
 function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
     domain = copy(hole.domain)
@@ -84,7 +84,7 @@ function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVect
         parent_mask = falses(length(domain))
         parent_mask[grammar.bytype[grammar.types[rule]]] .= true
 
-        fixed_shaped_domain = grammar.bychildtypes[rule] .&parent_mask .& hole.domain
+        fixed_shaped_domain = grammar.bychildtypes[rule] .& parent_mask .& hole.domain
         push!(fixed_shaped_domains, fixed_shaped_domain)
         domain .-= fixed_shaped_domain
     end
