@@ -5,10 +5,9 @@
     using HerbConstraints: grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP,
         constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar
     using HerbConstraints
-    using TestSetExtensions: ExtendedTestSet
 
     @testset "rulenode_transformations" begin
-        @testset ExtendedTestSet "single rule no children" begin
+        @testset "single rule no children" begin
             g = @csgrammar begin
                 S = 1
             end
@@ -104,7 +103,7 @@
 
 
     @testset "constraint_transformations" begin
-        @testset ExtendedTestSet "constraint_rulenode_to_ASP" begin
+        @testset "constraint_rulenode_to_ASP" begin
             g = @csgrammar begin
                 S = 1 | x
                 S = S + S
@@ -302,7 +301,7 @@
             @test asp == expected_asp
         end
 
-        @testset ExtendedTestSet "ordered_constraint_to_ASP" begin
+        @testset "ordered_constraint_to_ASP" begin
             g = @csgrammar begin
                 Number = |(1:2)
                 Number = x
@@ -443,7 +442,7 @@
         end
     end
     @testset "Full pipeline" begin
-        @testset ExtendedTestSet "Single solution, single derivation rule" begin
+        @testset "Single solution, single derivation rule" begin
             g = @csgrammar begin
                 S = 1
             end
@@ -456,7 +455,7 @@
             @test asp_solver.solutions[1] == Dict(1 => 1)
         end
 
-        @testset ExtendedTestSet "No solutions (ordered constraint)" begin
+        @testset "No solutions (ordered constraint)" begin
             grammar = @csgrammar begin
                 Number = 1
                 Number = x
@@ -486,7 +485,7 @@
             @test length(asp_solver.solutions) == 0
         end
 
-        @testset ExtendedTestSet "No solutions (forbidden constraint)" begin
+        @testset "No solutions (forbidden constraint)" begin
             grammar = @csgrammar begin
                 Number = 1
                 Number = x
@@ -559,7 +558,7 @@
             @test asp_tree == expected_asp
         end
 
-        @testset ExtendedTestSet "ordered_constraint_three_children_order" begin
+        @testset "ordered_constraint_three_children_order" begin
             g = @csgrammar begin
                 S = 1 | 2 | 3
                 S = S + S + S

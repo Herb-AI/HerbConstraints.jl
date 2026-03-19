@@ -162,4 +162,22 @@ HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar)
 
 HerbCore.issame(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
 
-HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool) = true # need to handle that separately
+function HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool)
+    all(1 <= x <= length(grammar.rules) for x in c.ignore_if) || return false
+    function _search_helper(cur::Int, target::Int, grammar::AbstractGrammar)
+        rid_children = grammar.childtypes[cur]
+        if grammar.types[target] in rid_children
+            return true
+        end
+        rid_children_id = unique!(vcat([findall(==(next_type), grammar.types) for next_type in grammar.childtypes[cur]]...))
+        return any([_search_helper(i, target, grammar) for i in rid_children_id])
+    end
+    sequence = c.sequence
+    rid = first(sequence)
+    for next_rid in sequence[2:end]
+        1 <= rid && rid <= length(grammar.rules) || return false
+        _search_helper(rid, next_rid, grammar) || return false
+        rid = next_rid
+    end
+    return true
+end

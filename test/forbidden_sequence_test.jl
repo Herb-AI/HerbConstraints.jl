@@ -319,14 +319,14 @@
                 Int = Int + Int
                 Int = Int * Int
             end
-            c = ForbiddenSequence([1, 2, 3], [2, 5])
+            c = ForbiddenSequence([3, 5, 4], [2, 5])
             addconstraint!(grammar, c)
             HerbCore.update_rule_indices!(c, grammar)
-            @test grammar.constraints[1].sequence == [1, 2, 3]
+            @test grammar.constraints[1].sequence == [3, 5, 4]
             @test grammar.constraints[1].ignore_if == [2, 5]
             mapping = Dict(1 => 10, 3 => 99, 5 => 6)
             HerbCore.update_rule_indices!(c, grammar, mapping)
-            @test grammar.constraints[1].sequence == [10, 2, 99]
+            @test grammar.constraints[1].sequence == [99, 6, 4]
             @test grammar.constraints[1].ignore_if == [2, 6]
         end
         @testset "error" begin

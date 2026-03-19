@@ -51,11 +51,11 @@
 
             forbidden = Forbidden(UniformHole(BitVector((0, 0, 1))))
             ordered = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
-            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)]) # children are not included 
+            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)]) 
             contains_subtree = ContainsSubtree(tree)
             addconstraint!(merge_to, forbidden)
             addconstraint!(merge_from, ordered)
-            addconstraint!(merge_from, contains_subtree)
+            addconstraint!(merge_from, contains_subtree; allow_empty_children=true)
 
             merge_grammars!(merge_to, merge_from)
             # test that merge_grammars! does not modify merge_from.constraints

@@ -1,5 +1,5 @@
-@testset "Adding constraints" verbose=true begin
-    using HerbGrammar: addconstraint!, @csgrammar, UniformHole
+@testitem "Adding constraints" begin
+    using HerbGrammar, HerbConstraints, HerbCore
     @testset "too many children" begin
         grammar = @csgrammar begin
             Int = Int + 1
@@ -29,7 +29,7 @@
             Exp = 0
             Exp = 1
         end
-
+        @show "this test"
         tw = DomainRuleNode(BitVector([1, 1, 1, 0, 0]), [RuleNode(4), RuleNode(4)])
         @test_throws ErrorException addconstraint!(deepcopy(grammar), Forbidden(tw))
         t = DomainRuleNode(BitVector([0, 1, 1, 0, 0]), [RuleNode(4), RuleNode(4)])
@@ -61,6 +61,32 @@
         end 
         tree = DomainRuleNode(BitVector((1, 1, 1, 0, 0, 0, 0)), [VarNode(:a), VarNode(:a)])
         @test_nowarn addconstraint!(grammar, Forbidden(tree))
+    end
+
+    @testset "Forbidden constraints" begin
+        grammar = @csgrammar begin
+            S = A
+            A = C
+            B = D
+            C = 1
+        end
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 2]))
+        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([1, 3]))
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 4]))
+    end
+
+    @testset "UniformHoles" begin
+        g = @csgrammar begin
+            Real = 1
+            Real = 2
+            Real = x
+            Real = Real + Real
+            Real = Real * Real
+        end
+        t = UniformHole(BitVector((0, 0, 0, 1, 0)), [RuleNode(4), RuleNode(5)])
+        c = ContainsSubtree(t)
+        @test_nowarn addconstraint!(g, c; allow_empty_children=true)
+        @test_throws ErrorException addconstraint!(g, c)
     end
 
 end

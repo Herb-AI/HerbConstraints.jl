@@ -188,8 +188,7 @@
             end
             ordered = Ordered(RuleNode(4, [
                     VarNode(:a),
-                    VarNode(:b),
-                    VarNode(:c)
+                    VarNode(:b)
                 ]), [:a, :c, :b])
             addconstraint!(grammar, ordered)
             tree = @rulenode 10{1,5,6}
