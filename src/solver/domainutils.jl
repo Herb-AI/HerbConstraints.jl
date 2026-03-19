@@ -80,7 +80,11 @@ function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVect
         if isnothing(rule)
             break
         end
-        fixed_shaped_domain = grammar.bychildtypes[rule] .& hole.domain
+        
+        parent_mask = falses(length(domain))
+        parent_mask[grammar.bytype[grammar.types[rule]]] .= true
+
+        fixed_shaped_domain = grammar.bychildtypes[rule] .&parent_mask .& hole.domain
         push!(fixed_shaped_domains, fixed_shaped_domain)
         domain .-= fixed_shaped_domain
     end
