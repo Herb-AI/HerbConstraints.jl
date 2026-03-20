@@ -129,4 +129,4 @@ end
 HerbCore.is_domain_valid(c::Forbidden, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::Forbidden, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
 
-HerbCore.issame(c1::Forbidden, c2::Forbidden) = HerbCore.issame(c1.tree, c2.tree)
+HerbCore.Base.:(==)(c1::Forbidden, c2::Forbidden) = (c1.tree == c2.tree)
