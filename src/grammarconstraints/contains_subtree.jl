@@ -102,4 +102,4 @@ end
 HerbCore.is_domain_valid(c::ContainsSubtree, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::ContainsSubtree, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
 
-HerbCore.issame(c1::ContainsSubtree, c2::ContainsSubtree) = HerbCore.issame(c1.tree, c2.tree)
+HerbCore.Base.:(==)(c1::ContainsSubtree, c2::ContainsSubtree) = (c1.tree == c2.tree)

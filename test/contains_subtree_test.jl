@@ -359,7 +359,7 @@
         )
         @test HerbCore.is_domain_valid(contains_subtree, grammar) == true
     end
-    @testset "issame" begin
+    @testset "isequal" begin
         tree1 = UniformHole(BitVector((0, 0, 1, 1)), [
             RuleNode(1),
             RuleNode(4, [
@@ -374,7 +374,7 @@
                 UniformHole(BitVector((1, 1, 1, 0)), [])
             ])
         ])
-        @test HerbCore.issame(ContainsSubtree(tree1), ContainsSubtree(tree1)) == true
-        @test HerbCore.issame(ContainsSubtree(tree1), ContainsSubtree(tree2)) == false
+        @test ContainsSubtree(tree1) == ContainsSubtree(tree1)
+        @test ContainsSubtree(tree1) != ContainsSubtree(tree2)
     end
 end

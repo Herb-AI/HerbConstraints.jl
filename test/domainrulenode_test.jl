@@ -39,14 +39,12 @@
         @test HerbCore.is_domain_valid(node1, n_rules) == false
         @test HerbCore.is_domain_valid(node2, n_rules) == true
     end
-    @testset "issame" begin
-
+    @testset "isequal" begin
         node1 = DomainRuleNode(BitVector((1, 0)), [DomainRuleNode(BitVector((1, 1))), DomainRuleNode(BitVector((0, 1)))])
         node2 = DomainRuleNode(BitVector((1, 0)), [DomainRuleNode(BitVector((1, 1))), DomainRuleNode(BitVector((0, 1)))])
         node3 = DomainRuleNode(BitVector((1, 0)))
-        @test HerbCore.issame(node1, node2) == true
-        @test HerbCore.issame(node2, node3) == false
-
+        @test node1 == node2
+        @test node1 != node3
     end
     @testset "error on number of children mismatch with N children in rules in domain" begin
         g = @csgrammar begin
