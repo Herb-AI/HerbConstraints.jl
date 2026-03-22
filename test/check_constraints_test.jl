@@ -1,4 +1,4 @@
-@testitem "Adding constraints" begin
+@testitem "check_constraints" begin
     using HerbGrammar, HerbConstraints, HerbCore
     @testset "too many children" begin
         grammar = @csgrammar begin
@@ -29,7 +29,6 @@
             Exp = 0
             Exp = 1
         end
-        @show "this test"
         tw = DomainRuleNode(BitVector([1, 1, 1, 0, 0]), [RuleNode(4), RuleNode(4)])
         @test_throws ErrorException addconstraint!(deepcopy(grammar), Forbidden(tw))
         t = DomainRuleNode(BitVector([0, 1, 1, 0, 0]), [RuleNode(4), RuleNode(4)])
@@ -47,6 +46,10 @@
         ContainsSubtree(tree1)
 
         @test_nowarn addconstraint!(grammar, ContainsSubtree(tree1))
+
+        # empty children
+        tree2 = RuleNode(4, [])
+        @test_nowarn addconstraint!(grammar, Forbidden(tree2); allow_empty_children=true)
     end
 
     @testset "DRN with different types" begin
@@ -63,16 +66,20 @@
         @test_nowarn addconstraint!(grammar, Forbidden(tree))
     end
 
-    @testset "Forbidden constraints" begin
+    @testset "ForbiddenSequence" begin
         grammar = @csgrammar begin
             S = A
             A = C
             B = D
             C = 1
+            X = A + D
         end
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 2]))
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([1, 3]))
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 4]))
+        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([6]))
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([5, 4]))
+        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([5, 2, 3, 4]))
     end
 
     @testset "UniformHoles" begin
