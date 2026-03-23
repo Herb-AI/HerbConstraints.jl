@@ -186,28 +186,25 @@
                 Int = Int + Int
                 Int = Int * Int
             end
-            ordered = Ordered(RuleNode(4, [
+            ordered = Ordered(RuleNode(12, [
                     VarNode(:a),
-                    VarNode(:b),
-                    VarNode(:c)
-                ]), [:a, :c, :b])
+                    VarNode(:b)
+                ]), [:a, :b])
             addconstraint!(grammar, ordered)
-            tree = @rulenode 10{1,5,6}
+            tree = @rulenode 13{5,1}
             HerbCore.update_rule_indices!(ordered, grammar)
-            @test ordered.tree == RuleNode(4, [
+            @test ordered.tree == RuleNode(12, [
                 VarNode(:a),
-                VarNode(:b),
-                VarNode(:c)])
+                VarNode(:b)])
             @test check_tree(ordered, tree) == true # constraint pattern not found in tree
 
-            mapping = Dict(4 => 10, 2 => 22)
+            mapping = Dict(12 => 13, 2 => 22)
 
             HerbCore.update_rule_indices!(ordered, grammar, mapping)
             @test check_tree(ordered, tree) == false # tree now violates constraint
-            @test ordered.tree == RuleNode(10, [
+            @test ordered.tree == RuleNode(13, [
                 VarNode(:a),
-                VarNode(:b),
-                VarNode(:c)])
+                VarNode(:b)])
         end
     end
     @testset "is_domain_valid" begin
