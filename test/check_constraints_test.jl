@@ -1,5 +1,8 @@
-@testitem "check_constraints" begin
-    using HerbGrammar, HerbConstraints, HerbCore
+@testitem "Constraint valid with respect to a grammar" begin
+    import HerbCore: UniformHole, RuleNode
+    import HerbConstraints
+    import HerbGrammar: @csgrammar, is_constraint_valid, addconstraint!
+
     @testset "too many children" begin
         grammar = @csgrammar begin
             Int = Int + 1
@@ -36,7 +39,14 @@
     end
 
     @testset "No errors" begin
-        grammar = @cfgrammar begin
+        g = @csgrammar begin
+            Int = Int + Int
+            Int = 1 | 2
+        end
+        f = Forbidden(DomainRuleNode(g, [1], [RuleNode(2), RuleNode(3)]))
+        @test is_constraint_valid(f, g; allow_empty_children=false)
+
+        grammar = @csgrammar begin
             Number = |(1:2)
             Number = x
             Number = Number + Number
@@ -73,13 +83,16 @@
             B = D
             C = 1
             X = A + D
+            D = B
         end
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 2]))
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([1, 3]))
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 4]))
-        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([6]))
+        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([7]))
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([5, 4]))
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([5, 2, 3, 4]))
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([3, 3]))
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([3, 6, 3, 6, 6, 3, 3]))
     end
 
     @testset "UniformHoles" begin
