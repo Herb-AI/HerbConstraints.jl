@@ -100,13 +100,13 @@ function HerbCore.issame(A::DomainRuleNode, B::DomainRuleNode)
 
 end
 
-function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar, _expected_type::Symbol; allow_empty_children::Bool)::Bool
+function HerbGrammar.is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar, _expected_type::Symbol; allow_empty_children::Bool)::Bool
     # DomainRuleNode can have multiple expected types -> ignore the provided.
     length(grammar.rules) == length(drn.domain) || return false
     child_types = grammar.childtypes[drn.domain]
     return HerbGrammar._are_children_valid(drn, grammar, child_types; allow_empty_children=allow_empty_children)
 end
 
-function HerbGrammar._is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar; allow_empty_children::Bool)::Bool
-    return HerbGrammar._is_tree_valid(drn, grammar, :any; allow_empty_children=allow_empty_children)
+function HerbGrammar.is_tree_valid(drn::DomainRuleNode, grammar::AbstractGrammar; allow_empty_children::Bool)::Bool
+    return HerbGrammar.is_tree_valid(drn, grammar, :any; allow_empty_children=allow_empty_children)
 end
