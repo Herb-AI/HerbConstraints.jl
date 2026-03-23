@@ -88,11 +88,16 @@
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 2]))
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([1, 3]))
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([1, 4]))
+        # out of bounds
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([7]))
+        # different branches in the tree
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([5, 4]))
+        @test_nowarn addconstraint!(grammar, ForbiddenSequence([5, 3]))
         @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([5, 2, 3, 4]))
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([3, 3]))
+        # a cycle
         @test_nowarn addconstraint!(grammar, ForbiddenSequence([3, 6, 3, 6, 6, 3, 3]))
+        @test_throws ErrorException addconstraint!(grammar, ForbiddenSequence([3, 5, 6, 3, 6, 6, 3, 3]))
     end
 
     @testset "UniformHoles" begin
