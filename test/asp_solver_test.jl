@@ -1,4 +1,4 @@
-@testitem "ASPSolver" begin
+@testitem "ASPSolver" tags = [:asp] begin
     using HerbCore, HerbGrammar
     using Clingo_jll
 
@@ -7,7 +7,7 @@
     using HerbConstraints
     using TestSetExtensions: ExtendedTestSet
 
-    @testset "rulenode_transformations" begin
+    @testset ExtendedTestSet "rulenode_transformations" begin
         @testset ExtendedTestSet "single rule no children" begin
             g = @csgrammar begin
                 S = 1
@@ -67,11 +67,11 @@
 
             asp, next_index = rulenode_to_ASP(tree, g, 1)
             expected_asp = """
-            1 { node(1,3);node(1,4) } 1.
+            1 { node(1,(3;4)) } 1.
             child(1,1,2).
-            1 { node(2,1);node(2,2) } 1.
+            1 { node(2,(1;2)) } 1.
             child(1,2,3).
-            1 { node(3,1);node(3,2) } 1.
+            1 { node(3,(1;2)) } 1.
             """
             @test asp == expected_asp
         end
@@ -92,19 +92,19 @@
 
             asp, next_index = rulenode_to_ASP(statehole, g, 1)
             expected_asp = """
-            1 { node(1,4);node(1,3) } 1.
+            1 { node(1,(3;4)) } 1.
             child(1,1,2).
-            1 { node(2,1);node(2,2) } 1.
+            1 { node(2,(1;2)) } 1.
             child(1,2,3).
-            1 { node(3,1);node(3,2);node(3,3);node(3,4) } 1.
+            1 { node(3,(1;2;3;4)) } 1.
             """
             @test asp == expected_asp
         end
     end
 
 
-    @testset "constraint_transformations" begin
-        @testset ExtendedTestSet "constraint_rulenode_to_ASP" begin
+    @testset ExtendedTestSet "constraint_transformations" begin
+        @testset "constraint_rulenode_to_ASP" begin
             g = @csgrammar begin
                 S = 1 | x
                 S = S + S
@@ -120,8 +120,8 @@
             addconstraint!(g, c)
 
             asp, next_index, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
-            @test asp == expected_asp
+            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2))"
+            @test expected_asp == asp
         end
 
         @testset "constraint_uniformhole_to_ASP" begin
@@ -140,20 +140,12 @@
                 RuleNode(1),
                 RuleNode(2)
             ]))
-            addconstraint!(g, c; allow_empty_children=true)
-            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
+            addconstraint!(g, c)
+            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2))"
             @test asp_tree == expected_asp
-
-            expected_domains = """
-            allowed(c1x1,3).
-            allowed(c1x1,4).
-            allowed(c1x2,1).
-            allowed(c1x2,2).
-            allowed(c1x3,1).
-            allowed(c1x3,2).
-            """
-            @test additional == expected_domains
+            @test node_index == 3
+            @test constraint_index == 1
         end
 
         @testset "constraint_statehole_to_ASP" begin
@@ -176,21 +168,12 @@
             ])) # children are not included
             addconstraint!(g, c; allow_empty_children=true) 
 
-            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, statehole, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
+            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, statehole, 1, 1)
+            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
             @test asp_tree == expected_asp
+            @test node_index == 3
+            @test constraint_index == 1
 
-            expected_domains = """
-            allowed(c1x1,4).
-            allowed(c1x1,3).
-            allowed(c1x2,1).
-            allowed(c1x2,2).
-            allowed(c1x3,1).
-            allowed(c1x3,2).
-            allowed(c1x3,3).
-            allowed(c1x3,4).
-            """
-            @test additional == expected_domains
         end
 
         @testset "constraint_varnode_to_ASP" begin
@@ -209,22 +192,12 @@
                 VarNode(:a),
                 VarNode(:b)
             ]))
-            addconstraint!(g, c; allow_empty_children=true)
-            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
+            addconstraint!(g, c)
+            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
             @test asp_tree == expected_asp
-
-            expected_domains = """
-            allowed(c1x1,3).
-            allowed(c1x1,4).
-            allowed(c1x2,1).
-            allowed(c1x2,2).
-            allowed(c1x3,1).
-            allowed(c1x3,2).
-            allowed(c1x3,3).
-            allowed(c1x3,4).
-            """
-            @test additional == expected_domains
+            @test node_index == 3
+            @test constraint_index == 1
         end
 
         @testset "constraint_single_varnode_to_ASP" begin
@@ -240,25 +213,15 @@
             c = Forbidden(VarNode(:a))
             addconstraint!(g, c; allow_empty_children=true)
 
-            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
+            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
             @test asp_tree == expected_asp
-
-            expected_domains = """
-            allowed(c1x1,3).
-            allowed(c1x1,4).
-            allowed(c1x2,1).
-            allowed(c1x2,2).
-            allowed(c1x3,1).
-            allowed(c1x3,2).
-            allowed(c1x3,3).
-            allowed(c1x3,4).
-            """
-            @test additional == expected_domains
+            @test node_index == 3
+            @test constraint_index == 1
         end
     end
 
-    @testset "constraint_to_ASP" begin
+    @testset ExtendedTestSet "constraint_to_ASP" begin
         @testset "forbidden_constraint_to_ASP" begin
             g = @csgrammar begin
                 Number = |(1:2)
@@ -302,7 +265,7 @@
             @test asp == expected_asp
         end
 
-        @testset ExtendedTestSet "ordered_constraint_to_ASP" begin
+        @testset "ordered_constraint_to_ASP" begin
             g = @csgrammar begin
                 Number = |(1:2)
                 Number = x
@@ -312,7 +275,7 @@
             constraint = Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y)]), [:X, :Y])
             asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = """
-            :- node(X1,5),child(X1,1,X2),child(X1,2,X3),not is_smaller(X2,X3).
+            :- node(X1,5),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),not is_smaller(X2,X3).
             """
             @test asp == expected_asp
         end
@@ -327,16 +290,14 @@
             constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
             asp = constraint_to_ASP(g, constraint, 1)
             expected_asp = """
-            allowed(c1x2,1).
-            allowed(c1x2,2).
-            subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,3).
+            subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,3).
             :- not subtree(c1).
             """
             @test asp == expected_asp
         end
     end
 
-    @testset "Solver struct" begin
+    @testset ExtendedTestSet "Solver struct" begin
         @testset "asp_solver_uniform_holes" begin
             g = @csgrammar begin
                 S = 1 | x
@@ -507,11 +468,11 @@
             constraint_tree_asp = grammar_to_ASP(grammar)
             expected_asp_constraints = """
             % Forbidden(3{a,b})
-            subtree(c1) :- node(X1,3),child(X1,1,X2),child(X1,2,X3).
+            subtree(c1) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_).
             :- subtree(c1).
 
             % Forbidden(4{a,b})
-            subtree(c2) :- node(X1,4),child(X1,1,X2),child(X1,2,X3).
+            subtree(c2) :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_).
             :- subtree(c2).
 
             """
@@ -527,15 +488,15 @@
 
             asp_tree, _ = rulenode_to_ASP(tree, grammar, 1)
             expected_asp_tree = """
-            1 { node(1,3);node(1,4) } 1.
+            1 { node(1,(3;4)) } 1.
             child(1,1,2).
-            1 { node(2,3);node(2,4) } 1.
+            1 { node(2,(3;4)) } 1.
             child(2,1,3).
-            1 { node(3,1);node(3,2) } 1.
+            1 { node(3,(1;2)) } 1.
             child(2,2,4).
-            1 { node(4,1);node(4,2) } 1.
+            1 { node(4,(1;2)) } 1.
             child(1,2,5).
-            1 { node(5,1);node(5,2) } 1.
+            1 { node(5,(1;2)) } 1.
             """
             @test asp_tree == expected_asp_tree
 
@@ -555,7 +516,7 @@
                 VarNode(:a)
             ])
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,3),child(X1,1,X2),child(X1,2,X3),is_same(X2,X3)"
+            expected_asp = "node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3)"
             @test asp_tree == expected_asp
         end
 
@@ -580,8 +541,8 @@
             asp_tree = grammar_to_ASP(g)
             expected_asp = """
             % Ordered(4{a,b,c}, [:b, :c, :a])
-            :- node(X1,4),child(X1,1,X2),child(X1,2,X3),child(X1,3,X4),not is_smaller(X3,X4).
-            :- node(X1,4),child(X1,1,X2),child(X1,2,X3),child(X1,3,X4),not is_smaller(X4,X2).
+            :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),child(X1,3,X4),node(X4,_),not is_smaller(X3,X4).
+            :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),child(X1,3,X4),node(X4,_),not is_smaller(X4,X2).
 
             """
             @test asp_tree == expected_asp
@@ -594,7 +555,7 @@
             end
         end
 
-        @testset "constraints_with_varnode" begin
+        @testset ExtendedTestSet "constraints_with_varnode" begin
             grammar = @csgrammar begin
                 Number = 1
                 Number = x
@@ -620,10 +581,10 @@
             asp_tree = grammar_to_ASP(grammar)
             expected_asp = """
             % Ordered(3{a,b}, [:a, :b])
-            :- node(X1,3),child(X1,1,X2),child(X1,2,X3),not is_smaller(X2,X3).
+            :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),not is_smaller(X2,X3).
 
             % Forbidden(3{a,a})
-            subtree(c2) :- node(X1,3),child(X1,1,X2),child(X1,2,X3),is_same(X2,X3).
+            subtree(c2) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3).
             :- subtree(c2).
 
             """
@@ -633,7 +594,7 @@
             @test length(solver.solutions) == 1
             @test solver.solutions[1] == Dict(1 => 3, 2 => 1, 3 => 2)
         end
-        @testset "Forbidden with {a,a} pattern" begin
+        @testset ExtendedTestSet "Forbidden with {a,a} pattern" begin
             grammar = @csgrammar begin
                 Number = 1
                 Number = x
@@ -653,7 +614,7 @@
             asp_tree = grammar_to_ASP(grammar)
             expected_asp = """
             % Forbidden(3{a,a})
-            subtree(c1) :- node(X1,3),child(X1,1,X2),child(X1,2,X3),is_same(X2,X3).
+            subtree(c1) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3).
             :- subtree(c1).
 
             """
