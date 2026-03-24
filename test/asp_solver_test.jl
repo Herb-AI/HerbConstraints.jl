@@ -664,6 +664,34 @@
             @test Dict(1 => 3, 2 => 1, 3 => 2) ∈ solver.solutions
             @test Dict(1 => 3, 2 => 2, 3 => 1) ∈ solver.solutions
         end
+
     end
 end
 
+@testitem "Alias rule issue" tags = [:asp] begin
+    import HerbCore: @rulenode
+    import HerbGrammar: @csgrammar, addconstraint!
+    import HerbConstraints: Forbidden, VarNode, constraint_rulenode_to_ASP, grammar_to_ASP, rulenode_to_ASP
+    import TestSetExtensions: ExtendedTestSet
+
+    @testset ExtendedTestSet "Alias rule failing" begin
+        g_alias = @csgrammar begin
+            Expr = Expr + Expr
+            Expr = Const | Var
+            Const = 0 | 1 | 2
+            Var = X
+        end
+        g_no = @csgrammar begin
+            Expr = Expr + Expr
+            Expr = 0 | 1 | 2
+        end
+
+        drn_alias = DomainRuleNode(g_alias, [1], [VarNode(:x), (@rulenode 2{4})])
+        drn_no = DomainRuleNode(g_no, [1], [VarNode(:x), (@rulenode 2)])
+
+        asp_drn_alias = constraint_rulenode_to_ASP(g_alias, drn_alias, 0, 0)
+        asp_drn_no = constraint_rulenode_to_ASP(g_no, drn_no, 0, 0)
+
+        @test asp_drn_alias != asp_drn_no
+    end
+end
