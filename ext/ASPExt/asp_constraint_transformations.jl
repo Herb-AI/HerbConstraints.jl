@@ -31,9 +31,8 @@ allowed(c1x3,3).
 ```
 """
 function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::Forbidden, constraint_index::Int64)
-    tree_facts, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
-    output = domains
-    output *= "subtree(c$(constraint_index)) :- $(tree_facts).\n:- subtree(c$(constraint_index)).\n"
+    tree, _, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
+    output = "subtree(c$(constraint_index)) :- $(tree).\n:- subtree(c$(constraint_index)).\n"
     return output
 end
 
@@ -75,9 +74,8 @@ subtree(c1) :- node(X1,5), child(X1,1,X2), node(X2,1), child(X1,2,X3), node(X3,2
 ```
 """
 function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::ContainsSubtree, constraint_index::Int64)
-    tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
-    output = domains
-    output *= "subtree(c$(constraint_index)) :- $(tree).\n:- not subtree(c$(constraint_index)).\n"
+    tree, _, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
+    output = "subtree(c$(constraint_index)) :- $(tree).\n:- not subtree(c$(constraint_index)).\n"
     return output
 end
 
@@ -117,8 +115,7 @@ function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint:
     # X is smaller than Y if their indices are equal but "is_smaller" holds for each of X and Y's children
     output = ""
 
-    tree, domains, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
-    output *= domains
+    tree, _, _ = constraint_rulenode_to_ASP(grammar, constraint.tree, 1, constraint_index)
 
     _, varnode_map = map_varnodes_to_asp_indices(constraint.tree)
 
