@@ -664,6 +664,59 @@
             @test Dict(1 => 3, 2 => 1, 3 => 2) ∈ solver.solutions
             @test Dict(1 => 3, 2 => 2, 3 => 1) ∈ solver.solutions
         end
+
     end
 end
 
+@testitem "Alias rule issue" tags = [:asp] begin
+    import HerbCore: @rulenode
+    import HerbGrammar: @csgrammar, addconstraint!
+    import HerbConstraints: Forbidden, VarNode, constraint_rulenode_to_ASP, grammar_to_ASP, rulenode_to_ASP
+    import TestSetExtensions: ExtendedTestSet
+
+    @testset ExtendedTestSet "Alias rule failing" begin
+        g_alias = @csgrammar begin
+            Expr = Expr + Expr
+            Expr = Const | Var
+            Const = 0 | 1 | 2
+            Var = X
+        end
+        g_no = @csgrammar begin
+            Expr = Expr + Expr
+            Expr = 0 | 1 | 2
+        end
+
+        drn_alias = DomainRuleNode(g_alias, [1], [VarNode(:x), (@rulenode 2{4})])
+        drn_no = DomainRuleNode(g_no, [1], [VarNode(:x), (@rulenode 2)])
+
+        asp_drn_alias = constraint_rulenode_to_ASP(g_alias, drn_alias, 0, 0)
+        asp_drn_no = constraint_rulenode_to_ASP(g_no, drn_no, 0, 0)
+
+        @test asp_drn_alias != asp_drn_no
+    end
+end
+
+@testitem "Matching varnodes problem" tags = [:asp] begin
+    using HerbGrammar, HerbConstraints
+    using HerbConstraints: constraint_rulenode_to_ASP
+    using HerbSearch: BFSASPIterator
+    using Clingo_jll
+
+    g = @csgrammar begin
+        Const = 0
+        Entity = X
+        Expr = Const | Entity
+        Expr = Expr + Expr
+    end
+    drn = HerbConstraints.DomainRuleNode(g, [5], [VarNode(:a), VarNode(:a)])
+    f = Forbidden(drn)
+    crn_asp, _, _ = constraint_rulenode_to_ASP(g, drn, 1, 1) 
+    @test occursin("is_same", crn_asp) 
+    addconstraint!(g, f)
+    
+    bfs_programs = rulenode2expr.([freeze_state(p) for p ∈ BFSASPIterator(g, :Expr, max_depth=3)], (g,))
+    @test :(X + 0) in bfs_programs
+    @test !(:(X + X) in bfs_programs)
+    @test !(:(0 + 0) in bfs_programs)
+
+end
