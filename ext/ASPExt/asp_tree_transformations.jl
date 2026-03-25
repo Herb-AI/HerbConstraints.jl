@@ -155,8 +155,10 @@ end
 """
 function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::Union{UniformHole,DomainRuleNode,StateHole}, node_index::Int64, constraint_index::Int64)
     tree_facts = "node(X$node_index,$(domain_to_asp(rulenode, grammar, node_index)))"
+    varnode_equality = enforce_varnode_equality(rulenode, node_index)
     children_output, node_index, constraint_index = constraint_rulenode_to_ASP(grammar, get_children(rulenode), node_index, constraint_index)
     tree_facts *= children_output
+    tree_facts *= varnode_equality
 
     return tree_facts, node_index, constraint_index
 end
