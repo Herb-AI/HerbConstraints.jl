@@ -1,7 +1,6 @@
-using HerbCore, HerbGrammar
-
-@testset verbose=false "Tree Manipulations (UniformSolver)" begin
-
+@testitem "Tree Manipulations (UniformSolver)" begin
+    using HerbCore, HerbGrammar
+    
     function create_dummy_solver(tree)
         grammar = @csgrammar begin
             Number = x | 1

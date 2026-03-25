@@ -1,4 +1,4 @@
-@testset verbose=false "StateManager" begin
+@testitem "StateManager" begin
     @testset "1 int, 1 update, 1 backup" begin
         sm = HerbConstraints.StateManager()
         a = StateInt(sm, 10)

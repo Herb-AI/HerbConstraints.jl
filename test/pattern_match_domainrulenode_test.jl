@@ -1,7 +1,5 @@
-using HerbCore
-using HerbGrammar
-
-@testset verbose=false "PatternMatch with DomainRuleNode" begin
+@testitem "PatternMatch with DomainRuleNode" begin
+    using HerbCore, HerbGrammar
 
     #the grammar is not needed in the current implementation
     g = @csgrammar begin

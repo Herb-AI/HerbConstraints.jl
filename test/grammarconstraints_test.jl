@@ -1,4 +1,6 @@
-@testset verbose = true "AbstractGrammarConstraint" begin
+@testitem "AbstractGrammarConstraint" begin
+    using HerbCore, HerbGrammar
+
     @testset "add_rule! to grammar and update constraints" begin
         # define grammar
         grammar = @cfgrammar begin
@@ -10,8 +12,8 @@
 
         # add constraints
         contains = Contains(3)
-        forbidden_sequence = ForbiddenSequence([1, 2, 3])
-        tree1 = UniformHole(BitVector((0, 0, 1, 1, 0)), [RuleNode(2), RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), UniformHole(BitVector((1, 1, 0, 0, 0)), [])])])
+        forbidden_sequence = ForbiddenSequence([4, 1])
+        tree1 = UniformHole(BitVector((0, 0, 0, 1, 1)), [RuleNode(2), RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), UniformHole(BitVector((1, 1, 0, 0, 0)), [])])])
         tree2 = RuleNode(4, [VarNode(:a), RuleNode(1)])
         contains_subtree = ContainsSubtree(tree1)
         forbidden = Forbidden(tree2)
@@ -25,13 +27,13 @@
         add_rule!(grammar, :(Number = 3 | 4))
         @test length(grammar.rules) == 7
 
-        expected_bv1 = BitVector((0, 0, 1, 1, 0, 0, 0))
+        expected_bv1 = BitVector((0, 0, 0, 1, 1, 0, 0))
         expected_bv2 = BitVector((1, 1, 0, 0, 0, 0, 0))
         expected_bv3 = BitVector((1, 1, 0, 0, 0, 0, 0))
 
         @test grammar.constraints[1] == Contains(3) # no changes
-        @test grammar.constraints[2].sequence == [1, 2, 3] # no changes
-        @test grammar.constraints[3].tree.domain == expected_bv1# size BV changes
+        @test grammar.constraints[2].sequence == [4, 1] # no changes
+        @test grammar.constraints[3].tree.domain == expected_bv1 # size BV changes
         @test grammar.constraints[3].tree.children[2].children[1].domain == expected_bv2
         @test grammar.constraints[3].tree.children[2].children[2].domain == expected_bv3
         @test grammar.constraints[4].tree == tree2 # no changes
@@ -49,11 +51,11 @@
 
             forbidden = Forbidden(UniformHole(BitVector((0, 0, 1))))
             ordered = Ordered(DomainRuleNode([1, 1], [VarNode(:v), VarNode(:w)]), [:v, :w])
-            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)])
+            tree = UniformHole(BitVector((1, 0)), [RuleNode(1), RuleNode(2)]) 
             contains_subtree = ContainsSubtree(tree)
             addconstraint!(merge_to, forbidden)
             addconstraint!(merge_from, ordered)
-            addconstraint!(merge_from, contains_subtree)
+            addconstraint!(merge_from, contains_subtree; allow_empty_children=true)
 
             merge_grammars!(merge_to, merge_from)
             # test that merge_grammars! does not modify merge_from.constraints

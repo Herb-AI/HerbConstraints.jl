@@ -1,4 +1,5 @@
-@testset verbose = false "VarNode" begin
+@testitem "VarNode" begin
+    using HerbCore, HerbGrammar
 
     @testset "number_of_varnodes" begin
         @test HerbConstraints.contains_varnode(RuleNode(1), :a) == false

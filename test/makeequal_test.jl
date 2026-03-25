@@ -1,6 +1,5 @@
-using HerbCore, HerbGrammar
-
-@testset verbose=false "MakeEqual (UniformSolver)" begin
+@testitem "MakeEqual (UniformSolver)" begin
+    using HerbCore, HerbGrammar
 
     function create_dummy_solver(leftnode::AbstractRuleNode, rightnode::AbstractRuleNode)
         grammar = @csgrammar begin

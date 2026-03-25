@@ -1,4 +1,6 @@
-@testset verbose = true "DomainRuleNode" begin
+@testitem "DomainRuleNode" begin
+    using HerbCore, HerbGrammar
+
     @testset "Update domain size only" begin
         node = DomainRuleNode(BitVector((1, 0)))
         n_rules = 5

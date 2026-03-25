@@ -1,4 +1,4 @@
-@testset verbose=false "StateSparseSet" begin
+@testitem "StateSparseSet" begin
     @testset "min" begin
         set = HerbConstraints.StateSparseSet(HerbConstraints.StateManager(), 10)
         remove!(set, 1)

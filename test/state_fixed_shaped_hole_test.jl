@@ -1,6 +1,6 @@
-using HerbCore
-
-@testset verbose=false "StateHole" begin
+@testitem "StateHole" begin
+    using HerbCore
+    
     @testset "convert, isfilled and get_rule" begin
         root_stateless = UniformHole(BitVector((1, 1, 0, 0, 0)), [  # domain size 2
             UniformHole(BitVector((1, 0, 0, 0, 0)), [               # domain size 1 (assigned)

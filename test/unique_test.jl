@@ -1,4 +1,6 @@
-@testset verbose = false "Unique" begin
+@testitem "Unique" begin
+    using HerbCore, HerbGrammar
+    
     grammar = @csgrammar begin
         Number = x | 1
         Number = Number + Number

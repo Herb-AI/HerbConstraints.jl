@@ -1,5 +1,5 @@
-using HerbGrammar
-@testset verbose=false "Domain Utils" begin
+@testitem "Domain Utils" begin
+    using HerbCore, HerbGrammar
 
     @testset "is_subdomain (BitVector and StateSparseSet)" begin
         #The domain represents a set of rules. In this case the domain represents the set {1, 3, 4, 5, 8}.
@@ -68,13 +68,16 @@ using HerbGrammar
 
     @testset "is_subdomain false (AbstractRuleNode, no holes)" begin
         #the specific_tree is larger than the general_tree
-        specific_tree = RuleNode(8, [
-            RuleNode(5)
-            RuleNode(7, [
-                RuleNode(4),
+        specific_tree = RuleNode(
+            8,
+            [
                 RuleNode(5)
-            ])
-        ])
+                RuleNode(7, [
+                    RuleNode(4),
+                    RuleNode(5)
+                ])
+            ]
+        )
         general_tree = RuleNode(9)
         @test is_subdomain(specific_tree, general_tree) == false
     end
@@ -101,6 +104,18 @@ using HerbGrammar
         @test domains[2] == BitVector((0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0))
         @test domains[3] == BitVector((0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0))
         @test domains[4] == BitVector((0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0))
+
+        g = @cfgrammar begin
+            Number = x | 1
+            Number = Number + Number
+            Bool = Number - Number
+        end
+
+        domains = partition(Hole(BitVector((1, 1, 1, 1))), g)
+        @test length(domains) == 3
+        @test domains[1] == BitVector((1, 1, 0, 0))
+        @test domains[2] == BitVector((0, 0, 1, 0))
+        @test domains[3] == BitVector((0, 0, 0, 1))
     end
 
     @testset "are_disjoint" begin
