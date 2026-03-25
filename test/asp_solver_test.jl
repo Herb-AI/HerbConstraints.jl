@@ -656,3 +656,28 @@ end
         @test asp_drn_alias != asp_drn_no
     end
 end
+
+@testitem "Matching varnodes problem" tags = [:asp] begin
+    using HerbGrammar, HerbConstraints
+    using HerbConstraints: constraint_rulenode_to_ASP
+    using HerbSearch: BFSASPIterator
+    using Clingo_jll
+
+    g = @csgrammar begin
+        Const = 0
+        Entity = X
+        Expr = Const | Entity
+        Expr = Expr + Expr
+    end
+    drn = HerbConstraints.DomainRuleNode(g, [5], [VarNode(:a), VarNode(:a)])
+    f = Forbidden(drn)
+    crn_asp, _, _ = constraint_rulenode_to_ASP(g, drn, 1, 1) 
+    @test occursin("is_same", crn_asp) 
+    addconstraint!(g, f)
+    
+    bfs_programs = rulenode2expr.([freeze_state(p) for p ∈ BFSASPIterator(g, :Expr, max_depth=3)], (g,))
+    @test :(X + 0) in bfs_programs
+    @test !(:(X + X) in bfs_programs)
+    @test !(:(0 + 0) in bfs_programs)
+
+end
