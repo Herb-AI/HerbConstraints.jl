@@ -1,9 +1,4 @@
 """
-UTILITIES for RuleNode -> ASP transformations
-"""
-
-
-"""
     rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
 
 Transforms a [AbstractRuleNode] into an ASP program.
@@ -35,61 +30,70 @@ child(1,2,3).
 
 """
 function HerbConstraints.rulenode_to_ASP(rulenode::AbstractRuleNode, grammar::AbstractGrammar, node_index::Int64)
-    output = ""
-    output *= _node_to_ASP(rulenode, grammar, node_index)
-    parent_index = node_index
-    node_index = node_index + 1
-    for (child_ind, child) in enumerate(get_children(rulenode))
-        output *= "child($(parent_index),$(child_ind),$(node_index)).\n"
-        ch_output, node_index = rulenode_to_ASP(child, grammar, node_index)
-        output *= ch_output
-    end
+    output = "node($node_index,$(domain_to_asp(rulenode, grammar, node_index))).\n"
+    children_output, node_index = rulenode_to_ASP(get_children(rulenode), grammar, node_index)
+    output *= children_output
     return output, node_index
 end
 
-"""
-    _node_to_ASP(rulenode::RuleNode, ::AbstractGrammar, node_index::Int64)
+function HerbConstraints.rulenode_to_ASP(rulenode::Union{UniformHole,DomainRuleNode,StateHole}, grammar::AbstractGrammar, node_index::Int64)
+    output = ""
+output *= "1 { node($node_index,$(domain_to_asp(rulenode, grammar, node_index))) } 1.\n"
+    children_output, node_index = rulenode_to_ASP(get_children(rulenode), grammar, node_index)
+    output *= children_output
+    return output, node_index
+end
 
-Transforms a [`RuleNode`](@ref) into an ASP representation in the form `node(node_index, rule_id)`.
-Used internally to transform an AST rulenode.
-"""
-function _node_to_ASP(rulenode::RuleNode, ::AbstractGrammar, node_index::Int64)
-    return "node($(node_index),$(get_rule(rulenode))).\n"
+function HerbConstraints.rulenode_to_ASP(
+    children::AbstractVector{<:AbstractRuleNode},
+    grammar::AbstractGrammar,
+    node_index::Int
+)
+    output = ""
+    parent_index = node_index
+
+    for (child_ind, child) in enumerate(children)
+        output *= "child($(parent_index),$(child_ind),$(node_index+1)).\n"
+        ch_output, node_index = rulenode_to_ASP(child, grammar, node_index+1)
+        output *= ch_output
+    end
+
+    return output, node_index 
 end
 
 """
-    _node_to_ASP(rulenode::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
+    domain_to_asp(rulenode::RuleNode, ::AbstractGrammar, node_index::Int64)
 
-Transforms a [`UniformHole`](@ref) or [`DomainRuleNode`](@ref) into an ASP representation in the form
-`1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...} 1.`.
-Used internally to transform an AST rulenode.
+Transform the domain of `rulenode` into an ASP representation.
+
+For [`RuleNode`](@ref)s, the domain is a single value.
+
+```jldoctest
+julia> g = @csgrammar begin
+    Int = Int + Int
+    Int = 1
+end;
+
+julia> domain_to_asp((@rulenode 1{2,2}), g, 42) 
+
+"node(42, 1)"
+```
 """
-function _node_to_ASP(rulenode::Union{UniformHole,DomainRuleNode}, grammar::AbstractGrammar, node_index::Int64)
-    options = join(["node($(node_index),$(ind))" for ind in filter(x -> rulenode.domain[x], 1:length(grammar.rules))], ";")
-    return "1 { $(options) } 1.\n"
+function domain_to_asp(rulenode::RuleNode, ::AbstractGrammar, ::Int)
+    return "$(get_rule(rulenode))"
 end
 
-"""
-    _node_to_ASP(rulenode::StateHole, ::AbstractGrammar, node_index::Int64)
-
-Transform a [`StateHole`](@ref) into an ASP representation in the form
-`1 { node(node_index, rule_id_1); node(node_index, rule_id_2);...} 1.`
-Used internally to transform an AST rulenode.
-"""
-function _node_to_ASP(rulenode::StateHole, ::AbstractGrammar, node_index::Int64)
-    options = join(["node($(node_index),$(ind))" for ind in Base.findall(rulenode.domain)], ";")
-    return "1 { $(options) } 1.\n"
+function domain_to_asp(rulenode::Union{UniformHole,DomainRuleNode,StateHole}, ::AbstractGrammar, ::Int)
+    return "(" * join(sort(findall(rulenode.domain)), ";") * ")"
 end
 
 function HerbConstraints.constraint_rulenode_to_ASP(
     ::AbstractGrammar,
     vn::VarNode,
     node_index::Int,
-    ::Int
+    constraint_index::Int
 )
-    varnode_equality = enforce_varnode_equality(vn, node_index)
-
-    return "node(X$(node_index),X$(node_index))" * varnode_equality, "", node_index
+    return "node(X$(node_index),_)", node_index, constraint_index
 end
 
 """
@@ -103,77 +107,62 @@ Transforms a template [`RuleNode`](@ref) to an ASP form suitable for constraints
 @rulenode [4,5]{3,3} -> allowed(x1,1).node(X1,D1),allowed(x1,D1),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).
 ```
 """
-function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int64, constraint_index::Int64)
-    tree_facts, additional_facts = "", ""
-    tmp_facts, tmp_additional = _constraint_node_to_ASP(grammar, rulenode, node_index, constraint_index::Int64)
-    tree_facts *= "$(tmp_facts)"
+function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::AbstractRuleNode, node_index::Int, constraint_index::Int)
+    tree_facts = "node(X$node_index,$(domain_to_asp(rulenode, grammar, node_index)))"
     varnode_equality = enforce_varnode_equality(rulenode, node_index)
-    additional_facts *= join(tmp_additional, "")
-    parent_index = node_index
-    node_index += 1
-    for (child_ind, child) in enumerate(rulenode.children)
-        if isa(child, VarNode)
-            # Create a variable (uppercase) of the node name, which is a symbol
-            node_name = titlecase(string(child.name))
-            tree_facts *= ",child(X$parent_index,$child_ind,X$node_index)"
-            node_index += 1
-        else
-            tmp_facts, tmp_additional = _constraint_node_to_ASP(grammar, child, node_index, constraint_index)
-            tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index))"
-            tree_facts *= ",$(tmp_facts)"
-            additional_facts *= join(tmp_additional, "")
-            node_index += 1
-        end
-    end
+    children_output, node_index, constraint_index = constraint_rulenode_to_ASP(grammar, get_children(rulenode), node_index, constraint_index)
+
+    tree_facts *= children_output
     tree_facts *= varnode_equality
-    return tree_facts, additional_facts, node_index
+
+    return tree_facts, node_index, constraint_index
 end
 
-"""
-    _constraint_node_to_ASP(::AbstractGrammar, rulenode::RuleNode, node_index::Int64, constraint_index::Int64)
+function HerbConstraints.constraint_rulenode_to_ASP(
+    grammar::AbstractGrammar,
+    children::AbstractVector{<:AbstractRuleNode},
+    node_index::Int,
+    constraint_index::Int
+)
+    output = ""
+    parent_index = node_index
+    for (child_ind, child) in enumerate(children)
+        output *= ",child(X$(parent_index),$(child_ind),X$(node_index + 1)),"
+        ch_output, node_index, constraint_index = constraint_rulenode_to_ASP(grammar, child, node_index + 1, constraint_index)
+        output *= ch_output
+    end
 
-Transforms a [RuleNode] into an ASP representation in the form
-`node(X_node_index, RuleNode_index).`
-
-Used internally to transform an AST rulenode of a constraint.
-"""
-function _constraint_node_to_ASP(::AbstractGrammar, rulenode::RuleNode, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),$(get_rule(rulenode)))", []
+    return output, node_index, constraint_index
 end
+
+# """
+#     constraint_node_to_ASP(grammar::AbstractGrammar, rulenode::RuleNode, node_index::Int, constraint_index::Int)
+#
+# Transforms a [RuleNode] into an ASP representation in the form
+# `node(X_node_index, RuleNode_index).`
+#
+# """
+# function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::RuleNode, node_index::Int, constraint_index::Int)
+#     tree_facts = domain_to_asp(rulenode, grammar, node_index)
+#     children_output, node_index, constraint_index = constraint_rulenode_to_ASP(grammar, get_children(rulenode), node_index, constraint_index)
+#     tree_facts *= children_output
+#
+#     return tree_facts, node_index, constraint_index
+# end
 
 """
     _constraint_node_to_ASP(grammar::AbstractGrammar, rulenode::Union{UniformHole,DomainRuleNode}, node_index::Int64, constraint_index::Int64)
-
-Transforms a [`UniformHole`](@ref) or [`DomainRuleNode`](@ref) into an ASP representation in the form
-
-```
-node(X_node_index, D_node_index, allowed(c{constraint_index}x{node_index}, D_node_index))
-```
-
-and the allowed domains of this constraint node.
-
-Used internally to transform an AST rulenode of a constraint.
 """
-function _constraint_node_to_ASP(grammar::AbstractGrammar, rulenode::Union{UniformHole,DomainRuleNode}, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index),$x).\n", collect(filter(x -> rulenode.domain[x], 1:length(grammar.rules))))
+function HerbConstraints.constraint_rulenode_to_ASP(grammar::AbstractGrammar, rulenode::Union{UniformHole,DomainRuleNode,StateHole}, node_index::Int64, constraint_index::Int64)
+    tree_facts = "node(X$node_index,$(domain_to_asp(rulenode, grammar, node_index)))"
+    varnode_equality = enforce_varnode_equality(rulenode, node_index)
+    children_output, node_index, constraint_index = constraint_rulenode_to_ASP(grammar, get_children(rulenode), node_index, constraint_index)
+    tree_facts *= children_output
+    tree_facts *= varnode_equality
+
+    return tree_facts, node_index, constraint_index
 end
 
-"""
-    _constraint_node_to_ASP(::AbstractGrammar, rulenode::StateHole, node_index::Int64, constraint_index::Int64)
-
-Transforms a [`StateHole`](@ref) into an ASP representation in the form
-
-```
-node(X_node_index, D_node_index, allowed(c{constraint_index}x{node_index}, D_node_index))
-``` 
-
-and the allowed domains of this constraint node.
-
-Used internally to transform an AST rulenode of a constraint.
-"""
-function _constraint_node_to_ASP(::AbstractGrammar, rulenode::StateHole, node_index::Int64, constraint_index::Int64)
-    return "node(X$(node_index),D$(node_index)),allowed(c$(constraint_index)x$(node_index),D$(node_index))", map(x -> "allowed(c$(constraint_index)x$(node_index),$x).\n", Base.findall(rulenode.domain))
-end
 
 """
     map_varnodes_to_asp_indices(
