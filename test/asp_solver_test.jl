@@ -6,6 +6,7 @@
         constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar
     using HerbConstraints
     using TestSetExtensions: ExtendedTestSet
+    using ReferenceTests
 
     @testset ExtendedTestSet "rulenode_transformations" begin
         @testset ExtendedTestSet "single rule no children" begin
@@ -15,13 +16,9 @@
 
             tree = RuleNode(1)
 
-            asp, _ = rulenode_to_ASP(tree, g, 1)
-
-            expected_asp = """
-            node(1,1).
-            """
-
-            @test asp == expected_asp
+            asp, next_index = rulenode_to_ASP(tree, g, 1)
+            @test_reference "asp_output/single_rulenode_no_children.lp" asp
+            @test next_index == 2
         end
         @testset "rulenode_to_ASP" begin
             g = @csgrammar begin
@@ -39,18 +36,8 @@
             ])
 
             asp, next_index = rulenode_to_ASP(tree, g, 1)
-            expected_asp = """
-            node(1,3).
-            child(1,1,2).
-            node(2,1).
-            child(1,2,3).
-            node(3,4).
-            child(3,1,4).
-            node(4,1).
-            child(3,2,5).
-            node(5,2).
-            """
-            @test asp == expected_asp
+            @test_reference "asp_output/larger_rulenode.lp" asp
+            @test next_index == 6
         end
 
         @testset "uniformhole_to_ASP" begin
@@ -66,14 +53,8 @@
             ])
 
             asp, next_index = rulenode_to_ASP(tree, g, 1)
-            expected_asp = """
-            1 { node(1,(3;4)) } 1.
-            child(1,1,2).
-            1 { node(2,(1;2)) } 1.
-            child(1,2,3).
-            1 { node(3,(1;2)) } 1.
-            """
-            @test asp == expected_asp
+            @test_reference "asp_output/uniform_hole.lp" asp
+            @test next_index == 4
         end
 
         @testset "statehole_to_ASP" begin
@@ -91,14 +72,7 @@
             statehole = HerbConstraints.StateHole(sm, tree)
 
             asp, next_index = rulenode_to_ASP(statehole, g, 1)
-            expected_asp = """
-            1 { node(1,(3;4)) } 1.
-            child(1,1,2).
-            1 { node(2,(1;2)) } 1.
-            child(1,2,3).
-            1 { node(3,(1;2;3;4)) } 1.
-            """
-            @test asp == expected_asp
+            @test_reference "asp_output/statehole.lp" asp
         end
     end
 
@@ -120,8 +94,8 @@
             addconstraint!(g, c)
 
             asp, next_index, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2))"
-            @test expected_asp == asp
+            @test_reference "asp_output/unique_constraint_rulenode.lp" asp
+            @test next_index == 4
         end
 
         @testset "constraint_uniformhole_to_ASP" begin
@@ -142,9 +116,8 @@
             ]))
             addconstraint!(g, c)
             asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2))"
-            @test asp_tree == expected_asp
-            @test node_index == 3
+            @test_reference "asp_output/containssubtree_constraint_rulenode.lp" asp_tree
+            @test node_index == 4
             @test constraint_index == 1
         end
 
@@ -169,11 +142,9 @@
             addconstraint!(g, c; allow_empty_children=true)
 
             asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, statehole, 1, 1)
-            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
-            @test asp_tree == expected_asp
-            @test node_index == 3
+            @test_reference "asp_output/contains_subtree_constraint_statehole.lp" asp_tree
+            @test node_index == 4
             @test constraint_index == 1
-
         end
 
 
@@ -191,9 +162,8 @@
             addconstraint!(g, c; allow_empty_children=true)
 
             asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
-            @test asp_tree == expected_asp
-            @test node_index == 3
+            @test_reference "asp_output/forbidden_constraint_varnode.lp" asp_tree
+            @test node_index == 4
             @test constraint_index == 1
         end
     end
@@ -210,8 +180,7 @@
             constraint = Forbidden(RuleNode(5, [RuleNode(3), RuleNode(3)]))
 
             asp = constraint_to_ASP(g, constraint, 1)
-            expected_asp = "subtree(c1) :- node(X1,5),child(X1,1,X2),node(X2,3),child(X1,2,X3),node(X3,3).\n:- subtree(c1).\n"
-            @test asp == expected_asp
+            @test_reference "asp_output/forbidden_constraint.lp" asp
         end
 
         @testset "contains_rulenode_constraint_to_ASP" begin
@@ -251,10 +220,7 @@
             end
             constraint = Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y)]), [:X, :Y])
             asp = constraint_to_ASP(g, constraint, 1)
-            expected_asp = """
-            :- node(X1,5),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),not is_smaller(X2,X3).
-            """
-            @test asp == expected_asp
+            @test_reference "asp_output/ordered_constraint.lp" asp
         end
 
     end
@@ -428,17 +394,7 @@
             addconstraint!(grammar, constraint2)
 
             constraint_tree_asp = grammar_to_ASP(grammar)
-            expected_asp_constraints = """
-            % Forbidden(3{a,b})
-            subtree(c1) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_).
-            :- subtree(c1).
-
-            % Forbidden(4{a,b})
-            subtree(c2) :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_).
-            :- subtree(c2).
-
-            """
-            @test constraint_tree_asp == expected_asp_constraints
+            @test_reference "asp_output/grammar_with_forbidden.lp" constraint_tree_asp
 
             tree = UniformHole(BitVector((0, 0, 1, 1)), [
                 UniformHole(BitVector((0, 0, 1, 1)), [
@@ -449,18 +405,7 @@
             ])
 
             asp_tree, _ = rulenode_to_ASP(tree, grammar, 1)
-            expected_asp_tree = """
-            1 { node(1,(3;4)) } 1.
-            child(1,1,2).
-            1 { node(2,(3;4)) } 1.
-            child(2,1,3).
-            1 { node(3,(1;2)) } 1.
-            child(2,2,4).
-            1 { node(4,(1;2)) } 1.
-            child(1,2,5).
-            1 { node(5,(1;2)) } 1.
-            """
-            @test asp_tree == expected_asp_tree
+            @test_reference "asp_output/many_uniform_holes.lp" asp_tree
 
             asp_solver = @test_nowarn ASPSolver(grammar, tree)
             @test !isfeasible(asp_solver)
@@ -478,8 +423,7 @@
                 VarNode(:a)
             ])
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3)"
-            @test asp_tree == expected_asp
+            @test_reference "asp_output/two_varnode_with_same_symbol.lp" asp_tree
         end
 
         @testset ExtendedTestSet "ordered_constraint_three_children_order" begin
@@ -501,13 +445,7 @@
             addconstraint!(g, c1)
 
             asp_tree = grammar_to_ASP(g)
-            expected_asp = """
-            % Ordered(4{a,b,c}, [:b, :c, :a])
-            :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),child(X1,3,X4),node(X4,_),not is_smaller(X3,X4).
-            :- node(X1,4),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),child(X1,3,X4),node(X4,_),not is_smaller(X4,X2).
-
-            """
-            @test asp_tree == expected_asp
+            @test_reference "asp_output/ordered_with_three_children.lp" asp_tree
 
             solver = @test_nowarn ASPSolver(g, tree)
             @test 10 == length(solver.solutions)
@@ -541,16 +479,7 @@
             ])
 
             asp_tree = grammar_to_ASP(grammar)
-            expected_asp = """
-            % Ordered(3{a,b}, [:a, :b])
-            :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),not is_smaller(X2,X3).
-
-            % Forbidden(3{a,a})
-            subtree(c2) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3).
-            :- subtree(c2).
-
-            """
-            @test asp_tree == expected_asp
+            @test_reference "asp_output/ordered_and_forbidden.lp" asp_tree
 
             solver = @test_nowarn ASPSolver(grammar, tree)
             @test length(solver.solutions) == 1
@@ -574,20 +503,13 @@
             ])
 
             asp_tree = grammar_to_ASP(grammar)
-            expected_asp = """
-            % Forbidden(3{a,a})
-            subtree(c1) :- node(X1,3),child(X1,1,X2),node(X2,_),child(X1,2,X3),node(X3,_),is_same(X2,X3).
-            :- subtree(c1).
-
-            """
-            @test asp_tree == expected_asp
+            @test_reference "asp_output/forbidden_with_two_matching_varnodes.lp" asp_tree
 
             solver = @test_nowarn ASPSolver(grammar, tree)
             @test length(solver.solutions) == 2
             @test Dict(1 => 3, 2 => 1, 3 => 2) ∈ solver.solutions
             @test Dict(1 => 3, 2 => 2, 3 => 1) ∈ solver.solutions
         end
-
     end
 end
 
@@ -648,6 +570,7 @@ end
     using HerbConstraints: grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP,
         constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar, solve
     using Clingo_jll
+    using ReferenceTests
 
     g = @csgrammar begin
         Number = |(1:2)
@@ -658,11 +581,7 @@ end
     constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
     addconstraint!(g, constraint)
     asp = constraint_to_ASP(g, constraint, 1)
-    expected_asp = """
-    subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,3).
-    :- not subtree(c1).
-    """
-    @test asp == expected_asp
+    @test_reference "asp_output/contains_subtree_constraint.lp" asp
 
     uh = UniformHole(get_domain(g, [5]), [UniformHole(get_domain(g, [2])), UniformHole(get_domain(g, [3]))])
     solver = ASPSolver(g, uh)
