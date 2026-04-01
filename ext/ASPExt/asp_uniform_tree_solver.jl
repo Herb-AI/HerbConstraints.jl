@@ -42,7 +42,7 @@ function HerbConstraints.solve(solver::ASPSolver)
         """
     end
     @timeit_debug solver.statistics "generate ASP RuleNode" begin
-        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), HerbConstraints.get_grammar(solver), 1)
+        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), 1)
         constraints = grammar_to_ASP(HerbConstraints.get_grammar(solver))
         comparisons = rulenode_comparisons_asp(solver)
 

@@ -10,23 +10,13 @@
 
     @testset ExtendedTestSet "rulenode_transformations" begin
         @testset ExtendedTestSet "single rule no children" begin
-            g = @csgrammar begin
-                S = 1
-            end
-
             tree = RuleNode(1)
 
-            asp, next_index = rulenode_to_ASP(tree, g, 1)
+            asp, next_index = rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/single_rulenode_no_children.lp" asp
             @test next_index == 2
         end
         @testset "rulenode_to_ASP" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
-
             tree = RuleNode(3, [
                 RuleNode(1),
                 RuleNode(4, [
@@ -35,35 +25,23 @@
                 ])
             ])
 
-            asp, next_index = rulenode_to_ASP(tree, g, 1)
+            asp, next_index = rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/larger_rulenode.lp" asp
             @test next_index == 6
         end
 
         @testset "uniformhole_to_ASP" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
-
             tree = UniformHole(BitVector((0, 0, 1, 1)), [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
-            asp, next_index = rulenode_to_ASP(tree, g, 1)
+            asp, next_index = rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/uniform_hole.lp" asp
             @test next_index == 4
         end
 
         @testset "statehole_to_ASP" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
-
             tree = UniformHole(BitVector((0, 0, 1, 1)), [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 1, 1)), [])
@@ -71,7 +49,7 @@
             sm = HerbConstraints.StateManager()
             statehole = HerbConstraints.StateHole(sm, tree)
 
-            asp, next_index = rulenode_to_ASP(statehole, g, 1)
+            asp, next_index = rulenode_to_ASP(statehole, 1)
             @test_reference "asp_output/statehole.lp" asp
         end
     end
@@ -93,7 +71,7 @@
             c = Unique(4)
             addconstraint!(g, c)
 
-            asp, next_index, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            asp, next_index = constraint_rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/unique_constraint_rulenode.lp" asp
             @test next_index == 4
         end
@@ -115,10 +93,9 @@
                 RuleNode(2)
             ]))
             addconstraint!(g, c)
-            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            asp_tree, node_index = constraint_rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/containssubtree_constraint_rulenode.lp" asp_tree
             @test node_index == 4
-            @test constraint_index == 1
         end
 
         @testset "constraint_statehole_to_ASP" begin
@@ -141,10 +118,9 @@
             ])) # children are not included
             addconstraint!(g, c; allow_empty_children=true)
 
-            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, statehole, 1, 1)
+            asp_tree, node_index = constraint_rulenode_to_ASP(statehole, 1)
             @test_reference "asp_output/contains_subtree_constraint_statehole.lp" asp_tree
             @test node_index == 4
-            @test constraint_index == 1
         end
 
 
@@ -161,10 +137,9 @@
             c = Forbidden(VarNode(:a))
             addconstraint!(g, c; allow_empty_children=true)
 
-            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            asp_tree, node_index = constraint_rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/forbidden_constraint_varnode.lp" asp_tree
             @test node_index == 4
-            @test constraint_index == 1
         end
     end
 
@@ -178,8 +153,9 @@
             end
 
             constraint = Forbidden(RuleNode(5, [RuleNode(3), RuleNode(3)]))
+            addconstraint!(g, constraint)
 
-            asp = constraint_to_ASP(g, constraint, 1)
+            asp = constraint_to_ASP(constraint, 1)
             @test_reference "asp_output/forbidden_constraint.lp" asp
         end
 
@@ -191,7 +167,8 @@
                 Number = Number * Number
             end
             constraint = Contains(4)
-            asp = constraint_to_ASP(g, constraint, 1)
+            addconstraint!(g, constraint)
+            asp = constraint_to_ASP(constraint, 1)
             expected_asp = ":- not node(_,4).\n"
 
             @test asp == expected_asp
@@ -205,7 +182,8 @@
                 Number = Number * Number
             end
             constraint = Unique(5)
-            asp = constraint_to_ASP(g, constraint, 1)
+            addconstraint!(g, constraint)
+            asp = constraint_to_ASP(constraint, 1)
             expected_asp = "{ node(X,5) : node(X,5) } 1.\n"
 
             @test asp == expected_asp
@@ -219,7 +197,8 @@
                 Number = Number * Number
             end
             constraint = Ordered(RuleNode(5, [VarNode(:X), VarNode(:Y)]), [:X, :Y])
-            asp = constraint_to_ASP(g, constraint, 1)
+            addconstraint!(g, constraint)
+            asp = constraint_to_ASP(constraint, 1)
             @test_reference "asp_output/ordered_constraint.lp" asp
         end
 
@@ -404,7 +383,7 @@
                 UniformHole(BitVector((1, 1, 0, 0)), [])
             ])
 
-            asp_tree, _ = rulenode_to_ASP(tree, grammar, 1)
+            asp_tree, _ = rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/many_uniform_holes.lp" asp_tree
 
             asp_solver = @test_nowarn ASPSolver(grammar, tree)
@@ -413,17 +392,13 @@
         end
 
         @testset "varnode_same_symbol" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
             tree = RuleNode(3, [
                 VarNode(:a),
                 VarNode(:a)
             ])
-            asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
+            asp_tree, next_index = constraint_rulenode_to_ASP(tree, 1)
             @test_reference "asp_output/two_varnode_with_same_symbol.lp" asp_tree
+            @test next_index == 4
         end
 
         @testset ExtendedTestSet "ordered_constraint_three_children_order" begin
@@ -532,10 +507,15 @@ end
         end
 
         drn_alias = DomainRuleNode(g_alias, [1], [VarNode(:x), (@rulenode 2{4})])
-        drn_no = DomainRuleNode(g_no, [1], [VarNode(:x), (@rulenode 2)])
+        constraint = Forbidden(drn_alias)
+        addconstraint!(g_alias, constraint)
 
-        asp_drn_alias = constraint_rulenode_to_ASP(g_alias, drn_alias, 0, 0)
-        asp_drn_no = constraint_rulenode_to_ASP(g_no, drn_no, 0, 0)
+        drn_no = DomainRuleNode(g_no, [1], [VarNode(:x), (@rulenode 2)])
+        constraint = Forbidden(drn_no)
+        addconstraint!(g_no, constraint)
+
+        asp_drn_alias = constraint_rulenode_to_ASP(drn_alias, 1)
+        asp_drn_no = constraint_rulenode_to_ASP(drn_no, 1)
 
         @test asp_drn_alias != asp_drn_no
     end
@@ -555,7 +535,8 @@ end
     end
     drn = HerbConstraints.DomainRuleNode(g, [5], [VarNode(:a), VarNode(:a)])
     f = Forbidden(drn)
-    crn_asp, _, _ = constraint_rulenode_to_ASP(g, drn, 1, 1)
+    addconstraint!(g, f)
+    crn_asp, _ = constraint_rulenode_to_ASP(drn, 1)
     @test occursin("is_same", crn_asp)
     addconstraint!(g, f)
 
@@ -580,7 +561,7 @@ end
     end
     constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
     addconstraint!(g, constraint)
-    asp = constraint_to_ASP(g, constraint, 1)
+    asp = constraint_to_ASP(constraint, 1)
     @test_reference "asp_output/contains_subtree_constraint.lp" asp
 
     uh = UniformHole(get_domain(g, [5]), [UniformHole(get_domain(g, [2])), UniformHole(get_domain(g, [3]))])
@@ -613,11 +594,10 @@ end
 
         c = Forbidden(tree)
         addconstraint!(g, c)
-        asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+        asp_tree, node_index = constraint_rulenode_to_ASP(tree, 1)
         @test_reference "asp_output/forbidden_a_b_constraint_tree.lp" asp_tree
         @test node_index == 4
-        @test constraint_index == 1
-        asp_constraint = constraint_to_ASP(g, c, 1)
+        asp_constraint = constraint_to_ASP(c, 1)
         @test_reference "asp_output/forbidden_a_b.lp" asp_constraint
         uh = UniformHole(BitVector((0, 0, 1, 1)), [
             UniformHole(BitVector((1, 1, 0, 0)), []),
