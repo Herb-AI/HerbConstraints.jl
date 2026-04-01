@@ -166,7 +166,7 @@
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 1, 1)), [])
             ])) # children are not included
-            addconstraint!(g, c; allow_empty_children=true) 
+            addconstraint!(g, c; allow_empty_children=true)
 
             asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, statehole, 1, 1)
             expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
@@ -176,29 +176,6 @@
 
         end
 
-        @testset "constraint_varnode_to_ASP" begin
-            g = @csgrammar begin
-                S = 1 | x
-                S = S + S
-                S = S * S
-            end
-
-            tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                UniformHole(BitVector((1, 1, 0, 0)), []),
-                UniformHole(BitVector((1, 1, 1, 1)), [])
-            ])
-
-            c = Forbidden(UniformHole(BitVector((0, 0, 1, 1)), [
-                VarNode(:a),
-                VarNode(:b)
-            ]))
-            addconstraint!(g, c)
-            asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
-            expected_asp = "node(X1,(3;4)),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,(1;2;3;4))"
-            @test asp_tree == expected_asp
-            @test node_index == 3
-            @test constraint_index == 1
-        end
 
         @testset "constraint_single_varnode_to_ASP" begin
             g = @csgrammar begin
@@ -280,21 +257,6 @@
             @test asp == expected_asp
         end
 
-        @testset "contains_subtree_constraint_to_ASP" begin
-            g = @csgrammar begin
-                Number = |(1:2)
-                Number = x
-                Number = Number + Number
-                Number = Number * Number
-            end
-            constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
-            asp = constraint_to_ASP(g, constraint, 1)
-            expected_asp = """
-            subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,3).
-            :- not subtree(c1).
-            """
-            @test asp == expected_asp
-        end
     end
 
     @testset ExtendedTestSet "Solver struct" begin
@@ -671,13 +633,81 @@ end
     end
     drn = HerbConstraints.DomainRuleNode(g, [5], [VarNode(:a), VarNode(:a)])
     f = Forbidden(drn)
-    crn_asp, _, _ = constraint_rulenode_to_ASP(g, drn, 1, 1) 
-    @test occursin("is_same", crn_asp) 
+    crn_asp, _, _ = constraint_rulenode_to_ASP(g, drn, 1, 1)
+    @test occursin("is_same", crn_asp)
     addconstraint!(g, f)
-    
+
     bfs_programs = rulenode2expr.([freeze_state(p) for p ∈ BFSASPIterator(g, :Expr, max_depth=3)], (g,))
     @test :(X + 0) in bfs_programs
     @test !(:(X + X) in bfs_programs)
     @test !(:(0 + 0) in bfs_programs)
+end
 
+@testitem "Contains subtree ASP" tags = [:asp] begin
+    using HerbGrammar, HerbCore
+    using HerbConstraints: grammar_to_ASP, constraint_to_ASP, rulenode_to_ASP,
+        constraint_rulenode_to_ASP, ASPSolver, isfeasible, get_grammar, solve
+    using Clingo_jll
+
+    g = @csgrammar begin
+        Number = |(1:2)
+        Number = x
+        Number = Number + Number
+        Number = Number * Number
+    end
+    constraint = ContainsSubtree(RuleNode(4, [UniformHole(BitVector((1, 1, 0, 0, 0)), []), RuleNode(3)]))
+    addconstraint!(g, constraint)
+    asp = constraint_to_ASP(g, constraint, 1)
+    expected_asp = """
+    subtree(c1) :- node(X1,4),child(X1,1,X2),node(X2,(1;2)),child(X1,2,X3),node(X3,3).
+    :- not subtree(c1).
+    """
+    @test asp == expected_asp
+
+    uh = UniformHole(get_domain(g, [5]), [UniformHole(get_domain(g, [2])), UniformHole(get_domain(g, [3]))])
+    solver = ASPSolver(g, uh)
+    @test isempty(solver.solutions)
+
+    uh = UniformHole(get_domain(g, [4]), [UniformHole(get_domain(g, [2])), UniformHole(get_domain(g, [3]))])
+    solver = ASPSolver(g, uh)
+    @test length(solver.solutions) == 1
+end
+
+@testitem "Forbidden ASP" tags = [:asp] begin
+    using HerbGrammar, HerbCore
+    using HerbConstraints: constraint_to_ASP, constraint_rulenode_to_ASP, ASPSolver
+    using Clingo_jll
+    using ReferenceTests
+    using TestSetExtensions
+
+    @testset ExtendedTestSet "Forbidden" begin
+        g = @csgrammar begin
+            S = 1 | x
+            S = S + S
+            S = S * S
+        end
+
+        tree = UniformHole(BitVector((0, 0, 1, 1)), [
+            VarNode(:a),
+            VarNode(:b)
+        ])
+
+        c = Forbidden(tree)
+        addconstraint!(g, c)
+        asp_tree, node_index, constraint_index = constraint_rulenode_to_ASP(g, tree, 1, 1)
+        @test_reference "asp_output/forbidden_a_b_constraint_tree.lp" asp_tree
+        @test node_index == 4
+        @test constraint_index == 1
+        asp_constraint = constraint_to_ASP(g, c, 1)
+        @test_reference "asp_output/forbidden_a_b.lp" asp_constraint
+        uh = UniformHole(BitVector((0, 0, 1, 1)), [
+            UniformHole(BitVector((1, 1, 0, 0)), []),
+            UniformHole(BitVector((1, 1, 1, 1)), [])
+        ])
+        solver = ASPSolver(g, uh)
+        @test isempty(solver.solutions)
+        uh = UniformHole(get_domain(g, [1, 2]))
+        solver = ASPSolver(g, uh)
+        @test length(solver.solutions) == 2
+    end
 end
