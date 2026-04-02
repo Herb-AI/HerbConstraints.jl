@@ -24,6 +24,7 @@ function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
 end
 
 HerbCore.isuniform(::VarNode) = false
+HerbCore.get_children(::VarNode) = HerbCore.NOCHILDREN
 
 """
     contains_varnode(rn::AbstractRuleNode, name::Symbol)
