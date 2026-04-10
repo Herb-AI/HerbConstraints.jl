@@ -124,8 +124,8 @@ function HerbConstraints.map_varnodes_to_asp_indices(
     idx=1,
     map=Dict{Symbol,Vector{Int}}()
 )::Tuple{Int,Dict{Symbol,Vector{Int}}}
+    idx += 1
     for c in get_children(rn)
-        idx += 1
         idx, map = map_varnodes_to_asp_indices(c; idx, map)
     end
 
@@ -140,7 +140,7 @@ function HerbConstraints.map_varnodes_to_asp_indices(
     existing_indices = get!(map, vn.name, Int[])
     push!(existing_indices, idx)
 
-    return idx, map
+    return idx + 1, map
 end
 
 """
