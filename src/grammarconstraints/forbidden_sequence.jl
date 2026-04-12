@@ -161,3 +161,45 @@ HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <=
 HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
 
 HerbCore.Base.:(==)(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
+
+function HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool)
+    n_rules = length(grammar.rules)
+    all(1 <= x <= n_rules for x in c.ignore_if) || return false
+    function _search_helper(cur::Int, target::Int, grammar::AbstractGrammar)
+
+        target_type = grammar.types[target]
+        visited = falses(n_rules)
+        queue = Int[cur]
+        visited[cur] = true
+        head = 1
+
+        while head <= length(queue)
+            rid = queue[head]
+            head += 1
+
+            rid_children = grammar.childtypes[rid]
+            if target_type in rid_children
+                return true
+            end
+
+            for next_type in rid_children
+                for next_rid in findall(==(next_type), grammar.types)
+                    if !visited[next_rid]
+                        visited[next_rid] = true
+                        push!(queue, next_rid)
+                    end
+                end
+            end
+        end
+
+        return false
+    end
+    sequence = c.sequence
+    rid = first(sequence)
+    for next_rid in sequence[2:end]
+        1 <= rid && rid <= n_rules || return false
+        _search_helper(rid, next_rid, grammar) || return false
+        rid = next_rid
+    end
+    return true
+end

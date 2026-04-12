@@ -104,3 +104,5 @@ end
 
 HerbCore.is_domain_valid(c::Contains, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Contains, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
+
+HerbGrammar.is_constraint_valid(c::Contains, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)

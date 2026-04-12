@@ -139,7 +139,7 @@
                 RuleNode(1),
                 RuleNode(2)
             ]))
-            addconstraint!(g, c)
+            addconstraint!(g, c; allow_empty_children=true)
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
@@ -172,8 +172,8 @@
             c = ContainsSubtree(RuleNode(4, [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
                 UniformHole(BitVector((1, 1, 1, 1)), [])
-            ]))
-            addconstraint!(g, c)
+            ])) # children are not included
+            addconstraint!(g, c; allow_empty_children=true) 
 
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, statehole, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
@@ -208,7 +208,7 @@
                 VarNode(:a),
                 VarNode(:b)
             ]))
-            addconstraint!(g, c)
+            addconstraint!(g, c; allow_empty_children=true)
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
             @test asp_tree == expected_asp
@@ -237,7 +237,7 @@
                 UniformHole(BitVector((1, 1, 1, 1)), [])
             ])
             c = Forbidden(VarNode(:a))
-            addconstraint!(g, c)
+            addconstraint!(g, c; allow_empty_children=true)
 
             asp_tree, additional, _ = constraint_rulenode_to_ASP(g, tree, 1, 1)
             expected_asp = "node(X1,D1),allowed(c1x1,D1),child(X1,1,X2),node(X2,D2),allowed(c1x2,D2),child(X1,2,X3),node(X3,D3),allowed(c1x3,D3)"
@@ -342,8 +342,8 @@
                 S = S + S
                 S = S * S
             end
-            addconstraint!(g, Unique(1))
-            addconstraint!(g, Unique(2))
+            addconstraint!(g, Unique(1); allow_empty_children=true)
+            addconstraint!(g, Unique(2); allow_empty_children=true)
 
             tree = UniformHole(BitVector((0, 0, 1, 1)), [
                 UniformHole(BitVector((1, 1, 0, 0)), []),
@@ -387,8 +387,8 @@
                 S = S + S
                 S = S * S
             end
-            addconstraint!(g, Unique(1))
-            addconstraint!(g, Unique(2))
+            addconstraint!(g, Unique(1); allow_empty_children=true)
+            addconstraint!(g, Unique(2); allow_empty_children=true)
 
             tree = RuleNode(3, [
                 RuleNode(4, [

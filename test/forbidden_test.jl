@@ -89,14 +89,14 @@
                 Int = Int + Int
                 Int = Int * Int
             end
-            forbidden = Forbidden(RuleNode(3, [VarNode(:a), VarNode(:a)]))
+            forbidden = Forbidden(RuleNode(12, [VarNode(:a), VarNode(:a)]))
             addconstraint!(grammar, forbidden)
-            tree = @rulenode 3{4{2,3{2,2}},7}
+            tree = @rulenode 12{13{2,12{2,2}},7}
             HerbCore.update_rule_indices!(forbidden, grammar)
             @test check_tree(forbidden, tree) == false
-            @test forbidden.tree == RuleNode(3, [VarNode(:a), VarNode(:a)])
+            @test forbidden.tree == RuleNode(12, [VarNode(:a), VarNode(:a)])
 
-            mapping = Dict(3 => 9, 2 => 22)
+            mapping = Dict(12 => 9, 2 => 22)
             expected_forbidden = Forbidden(RuleNode(9, [VarNode(:a), VarNode(:a)
             ]))
             HerbCore.update_rule_indices!(forbidden, grammar, mapping)

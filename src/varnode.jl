@@ -61,3 +61,6 @@ end
 # Always return `true` (interface only)
 HerbCore.is_domain_valid(node::VarNode, n_rules::Integer) = true
 
+HerbGrammar.is_tree_valid(vn::VarNode, grammar::AbstractGrammar; allow_empty_children::Bool)::Bool = true
+
+HerbGrammar.is_tree_valid(vn::VarNode, grammar::AbstractGrammar, expected_type::Symbol; allow_empty_children::Bool)::Bool = true

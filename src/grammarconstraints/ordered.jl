@@ -135,3 +135,7 @@ HerbCore.is_domain_valid(c::Ordered, n_rules::Integer) = HerbCore.is_domain_vali
 HerbCore.is_domain_valid(c::Ordered, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
 
 HerbCore.Base.:(==)(c1::Ordered, c2::Ordered) = (c1.tree == c2.tree) && (c1.order == c2.order)
+
+function HerbGrammar.is_constraint_valid(c::Ordered, grammar::AbstractGrammar; allow_empty_children::Bool)
+    return HerbGrammar.is_tree_valid(c.tree, grammar; allow_empty_children=allow_empty_children)
+end
