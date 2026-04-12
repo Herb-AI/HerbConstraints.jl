@@ -583,7 +583,7 @@
             :- node(X1,4),child(X1,1,X2),child(X1,2,X3),child(X1,3,X4),not is_smaller(X4,X2).
 
             """
-            @test expected_asp == asp_tree
+            @test asp_tree == expected_asp
 
             solver = @test_nowarn ASPSolver(g, tree)
             @test 10 == length(solver.solutions)
