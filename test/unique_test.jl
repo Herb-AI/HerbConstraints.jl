@@ -171,8 +171,8 @@
         @test HerbCore.is_domain_valid(Unique(8), grammar) == false
         @test HerbCore.is_domain_valid(Unique(3), grammar) == true
     end
-    @testset "issame" begin
-        @test HerbCore.issame(Unique(2), Unique(2)) == true
-        @test HerbCore.issame(Unique(17), Unique(2)) == false
+    @testset "isequal" begin
+        @test Unique(2) == Unique(2)
+        @test Unique(17) != Unique(2)
     end
 end
