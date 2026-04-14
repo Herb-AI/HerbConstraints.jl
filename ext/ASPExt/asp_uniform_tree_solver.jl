@@ -41,48 +41,47 @@ function HerbConstraints.solve(solver::ASPSolver)
         called already when constructing an `ASPSolver`.
         """
     end
-    @timeit_debug solver.statistics "generate ASP RuleNode" begin
-        string_rulenode, _ = rulenode_to_ASP(get_rulenode(solver), 1)
-        constraints = grammar_to_ASP(HerbConstraints.get_grammar(solver))
-        comparisons = rulenode_comparisons_asp(solver)
 
-        asp_input = """
-        %%% RuleNode
-        $string_rulenode
-        %%% Comparisons
-        $comparisons
-        %%% Constraints
-        $constraints
-        %%% Query
-        #show node/2.
-        """
+    asp_input = PipeBuffer()
+    @timeit_debug solver.statistics "generate ASP RuleNode" begin
+        println(asp_input, "%%% RuleNode")
+        rulenode_to_ASP(asp_input, get_rulenode(solver), 1)
+        println(asp_input, "%%% Comparisons")
+        rulenode_comparisons_asp(asp_input, solver)
+        println(asp_input, "%%% Constraints")
+        grammar_to_ASP(asp_input, HerbConstraints.get_grammar(solver))
+        println(asp_input, "%%% Query\n#show node/2.")
     end
 
-    buffer = IOBuffer(asp_input)
-    @debug get_rulenode(solver) HerbConstraints.get_grammar(solver) asp_input
-    asp_output = IOBuffer()
-    errors_and_warnings = IOBuffer()
+    @debug get_rulenode(solver) HerbConstraints.get_grammar(solver)
+    @debug String(take!(copy(asp_input)))
+
+    asp_output = PipeBuffer()
+    errors_and_warnings = PipeBuffer()
+
+    # Ignore the status of the command because clingo uses the return
+    # code of the CLI to communicate some information about the status
+    # of the solve, and, depending on the status, this makes it appear
+    # as though the command has failed (exit code != 0)
+    #
+    # --models 0 means return _all_ models (solutions), not 0 models
+    ignored_clingo = ignorestatus(`$(Clingo_jll.clingo()) --models 0`)
+
+    # now set up a pipeline where the input is piped to clingo and the output
+    # is captured
+    clingo_with_io = pipeline(asp_input, ignored_clingo, asp_output)
+
     @timeit_debug solver.statistics "run Clingo" begin
-        run(pipeline(
-            # Ignore the status of the command because clingo uses the return
-            # code of the CLI to communicate some information about the status
-            # of the solve, and, depending on the status, this makes it appear
-            # as though the command has failed (exit code != 0)
-            #
-            # --models 0 means return _all_ models (solutions), not 0 models
-            ignorestatus(`$(Clingo_jll.clingo()) --models 0`),
-            stdin=buffer,
-            stderr=errors_and_warnings,
-            stdout=asp_output
-        ))
+        run(pipeline(clingo_with_io, stderr=errors_and_warnings))
     end
 
     errors_and_warnings = String(take!(errors_and_warnings))
     if errors_and_warnings != ""
         @warn "Stderr from `clingo`:\n" * errors_and_warnings
     end
-
-    extract_solutions(solver, split(String(take!(asp_output)), "\n"))
+    output = String(take!(asp_output))
+    @debug output
+    return extract_solutions(solver, split(output, "\n"))
 end
 
 """
