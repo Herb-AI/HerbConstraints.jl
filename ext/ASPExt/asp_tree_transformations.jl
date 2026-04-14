@@ -36,21 +36,10 @@ function HerbConstraints.rulenode_to_ASP(rulenode::AbstractRuleNode, node_index:
     else
         "1 { node($node_index,$(domain_to_asp(rulenode))) } 1.\n"
     end
+    parent_index = node_index
     node_index += 1
-    children_output, node_index = rulenode_to_ASP(get_children(rulenode), node_index; is_constraint)
-    output *= children_output
-    return output, node_index
-end
 
-function HerbConstraints.rulenode_to_ASP(
-    children::AbstractVector{<:AbstractRuleNode},
-    node_index::Int;
-    is_constraint=false
-)
-    output = ""
-    parent_index = node_index - 1
-
-    for (child_ind, child) in enumerate(children)
+    for (child_ind, child) in enumerate(get_children(rulenode))
         output *= if is_constraint
             ",child(X$(parent_index),$(child_ind),X$(node_index)),"
         else
