@@ -62,12 +62,12 @@ end
 """
     update_rule_indices!(c::Contains, n_rules::Integer, mapping::AbstractDict{<:Integer,<:Integer}, constraints::Vector{<:AbstractConstraint})
 
-Updates the `Contains` constraint to reflect grammar changes by replacing it with a new
+Updates the `Contains` constraint to reflect grammar changes by replacing it with a new 
 `Contains` constraint using the mapped rule index.
 
 # Arguments
 - `c`: The `Contains` constraint to be updated
-- `n_rules`: The new number of rules in the grammar
+- `n_rules`: The new number of rules in the grammar  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 - `constraints`: Vector of grammar constraints containing the constraint to update
 """
@@ -88,12 +88,12 @@ end
 """
     update_rule_indices!(c::Contains, grammar::AbstractGrammar, mapping::AbstractDict{<:Integer,<:Integer})
 
-Updates the `Contains` constraint to reflect grammar changes by replacing it with a new
+Updates the `Contains` constraint to reflect grammar changes by replacing it with a new 
 `Contains` constraint using the mapped rule index.
 
 # Arguments
 - `c`: The `Contains` constraint to be updated
-- `grammar`: The grammar that changed
+- `grammar`: The grammar that changed  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 """
 function HerbCore.update_rule_indices!(c::Contains,
@@ -104,14 +104,5 @@ end
 
 HerbCore.is_domain_valid(c::Contains, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Contains, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
-
-"""
-    ismonotone(::Contains)::Bool
-
-Returns `true`. A [`Contains`](@ref) constraint is monotone: once the required rule is present
-in a partial tree, filling holes can only add nodes, never remove existing ones, so the
-constraint remains satisfied in all completions.
-"""
-ismonotone(::Contains) = true
 
 HerbGrammar.is_constraint_valid(c::Contains, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)

@@ -12,15 +12,6 @@ struct LocalForbidden <: AbstractLocalConstraint
 end
 
 """
-    isantimonotone(::LocalForbidden)::Bool
-
-Returns `true`. A [`LocalForbidden`](@ref) constraint is anti-monotone: if the forbidden pattern
-is present at the constrained location in a partial tree, no completion can remove those nodes,
-so the violation persists in all completions.
-"""
-isantimonotone(::LocalForbidden) = true
-
-"""
     function propagate!(solver::Solver, c::LocalForbidden)
 
 Enforce that the forbidden `tree` does not occur at the `path`.

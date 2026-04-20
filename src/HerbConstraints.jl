@@ -43,22 +43,6 @@ function get_priority(::AbstractLocalConstraint)
     return 0
 end
 
-"""
-    ismonotone(c::AbstractConstraint)::Bool
-
-Returns `true` if the constraint is monotone: if it is satisfied for a partial tree,
-it remains satisfied for all completions of that tree. Defaults to `false`.
-"""
-ismonotone(::AbstractConstraint) = false
-
-"""
-    isantimonotone(c::AbstractConstraint)::Bool
-
-Returns `true` if the constraint is anti-monotone: if it is violated for a partial tree,
-it remains violated for all completions of that tree. Defaults to `false`.
-"""
-isantimonotone(::AbstractConstraint) = false
-
 include("varnode.jl")
 include("domainrulenode.jl")
 
@@ -171,10 +155,6 @@ export
     set_value!,
     increment!,
     decrement!,
-
-    #monotonicity
-    ismonotone,
-    isantimonotone,
 
     #uniform solver
     UniformSolver,

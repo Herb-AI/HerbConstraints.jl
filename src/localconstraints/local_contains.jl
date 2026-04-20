@@ -10,15 +10,6 @@ struct LocalContains <: AbstractLocalConstraint
 end
 
 """
-    ismonotone(::LocalContains)::Bool
-
-Returns `true`. A [`LocalContains`](@ref) constraint is monotone: once the required rule is
-present at or below the constrained path, filling holes can only add nodes, never remove
-existing ones, so the constraint remains satisfied in all completions.
-"""
-ismonotone(::LocalContains) = true
-
-"""
     function propagate!(solver::Solver, c::LocalContains)
 
 Enforce that the `rule` appears at or below the `path` at least once.
