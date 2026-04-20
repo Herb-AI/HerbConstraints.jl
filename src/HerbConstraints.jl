@@ -183,6 +183,6 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    issame, ASPSolver
+    ASPSolver
 
 end # module HerbConstraints
