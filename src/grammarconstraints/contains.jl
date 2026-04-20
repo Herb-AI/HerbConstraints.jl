@@ -105,6 +105,15 @@ end
 HerbCore.is_domain_valid(c::Contains, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Contains, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
 
+"""
+    ismonotone(::Contains)::Bool
+
+Returns `true`. A [`Contains`](@ref) constraint is monotone: once the required rule is present
+in a partial tree, filling holes can only add nodes, never remove existing ones, so the
+constraint remains satisfied in all completions.
+"""
+ismonotone(::Contains) = true
+
 HerbCore.issame(c1::Contains, c2::Contains) = c1 == c2
 
 HerbGrammar.is_constraint_valid(c::Contains, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)

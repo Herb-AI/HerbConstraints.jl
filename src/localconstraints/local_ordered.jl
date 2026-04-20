@@ -10,6 +10,15 @@ mutable struct LocalOrdered <: AbstractLocalConstraint
 end
 
 """
+    isantimonotone(::LocalOrdered)::Bool
+
+Returns `true`. A [`LocalOrdered`](@ref) constraint is anti-monotone: once the variable
+assignments are fixed (no holes remain in the matched pattern) and the ordering is violated,
+filling further holes elsewhere in the tree cannot undo that violation.
+"""
+isantimonotone(::LocalOrdered) = true
+
+"""
     function propagate!(solver::Solver, c::LocalOrdered)
 
 Enforce that the [`VarNode`](@ref)s in the `tree` are in the specified `order`.

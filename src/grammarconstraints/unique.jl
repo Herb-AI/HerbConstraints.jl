@@ -119,6 +119,15 @@ end
 HerbCore.is_domain_valid(c::Unique, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Unique, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
 
+"""
+    isantimonotone(::Unique)::Bool
+
+Returns `true`. A [`Unique`](@ref) constraint is anti-monotone: if the required rule already
+appears more than once in a partial tree, filling holes can only add further nodes, never remove
+existing ones, so the violation persists in all completions.
+"""
+isantimonotone(::Unique) = true
+
 HerbCore.issame(c1::Unique, c2::Unique) = c1 == c2
 
 HerbGrammar.is_constraint_valid(c::Unique, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)

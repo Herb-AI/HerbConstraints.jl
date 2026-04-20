@@ -102,6 +102,15 @@ end
 HerbCore.is_domain_valid(c::ContainsSubtree, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::ContainsSubtree, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
 
+"""
+    ismonotone(::ContainsSubtree)::Bool
+
+Returns `true`. A [`ContainsSubtree`](@ref) constraint is monotone: once the required subtree is
+present in a partial tree, filling holes can only add nodes, never remove existing ones, so the
+constraint remains satisfied in all completions.
+"""
+ismonotone(::ContainsSubtree) = true
+
 HerbCore.issame(c1::ContainsSubtree, c2::ContainsSubtree) = HerbCore.issame(c1.tree, c2.tree)
 
 function HerbGrammar.is_constraint_valid(c::ContainsSubtree, grammar::AbstractGrammar; allow_empty_children::Bool)

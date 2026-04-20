@@ -160,6 +160,15 @@ end
 HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <= n_rules, c.sequence) && all(i -> i <= n_rules, c.ignore_if)
 HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
 
+"""
+    isantimonotone(::ForbiddenSequence)::Bool
+
+Returns `true`. A [`ForbiddenSequence`](@ref) constraint is anti-monotone: if the forbidden
+vertical sequence of rules is already present in a partial tree, no completion can remove those
+nodes, so the violation persists in all completions.
+"""
+isantimonotone(::ForbiddenSequence) = true
+
 HerbCore.issame(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
 
 function HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool)
