@@ -230,9 +230,15 @@ function simplify_hole!(solver::GenericSolver, path::Vector{Int})
         end
     elseif hole isa Hole
         if domain_size == 1
-            new_node = RuleNode(findfirst(hole.domain), grammar)
+            child_types = grammar.childtypes[findfirst(hole.domain)]
+            domains = [get_domain(grammar, type) for type ∈ child_types]
+            new_children = [Hole(d) for d ∈ domains]
+            new_node = RuleNode(findfirst(hole.domain), new_children)
         elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
-            new_node = UniformHole(hole.domain, grammar)
+            child_types = grammar.childtypes[findfirst(hole.domain)]
+            domains = [get_domain(grammar, type) for type ∈ child_types]
+            new_children = [Hole(d) for d ∈ domains]
+            new_node = UniformHole(hole.domain, new_children)
         end
     else
         @assert !isnothing(hole) "No node exists at path $path in the current state"
