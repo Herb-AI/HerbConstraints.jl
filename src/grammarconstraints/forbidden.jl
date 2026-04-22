@@ -131,6 +131,15 @@ HerbCore.is_domain_valid(c::Forbidden, grammar::AbstractGrammar) = HerbCore.is_d
 
 Base.:(==)(c1::Forbidden, c2::Forbidden) = (c1.tree == c2.tree)
 
+"""
+    isantimonotone(::Forbidden)::Bool
+
+Returns `true`. A [`Forbidden`](@ref) constraint is anti-monotone: if the forbidden pattern is
+present in a partial tree, it cannot be removed by filling holes, so the violation persists in
+all completions.
+"""
+isantimonotone(::Forbidden) = true
+
 function HerbGrammar.is_constraint_valid(c::Forbidden, grammar::AbstractGrammar; allow_empty_children::Bool)
     return HerbGrammar.is_tree_valid(c.tree, grammar; allow_empty_children=allow_empty_children)
 end
