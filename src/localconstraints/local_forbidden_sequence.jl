@@ -11,15 +11,6 @@ struct LocalForbiddenSequence <: AbstractLocalConstraint
 end
 
 """
-    isantimonotone(::LocalForbiddenSequence)::Bool
-
-Returns `true`. A [`LocalForbiddenSequence`](@ref) constraint is anti-monotone: if the forbidden
-vertical sequence of rules is already present along the constrained path, no completion can
-remove those nodes, so the violation persists in all completions.
-"""
-isantimonotone(::LocalForbiddenSequence) = true
-
-"""
     shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
 
 Return true iff the manipulation happened at or above the constraint path.

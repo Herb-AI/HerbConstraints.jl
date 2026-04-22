@@ -11,15 +11,6 @@ struct LocalUnique <: AbstractLocalConstraint
     holes::Vector{AbstractHole}
 end
 
-"""
-    isantimonotone(::LocalUnique)::Bool
-
-Returns `true`. A [`LocalUnique`](@ref) constraint is anti-monotone: if the required rule
-already appears more than once at or below the constrained path, filling holes can only add
-further nodes, never remove existing ones, so the violation persists in all completions.
-"""
-isantimonotone(::LocalUnique) = true
-
 LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
 
 """

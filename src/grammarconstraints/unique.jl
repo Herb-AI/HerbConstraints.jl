@@ -76,12 +76,12 @@ end
     mapping::AbstractDict{<:Integer,<:Integer},
     constraints::Vector{<:AbstractConstraint})
 
-Updates the `Unique` constraint to reflect grammar changes by replacing it with a new
+Updates the `Unique` constraint to reflect grammar changes by replacing it with a new 
 `Unique` constraint using the mapped rule index. Errors if rule index exceeds new `n_rules`.
 
 # Arguments
 - `c`: The `Unique` constraint to be updated
-- `n_rules`: The new number of rules in the grammar
+- `n_rules`: The new number of rules in the grammar  
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 - `constraints`: Vector of grammar constraints containing the constraint to update
 """
@@ -102,7 +102,7 @@ end
     grammar::AbstractGrammar,
     mapping::AbstractDict{<:Integer,<:Integer})
 
-Updates the `Unique` constraint to reflect grammar changes by replacing it with a new
+Updates the `Unique` constraint to reflect grammar changes by replacing it with a new 
 `Unique` constraint using the mapped rule index.Errors if rule index exceeds number of grammar rules.
 
 # Arguments
@@ -118,15 +118,6 @@ end
 
 HerbCore.is_domain_valid(c::Unique, n_rules::Integer) = c.rule <= n_rules
 HerbCore.is_domain_valid(c::Unique, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
-
-"""
-    isantimonotone(::Unique)::Bool
-
-Returns `true`. A [`Unique`](@ref) constraint is anti-monotone: if the required rule already
-appears more than once in a partial tree, filling holes can only add further nodes, never remove
-existing ones, so the violation persists in all completions.
-"""
-isantimonotone(::Unique) = true
 
 
 HerbGrammar.is_constraint_valid(c::Unique, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)
