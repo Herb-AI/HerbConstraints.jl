@@ -13,25 +13,24 @@ Each [`SolverState`](@ref) holds an independent propagation program. Program ite
 - `save_state!`
 - `load_state!`
 """
-mutable struct GenericSolver <: Solver
-    grammar::AbstractGrammar
-    state::Union{SolverState, Nothing}
-    schedule::PriorityQueue{AbstractLocalConstraint, Int}
-    statistics::Union{TimerOutput, Nothing}
+mutable struct GenericSolver{G<:AbstractGrammar,S<:SolverState} <: Solver
+    grammar::G
+    state::S
+    schedule::PriorityQueue{AbstractLocalConstraint,Int}
+    statistics::Union{TimerOutput,Nothing}
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
 end
-
 
 """
     GenericSolver(grammar::AbstractGrammar, sym::Symbol)
 
 Constructs a new solver, with an initial state using starting symbol `sym`
 """
-function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
-    init_node = Hole(get_domain(grammar, sym))
-    GenericSolver(grammar, init_node, with_statistics=with_statistics, max_size = max_size, max_depth = max_depth)
+function GenericSolver(grammar::AbstractGrammar, sym::Symbol; with_statistics=false, max_size=typemax(Int), max_depth=typemax(Int))
+    init_node = StableGrammarDomainRuleNode(grammar, get_domain(grammar, sym))
+    GenericSolver(grammar, init_node, with_statistics=with_statistics, max_size=max_size, max_depth=max_depth)
 end
 
 
@@ -40,10 +39,10 @@ end
 
 Constructs a new solver, with an initial state of the provided [`AbstractRuleNode`](@ref).
 """
-function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
+function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size=typemax(Int), max_depth=typemax(Int))
     stats = with_statistics ? TimerOutput("Generic Solver") : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, false, max_size, max_depth)
-    new_state!(solver, init_node)
+    state = SolverState(init_node)
+    solver = GenericSolver{typeof(grammar),typeof(state)}(grammar, state, PriorityQueue{AbstractLocalConstraint,Int}(), stats, false, max_size, max_depth)
     return solver
 end
 
@@ -62,7 +61,7 @@ function deactivate!(solver::GenericSolver, constraint::AbstractLocalConstraint)
         @timeit_debug solver.statistics "deactivate! removed from schedule" begin end
         delete!(solver.schedule, constraint)
     end
-    if constraint ∉ get_state(solver).active_constraints
+    if constraint ∉ get_active_constraints(get_state(solver))
         @timeit_debug solver.statistics "deactivate! (unnecessary)" begin end
         @assert constraint ∈ get_state(solver).active_constraints "Attempted to deactivate a deactivated constraint $(constraint)"
         # This assertion error can occur if a `propagate!` function is called outside `fix_point!`
@@ -103,7 +102,9 @@ By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
 function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     @timeit_debug solver.statistics "post! $(typeof(constraint))" begin end
     # add to the list of active constraints
     push!(get_state(solver).active_constraints, constraint)
@@ -146,7 +147,7 @@ Returns a copy of the current state that can be restored by calling `load_state!
 """
 function save_state!(solver::GenericSolver)::SolverState
     @timeit_debug solver.statistics "save_state!" begin end
-    return copy(get_state(solver))
+    return deepcopy(get_state(solver))
 end
 
 
@@ -174,10 +175,10 @@ end
 """
     function get_tree(solver::GenericSolver)::AbstractRuleNode
 
-Returns the number of [`AbstractRuleNode`](@ref)s in the tree.
+Returns the current tree of the `solver`.
 """
 function get_tree(solver::GenericSolver)::AbstractRuleNode
-    return solver.state.tree
+    return get_tree(get_state(solver))
 end
 
 
@@ -197,7 +198,7 @@ Get the symbol from the solver.
 """
 function get_starting_symbol(solver::GenericSolver)::Symbol
     root = get_tree(solver)
-    rule = isfilled(root) ?  get_rule(root) : findfirst(root.domain)
+    rule = isfilled(root) ? get_rule(root) : findfirst(root.domain)
     grammar = get_grammar(solver)
     return grammar.types[rule]
 end
@@ -283,9 +284,9 @@ end
 
 Get the node at path `location` and assert it is a [`AbstractHole`](@ref).
 """
-function get_hole_at_location(solver::GenericSolver, location::Vector{Int})::AbstractHole
+function get_hole_at_location(solver::GenericSolver, location::Vector{Int})# ::AbstractHole
     hole = get_node_at_location(get_tree(solver), location)
-    @assert hole isa AbstractHole "AbstractHole $hole is of non-AbstractHole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
+    # @assert hole isa AbstractHole "AbstractHole $hole is of non-AbstractHole type $(typeof(hole)). Tree: $(get_tree(solver)), location: $(location)"
     return hole
 end
 
@@ -296,7 +297,9 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::GenericSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     active_constraints = get_state(solver).active_constraints
     for c ∈ active_constraints
         if shouldschedule(solver, c, event_path)
@@ -314,7 +317,9 @@ Notify all constraints that a new node has appeared at the `event_path` by calli
     This does not notify the solver about nodes below the `event_path`. In that case, call [`notify_new_nodes`](@ref) instead.
 """
 function notify_new_node(solver::GenericSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     for c ∈ get_grammar(solver).constraints
         on_new_node(solver, c, event_path)
     end

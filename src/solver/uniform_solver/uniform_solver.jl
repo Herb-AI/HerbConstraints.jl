@@ -4,15 +4,15 @@ A DFS-based solver that uses `StateHole`s that support backtracking.
 mutable struct UniformSolver <: Solver
     grammar::AbstractGrammar
     sm::StateManager
-    tree::Union{RuleNode, StateHole}
-    path_to_node::Dict{Vector{Int}, AbstractRuleNode}
-    node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    isactive::Dict{AbstractLocalConstraint, StateInt}
+    tree::Union{RuleNode,StateHole}
+    path_to_node::Dict{Vector{Int},AbstractRuleNode}
+    node_to_path::Dict{AbstractRuleNode,Vector{Int}}
+    isactive::Dict{AbstractLocalConstraint,StateInt}
     canceledconstraints::Set{AbstractLocalConstraint}
     isfeasible::Bool
-    schedule::PriorityQueue{AbstractLocalConstraint, Int}
+    schedule::PriorityQueue{AbstractLocalConstraint,Int}
     fix_point_running::Bool
-    statistics::Union{TimerOutput, Nothing}
+    statistics::Union{TimerOutput,Nothing}
 end
 
 
@@ -23,11 +23,11 @@ function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRule
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
-    path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
-    node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    isactive = Dict{AbstractLocalConstraint, StateInt}()
+    path_to_node = Dict{Vector{Int},AbstractRuleNode}()
+    node_to_path = Dict{AbstractRuleNode,Vector{Int}}()
+    isactive = Dict{AbstractLocalConstraint,StateInt}()
     canceledconstraints = Set{AbstractLocalConstraint}()
-    schedule = PriorityQueue{AbstractLocalConstraint, Int}()
+    schedule = PriorityQueue{AbstractLocalConstraint,Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::TimerOutput => with_statistics
@@ -154,7 +154,9 @@ Post a new local constraint.
 Converts the constraint to a state constraint and schedules it for propagation.
 """
 function post!(solver::UniformSolver, constraint::AbstractLocalConstraint)
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     # initial propagation of the new constraint
     temp = solver.fix_point_running
     solver.fix_point_running = true
@@ -182,7 +184,9 @@ end
 Notify subscribed constraints that a tree manipulation has occured at the `event_path` by scheduling them for propagation
 """
 function notify_tree_manipulation(solver::UniformSolver, event_path::Vector{Int})
-    if !isfeasible(solver) return end
+    if !isfeasible(solver)
+        return
+    end
     for (constraint, isactive) ∈ solver.isactive
         if get_value(isactive) == 1
             if shouldschedule(solver, constraint, event_path)

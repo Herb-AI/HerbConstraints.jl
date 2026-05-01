@@ -48,7 +48,7 @@ end
 
 
 """
-    schedule(solver::GenericSolver, constraint::AbstractLocalConstraint)
+    schedule(solver::Solver, constraint::AbstractLocalConstraint)
 
 Schedules the `constraint` for propagation.
 """

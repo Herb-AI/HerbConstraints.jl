@@ -47,9 +47,11 @@ It is assumed new_domain ⊆ domain. For example: [1, 0, 1, 0] ⊆ [1, 0, 1, 1]
 """
 function remove_all_but!(solver::GenericSolver, path::Vector{Int}, new_domain::BitVector)
     hole = get_hole_at_location(solver, path)
-    if hole.domain == new_domain @warn "'remove_all_but' was called with trivial arguments" return end
+    if hole.domain == new_domain
+        @warn "'remove_all_but' was called with trivial arguments" return
+    end
     @assert is_subdomain(new_domain, hole.domain) "($new_domain) ⊈ ($(hole.domain)) The remaining rules are required to be a subdomain of the hole to remove from"
-    hole.domain = new_domain
+    setindex!(hole.domain, new_domain, eachindex(new_domain))
     simplify_hole!(solver, path)
     notify_tree_manipulation(solver, path)
     fix_point!(solver)
@@ -133,7 +135,7 @@ It is assumed rule_index ∈ hole.domain.
 !!! warning: If the `hole` is known to be in the current tree, the hole can be passed directly.
     The caller has to make sure that the hole instance is actually present at the provided `path`.
 """
-function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole, Nothing}=nothing)
+function remove_all_but!(solver::GenericSolver, path::Vector{Int}, rule_index::Int; hole::Union{Hole,Nothing}=nothing)
     if isnothing(hole)
         hole = get_hole_at_location(solver, path)
     end
@@ -168,11 +170,12 @@ Domain increasing substitutions are substitutions that cannot be achieved by rep
 Example of an domain increasing event: `hole[{3, 4, 5}] -> hole[{1, 2}]`.
 Example of an domain decreasing event: `hole[{3, 4, 5}] -> rulenode(4, [hole[{1, 2}], rulenode(1)])`.
 """
-function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing, Bool}=nothing)
+function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::AbstractRuleNode; is_domain_increasing::Union{Nothing,Bool}=nothing)
     if isempty(path)
         #replace the root
-        old_node = solver.state.tree
-        solver.state.tree = new_node
+        state = get_state(solver)
+        old_node = get_tree(state)
+        load_state!(solver, SolverState(new_node, get_active_constraints(state), isfeasible(state)))
     else
         #replace a node in the middle of the tree
         parent = get_tree(solver)
@@ -182,13 +185,13 @@ function substitute!(solver::GenericSolver, path::Vector{Int}, new_node::Abstrac
         old_node = parent.children[path[end]]
         parent.children[path[end]] = new_node
     end
-    
-    if (get_tree_size(solver) > get_max_size(solver)) || (length(path)+depth(new_node) > get_max_depth(solver))
+
+    if (get_tree_size(solver) > get_max_size(solver)) || (length(path) + depth(new_node) > get_max_depth(solver))
         #if the tree is too large, mark it as infeasible
         set_infeasible!(solver)
         return
     end
-    
+
     if isnothing(is_domain_increasing)
         #automatically decide if the event is domain increasing
         @timeit_debug solver.statistics "substitute! checks is_domain_increasing" begin end
@@ -236,47 +239,27 @@ Takes a [Hole](@ref) and tries to simplify it to a [UniformHole](@ref) or [RuleN
 If the domain of the hole is empty, the state will be marked as infeasible
 """
 function simplify_hole!(solver::GenericSolver, path::Vector{Int})
-    if !isfeasible(solver) return end
-    hole = get_hole_at_location(solver, path)
+    if !isfeasible(solver)
+        return
+    end
+    hole = get_node_at_location(solver, path)
     grammar = get_grammar(solver)
-    new_node = nothing
     domain_size = sum(hole.domain)
+    child_types = get_grammar(solver).childtypes[get_domain(hole)]
+    # Main.@infiltrate
     if domain_size == 0
         set_infeasible!(solver)
         return
-    elseif hole isa UniformHole
-        if domain_size == 1
-            new_node = RuleNode(findfirst(hole.domain), hole.children)
-        end
-    elseif hole isa Hole
-        if domain_size == 1
-            child_types = grammar.childtypes[findfirst(hole.domain)]
-            domains = [get_domain(grammar, type) for type ∈ child_types]
-            new_children = [Hole(d) for d ∈ domains]
-            new_node = RuleNode(findfirst(hole.domain), new_children)
-        elseif is_subdomain(hole.domain, grammar.bychildtypes[findfirst(hole.domain)])
-            child_types = grammar.childtypes[findfirst(hole.domain)]
-            domains = [get_domain(grammar, type) for type ∈ child_types]
-            new_children = [Hole(d) for d ∈ domains]
-            new_node = UniformHole(hole.domain, new_children)
-        end
+    elseif !isterminal(hole) && allequal(child_types)
+        child_types = grammar.childtypes[findfirst(hole.domain)]
+        domains = [get_domain(grammar, type) for type ∈ child_types]
+        new_children = (constructorof(typeof(hole))).(grammar, domains)
+        push!(get_children(hole), new_children...)
+        # Main.@infiltrate
+        substitute!(solver, path, new_node, is_domain_increasing=false)
     else
-        @assert !isnothing(hole) "No node exists at path $path in the current state"
+        !isnothing(hole) || error(lazy"No node exists at path $path in the current state")
         @warn "Attempted to simplify node type: $(typeof(hole))"
     end
 
-    #the hole will be simplified and replaced with a `new_node`
-    if !isnothing(new_node)
-        # Ideally, we should try to simplify holes with domain size of 1 here
-        # before substituting. This would remove some duplicated logic when calling
-        # pattern_match and lessthanorequal
-        substitute!(solver, path, new_node, is_domain_increasing=false)
-        for i ∈ 1:length(new_node.children)
-            # try to simplify the new children
-            child_path = push!(copy(path), i)
-            if (new_node.children[i] isa AbstractHole)
-                simplify_hole!(solver, child_path)
-            end
-        end
-    end
 end

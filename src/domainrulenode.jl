@@ -13,13 +13,45 @@ struct DomainRuleNode <: AbstractRuleNode
     children::Vector{AbstractRuleNode}
 end
 
+struct StableGrammarDomainRuleNode{G<:AbstractGrammar,C} <: AbstractRuleNode
+    grammar::G
+    domain::BitVector
+    children::Vector{StableGrammarDomainRuleNode}
+end
+
+# struct StableDomainRuleNode <: AbstractRuleNode
+#     domain::BitVector
+#
+# end
+
+const EMPTY_STABLE_GRAMMAR_DOMAIN_RULENODE = StableGrammarDomainRuleNode[]
+
+function StableGrammarDomainRuleNode(grammar, domain=trues(length(get_rules(grammar))), children=EMPTY_STABLE_GRAMMAR_DOMAIN_RULENODE)
+    length(domain) == length(get_rules(grammar)) || error(lazy"Domain size ($(length(domain))) must match grammar size ($(length(get_rules(grammar))))")
+    return StableGrammarDomainRuleNode{typeof(grammar),typeof(children)}(grammar, domain, children)
+end
+
+get_grammar(sgdrn::StableGrammarDomainRuleNode) = sgdrn.grammar
+HerbCore.get_rule(sgdrn::StableGrammarDomainRuleNode) = sgdrn.domain
+HerbCore.get_domain(sgdrn::StableGrammarDomainRuleNode) = sgdrn.domain
+HerbCore.get_children(sgdrn::StableGrammarDomainRuleNode) = sgdrn.children
+
+function HerbCore.isuniform(sgdrn::StableGrammarDomainRuleNode)
+    child_types = get_grammar(sgdrn).childtypes[get_domain(sgdrn)]
+    return allequal(child_types) && length(get_children(sgdrn)) == length(first(child_types))
+end
+
+function HerbGrammar.isterminal(sgdrn::StableGrammarDomainRuleNode)
+    return all(get_grammar(sgdrn).isterminal[get_domain(sgdrn)])
+end
+
 function DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}, children::Vector{<:AbstractRuleNode})
     domain = falses(length(grammar.rules))
     domain[rules] .= true
     # n children per rule in the domain
     n_children = length.(grammar.childtypes[domain])
 
-    if !(allequal(n_children) && n_children[1] == length(children)) 
+    if !(allequal(n_children) && n_children[1] == length(children))
         error("""Could not create DomainRuleNode. The number of children for \
               each rule in the domain must be equal (rules $rules have \
               $n_children children respectively). The length of the \

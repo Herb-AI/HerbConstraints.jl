@@ -24,7 +24,7 @@ mutable struct StateInt
 end
 
 function StateInt(sm, val)
-    return StateInt(sm, val, sm.current_state_id-1)
+    return StateInt(sm, val, sm.current_state_id - 1)
 end
 
 
@@ -127,6 +127,8 @@ function StateManager()
     current_state_id = 1
     return StateManager(prior_backups, current_backups, current_state_id)
 end
+
+Base.broadcastable(s::StateManager) = Ref(s)
 
 
 """

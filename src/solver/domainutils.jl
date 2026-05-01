@@ -30,9 +30,9 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
                 return false
             end
         end
-        
+
         #(RuleNode, AbstractHole), the rule must be inside the domain of the general_tree
-        (true, false) => begin 
+        (true, false) => begin
             if !general_tree.domain[get_rule(specific_tree)]
                 return false
             end
@@ -42,7 +42,7 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
         (false, true) => return false
 
         #(AbstractHole, AbstractHole), dispatch to the is_subdomain for domains
-        (false, false) => begin 
+        (false, false) => begin
             if !is_subdomain(specific_tree.domain, general_tree.domain)
                 return false
             end
@@ -72,15 +72,15 @@ end
 
 Partition a [Hole](@ref) into subdomains grouped by childtypes and the parent type.
 """
-function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
-    domain = copy(hole.domain)
+function partition(hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
+    domain = copy(get_domain(hole))
     fixed_shaped_domains = []
     while true
         rule = findfirst(domain)
         if isnothing(rule)
             break
         end
-        
+
         parent_mask = falses(length(domain))
         parent_mask[grammar.bytype[grammar.types[rule]]] .= true
 
@@ -117,8 +117,8 @@ Returns all the values that are in both `domain1` and `domain2`
 function get_intersection(domain1::BitVector, domain2::BitVector)::Vector{Int}
     return findall(domain1 .& domain2)
 end
-function get_intersection(sss::Union{BitVector, StateSparseSet}, domain2::Union{BitVector, StateSparseSet})::Vector{Int}
-    if !(sss isa StateSparseSet) 
+function get_intersection(sss::Union{BitVector,StateSparseSet}, domain2::Union{BitVector,StateSparseSet})::Vector{Int}
+    if !(sss isa StateSparseSet)
         sss, domain2 = domain2, sss
         @assert sss isa StateSparseSet
     end
