@@ -91,6 +91,8 @@ include("csg_annotated/csg_annotated.jl")
 include("csg_annotated/process_annotated_rules.jl")
 include("csg_annotated/algebraic_annotations.jl")
 
+include("next/Next.jl")
+
 export
     AbstractGrammarConstraint,
     AbstractLocalConstraint, DomainRuleNode,
