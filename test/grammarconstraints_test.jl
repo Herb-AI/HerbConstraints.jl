@@ -113,7 +113,8 @@
 
 
     end
-    @testset "issame" begin
-        @test HerbCore.issame(Contains(1), Unique(1)) == false
+    @testset "isequal" begin
+        @test Contains(1) == Contains(1)
+        @test Contains(1) != Unique(1)
     end
 end

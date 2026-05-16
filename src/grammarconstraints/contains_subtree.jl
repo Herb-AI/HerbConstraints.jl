@@ -102,7 +102,7 @@ end
 HerbCore.is_domain_valid(c::ContainsSubtree, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::ContainsSubtree, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
 
-HerbCore.issame(c1::ContainsSubtree, c2::ContainsSubtree) = HerbCore.issame(c1.tree, c2.tree)
+Base.:(==)(c1::ContainsSubtree, c2::ContainsSubtree) = (c1.tree == c2.tree)
 
 function HerbGrammar.is_constraint_valid(c::ContainsSubtree, grammar::AbstractGrammar; allow_empty_children::Bool)
     return HerbGrammar.is_tree_valid(c.tree, grammar; allow_empty_children=allow_empty_children)

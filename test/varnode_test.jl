@@ -26,8 +26,8 @@
     @testset "is_domain_valid" begin
         @test HerbCore.is_domain_valid(VarNode(:a), 99) == true
     end
-    @testset "issame" begin
-        @test HerbCore.issame(VarNode(:a), VarNode(:a)) == true
-        @test HerbCore.issame(VarNode(:a), VarNode(:z)) == false
+    @testset "isequal" begin
+        @test VarNode(:a) == VarNode(:a)
+        @test VarNode(:a) != VarNode(:z)
     end
 end

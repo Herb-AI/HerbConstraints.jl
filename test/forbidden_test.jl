@@ -117,7 +117,7 @@
         @test HerbCore.is_domain_valid(forbidden1, grammar) == false
         @test HerbCore.is_domain_valid(forbidden2, grammar) == true
     end
-    @testset "issame" begin
+    @testset "isequal" begin
         forbidden1 = Forbidden(RuleNode(4, [
             VarNode(:a),
             VarNode(:a)
@@ -130,7 +130,7 @@
             VarNode(:b),
             VarNode(:b)
         ]))
-        @test HerbCore.issame(forbidden1, forbidden2) == true
-        @test HerbCore.issame(forbidden1, forbidden3) == false
+        @test forbidden1 == forbidden2
+        @test forbidden1 != forbidden3
     end
 end
