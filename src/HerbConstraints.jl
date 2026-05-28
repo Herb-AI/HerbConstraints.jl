@@ -128,6 +128,7 @@ include("lessthanorequal.jl")
 include("makeequal.jl")
 
 include("localconstraints/local_forbidden.jl")
+include("localconstraints/local_forbidden_combination.jl")
 include("localconstraints/local_ordered.jl")
 include("localconstraints/local_contains.jl")
 include("localconstraints/local_contains_subtree.jl")
@@ -135,6 +136,7 @@ include("localconstraints/local_forbidden_sequence.jl")
 include("localconstraints/local_unique.jl")
 
 include("grammarconstraints/forbidden.jl")
+include("grammarconstraints/forbidden_combination.jl")
 include("grammarconstraints/ordered.jl")
 include("grammarconstraints/contains.jl")
 include("grammarconstraints/contains_subtree.jl")
@@ -167,6 +169,7 @@ export
 
     #grammar constraints
     Forbidden,
+    ForbiddenCombination,
     Ordered,
     Contains,
     ContainsSubtree,
@@ -175,6 +178,7 @@ export
 
     #local constraints
     LocalForbidden,
+    LocalForbiddenCombination,
     LocalOrdered,
     LocalContains,
     LocalContainsSubtree,
