@@ -162,6 +162,15 @@ HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar)
 
 Base.:(==)(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
 
+"""
+    isantimonotone(::ForbiddenSequence)::Bool
+
+Returns `true`. A [`ForbiddenSequence`](@ref) constraint is anti-monotone: if the forbidden
+vertical sequence of rules is already present in a partial tree, no completion can remove those
+nodes, so the violation persists in all completions.
+"""
+isantimonotone(::ForbiddenSequence) = true
+
 function HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool)
     n_rules = length(grammar.rules)
     all(1 <= x <= n_rules for x in c.ignore_if) || return false
