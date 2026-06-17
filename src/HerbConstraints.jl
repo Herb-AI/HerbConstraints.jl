@@ -54,7 +54,7 @@ ismonotone(::AbstractConstraint) = false
 """
     isantimonotone(c::AbstractConstraint)::Bool
 
-Returns `true` if the constraint is anti-monotone: if it is violated for a partial tree,
+Returns `true` if the constraint is anti-monotone: if the constraint is violated for a partial tree,
 it remains violated for all completions of that tree. Defaults to `false`.
 """
 isantimonotone(::AbstractConstraint) = false
