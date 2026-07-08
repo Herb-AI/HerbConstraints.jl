@@ -155,12 +155,14 @@ Function that should be called whenever the constraint is already satisfied and 
 function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.schedule)
         # remove the constraint from the schedule
+        # @info "Removing" constraint
         @timeit_debug solver.statistics "deactivate! removed from schedule" begin end
         delete!(solver.schedule, constraint)
     end
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
         @timeit_debug solver.statistics "deactivate!" begin end
+        # @info "Deactivating" constraint
         set_value!(solver.isactive[constraint], 0)
         return
     end

@@ -4,7 +4,7 @@
 Forbids the given `sequence` of rule nodes ending at the node at the `path`.
 If any of the rules in `ignore_if` appears in the sequence, the constraint is ignored.
 """
-struct LocalForbiddenSequence <: AbstractLocalConstraint
+@auto_hash_equals struct LocalForbiddenSequence <: AbstractLocalConstraint
     path::Vector{Int}
     sequence::Vector{Int}
     ignore_if::Vector{Int}
