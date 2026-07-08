@@ -6,10 +6,11 @@ Forbids the a subtree that matches the `tree` to be generated at the location
 provided by the path. 
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
-struct LocalForbidden <: AbstractLocalConstraint
+@auto_hash_equals struct LocalForbidden <: AbstractLocalConstraint
     path::Vector{Int}
     tree::AbstractRuleNode
 end
+
 
 """
     function propagate!(solver::Solver, c::LocalForbidden)

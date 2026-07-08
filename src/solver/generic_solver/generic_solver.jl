@@ -103,6 +103,9 @@ By default, the constraint will be scheduled for its initial propagation.
 Constraints can overload this method to add themselves to notify lists or triggers.
 """
 function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
+    # if constraint isa LocalForbidden
+    #     @info "post!" constraint
+    # end
     if !isfeasible(solver) return end
     @timeit_debug solver.statistics "post! $(typeof(constraint))" begin end
     # add to the list of active constraints

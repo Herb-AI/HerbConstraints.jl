@@ -4,7 +4,7 @@
 Forbids any subtree at `path` whose root matches `root` and whose children
 match one of the child tuples in `children`.
 """
-struct LocalForbiddenCombination <: AbstractLocalConstraint
+@auto_hash_equals struct LocalForbiddenCombination <: AbstractLocalConstraint
     path::Vector{Int}
     root::AbstractRuleNode
     children::Vector{Vector{AbstractRuleNode}}

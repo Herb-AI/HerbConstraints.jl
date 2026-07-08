@@ -17,16 +17,27 @@ Supports the following functions:
 - `increment!`
 - `decrement!`
 """
-mutable struct StateInt
+mutable struct StateInt <: Integer
     sm::AbstractStateManager
     val::Int
     last_state_id::Int
-end
 
-function StateInt(sm, val)
-    return StateInt(sm, val, sm.current_state_id-1)
+    function StateInt(sm, val)
+        return new(sm, val, sm.current_state_id-1)
+    end
 end
+StateInt(val::Integer) = StateInt(StateManager(), val)
 
+Base.promote_rule(::Type{<:StateInt}, ::Type{<:Integer}) = StateInt 
+Base.:(==)(si1::StateInt, si2::StateInt) = si1.val == si2.val 
+
+function Base.show(io::IO, ::MIME"text/plain", si::StateInt)
+    if get(io, :compact, false)
+        print(io, typeof(si), "(", typeof(si.sm), "(...), val: ", si.val, ", ", si.last_state_id, ")")
+    else
+        print(io, typeof(si), "(", si.val, ", ", si.sm, ")")
+    end
+end
 
 """
 Get the value of the stateful integer
@@ -72,7 +83,6 @@ struct StateIntBackup
     state_int::StateInt
     original_val::Int
 end
-
 
 """
 Should be called whenever the state of a `StateInt` is modified.
@@ -126,6 +136,17 @@ function StateManager()
     current_backups = Vector{StateIntBackup}()
     current_state_id = 1
     return StateManager(prior_backups, current_backups, current_state_id)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", sm::StateManager)
+    if get(io, :compact, false)
+        print(io, "$(typeof(sm))(#prior:", length(sm.prior_backups), ",#current:", length(sm.current_backups), ",id:",sm.current_state_id, ")")
+    else
+        print(io, "$(typeof(sm)):\n   Prior backups: ", sm.prior_backups,
+            "\n   Current backups: ", sm.current_backups,
+            "\n   Current state ID: ", sm.current_state_id,
+        )
+    end
 end
 
 
