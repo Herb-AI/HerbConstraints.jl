@@ -162,7 +162,6 @@ function deactivate!(solver::UniformSolver, constraint::AbstractLocalConstraint)
     if constraint ∈ keys(solver.isactive)
         # the constraint was posted earlier and should be deactivated
         @timeit_debug solver.statistics "deactivate!" begin end
-        # @info "Deactivating" constraint
         set_value!(solver.isactive[constraint], 0)
         return
     end

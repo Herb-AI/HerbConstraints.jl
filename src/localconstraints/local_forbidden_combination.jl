@@ -89,7 +89,7 @@ function _combine_forbidden_combination_match(
     end
 end
 
-function propagate!(solver::Solver, c::LocalForbiddenCombination)
+function propagate!(solver::Solver, c::LocalForbiddenCombination, when_satisfied)
     while isfeasible(solver)
         node = get_node_at_location(solver, c.path)
         arity = length(first(c.children))
@@ -97,7 +97,7 @@ function propagate!(solver::Solver, c::LocalForbiddenCombination)
 
         @match root_match begin
             ::PatternMatchHardFail => begin
-                deactivate!(solver, c)
+                when_satisfied(solver, c)
                 return
             end
             ::PatternMatchSoftFail => return
@@ -137,7 +137,7 @@ function propagate!(solver::Solver, c::LocalForbiddenCombination)
             continue
         end
         if all_hardfail
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
         end
         return
     end

@@ -25,7 +25,7 @@ end
     function propagate!(solver::Solver, c::LocalForbiddenSequence)
 
 """
-function propagate!(solver::Solver, c::LocalForbiddenSequence)
+function propagate!(solver::Solver, c::LocalForbiddenSequence, when_satisfied)
     nodes = get_nodes_on_path(get_tree(solver), c.path)
     @timeit_debug solver.statistics "LocalForbiddenSequence propagation" begin end
 
@@ -37,7 +37,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         if (node isa RuleNode) || (node isa StateHole && isfilled(node))
             rule = get_rule(node)
             if (rule ∈ c.ignore_if)
-                deactivate!(solver, c)
+                when_satisfied(solver, c)
                 @timeit_debug solver.statistics "LocalForbiddenSequence deactivate by ignore_if" begin end
                 return
             elseif (rule == forbidden_rule)
@@ -55,7 +55,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
                             push!(forbidden_assignments, (path_idx, rules))
                             break
                         end
-                        deactivate!(solver, c)
+                        when_satisfied(solver, c)
                         @timeit_debug solver.statistics "LocalForbiddenSequence deactivate by ignore_if" begin end
                         return
                     end
@@ -68,7 +68,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     end
     if i > 0
         @timeit_debug solver.statistics "LocalForbiddenSequence deactivate" begin end
-        deactivate!(solver, c)
+        when_satisfied(solver, c)
         return
     end
     if length(forbidden_assignments) == 0
@@ -83,7 +83,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
             @timeit_debug solver.statistics "LocalForbiddenSequence deduction by ignore_if" begin end
         end
         if path_idx > length(c.path)
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
         end
         remove!(solver, c.path[1:path_idx-1], rule)
         return
@@ -129,7 +129,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
     @timeit_debug solver.statistics "LocalForbiddenSequence deduction (method 2)" begin end
     path_idx, rule = forbidden_assignment
     if path_idx > length(c.path)
-        deactivate!(solver, c)
+        when_satisfied(solver, c)
     end
     remove!(solver, c.path[1:path_idx-1], rule)
 end
