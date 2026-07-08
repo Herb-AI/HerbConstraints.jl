@@ -17,7 +17,7 @@ First the node located at the `path` is matched to see if the ordered constraint
 The nodes matching the variables are stored in the `vars` dictionary.
 Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.   
 """
-function propagate!(solver::Solver, c::LocalOrdered)
+function propagate!(solver::Solver, c::LocalOrdered, when_satisfied)
     @assert isfeasible(solver)
     node = get_node_at_location(solver, c.path)
     @timeit_debug solver.statistics "LocalOrdered propagation" begin end
@@ -26,7 +26,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
             @timeit_debug solver.statistics "LocalOrdered match hardfail" begin end
         end;
         ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
@@ -57,7 +57,7 @@ function propagate!(solver::Solver, c::LocalOrdered)
                 end
             end
             if should_deactivate
-                deactivate!(solver, c)
+                when_satisfied(solver, c)
             end
         end
     end

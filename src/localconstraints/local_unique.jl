@@ -6,7 +6,7 @@ Enforces that a given `rule` appears at or below the given `path` at most once.
 In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
 @auto_hash_equals struct LocalUnique <: AbstractLocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     rule::Int
     holes::Vector{AbstractHole}
 end
@@ -20,7 +20,7 @@ Enforce that the `rule` appears at or below the `path` at least once.
 Uses a helper function to retrieve a list of holes that can potentially hold the target rule.
 If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
 """
-function propagate!(solver::Solver, c::LocalUnique)
+function propagate!(solver::Solver, c::LocalUnique, when_satisfied)
     @timeit_debug solver.statistics "LocalUnique propagation" begin end
     if (solver isa GenericSolver) | isempty(c.holes)
         empty!(c.holes)
@@ -36,7 +36,7 @@ function propagate!(solver::Solver, c::LocalUnique)
     elseif count == 1
         if all(isuniform(hole) for hole ∈ c.holes)
             @timeit_debug solver.statistics "LocalUnique deactivate" begin end
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
         end 
         for hole ∈ c.holes
             deductions = 0

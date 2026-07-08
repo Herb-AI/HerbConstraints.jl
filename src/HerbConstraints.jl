@@ -34,6 +34,7 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
 
+
 """
     function get_priority(::AbstractLocalConstraint)
 
@@ -48,6 +49,7 @@ include("varnode.jl")
 include("domainrulenode.jl")
 
 include("solver/solver.jl")
+
 include("solver/generic_solver/state.jl")
 include("solver/generic_solver/generic_solver.jl")
 include("solver/generic_solver/treemanipulations.jl")
@@ -71,6 +73,19 @@ include("localconstraints/local_contains.jl")
 include("localconstraints/local_contains_subtree.jl")
 include("localconstraints/local_forbidden_sequence.jl")
 include("localconstraints/local_unique.jl")
+
+"""
+    propagate!(solver::Solver, constraint::AbstractLocalConstraint; when_satisfied=deactivate!)
+
+Propagate `constraint` on the current state of the `solver`.
+
+Setting `when_satisfied` changes the behavior of a satisfied constraint.
+Defaults to [`deactivate!`](@ref).
+"""
+function propagate!(solver::Solver, constraint::AbstractLocalConstraint; when_satisfied=deactivate!)
+    propagate!(solver, constraint, when_satisfied)
+end
+
 
 include("grammarconstraints/forbidden.jl")
 include("grammarconstraints/forbidden_combination.jl")

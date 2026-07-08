@@ -44,7 +44,7 @@ Enforce that the `tree` appears at or below the `path` at least once.
 Nodes that can potentially become the target sub-tree are considered `candidates`.
 In case of multiple candidates, a stateful set of `indices` is used to keep track of active candidates.
 """
-function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
+function propagate!(solver::UniformSolver, c::LocalContainsSubtree, when_satisfied)
     @timeit_debug solver.statistics "LocalContainsSubtree propagation" begin
         if isnothing(c.candidates)
             # Initial propagation: pattern match all nodes, only store the candidates for re-propagation
@@ -54,7 +54,7 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                     ::PatternMatchHardFail => ()
                     ::PatternMatchSuccess => begin
                         @timeit_debug solver.statistics "LocalContainsSubtree satisfied (initial propagation)" begin end
-                        deactivate!(solver, c);
+                        when_satisfied(solver, c);
                         return
                     end
                     ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => push!(c.candidates, node)
@@ -72,7 +72,7 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                     end
                     ::MakeEqualSuccess => begin
                         @timeit_debug solver.statistics "LocalContainsSubtree deduction (initial)" begin end
-                        deactivate!(solver, c);
+                        when_satisfied(solver, c);
                         return
                     end
                     ::MakeEqualSoftFail => begin
@@ -95,7 +95,7 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                         ::PatternMatchHardFail => remove!(c.indices, i)
                         ::PatternMatchSuccess => begin
                             @timeit_debug solver.statistics "LocalContainsSubtree satisfied" begin end
-                            deactivate!(solver, c);
+                            when_satisfied(solver, c);
                             return
                         end
                         ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => ()
@@ -114,7 +114,7 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree)
                     end
                     ::MakeEqualSuccess => begin
                         @timeit_debug solver.statistics "LocalContainsSubtree deduction" begin end
-                        deactivate!(solver, c);
+                        when_satisfied(solver, c);
                         return
                     end
                     ::MakeEqualSoftFail => begin

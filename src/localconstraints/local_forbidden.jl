@@ -19,14 +19,14 @@ Enforce that the forbidden `tree` does not occur at the `path`.
 The forbidden tree is matched against the [`AbstractRuleNode`](@ref) located at the path.
 Deductions are based on the type of the [`PatternMatchResult`](@ref) returned by the [`pattern_match`](@ref) function.
 """
-function propagate!(solver::Solver, c::LocalForbidden)
+function propagate!(solver::Solver, c::LocalForbidden, when_satisfied)
     node = get_node_at_location(solver, c.path)
     @timeit_debug solver.statistics "LocalForbidden propagation" begin end
     @match pattern_match(node, c.tree) begin
         ::PatternMatchHardFail => begin 
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
             @timeit_debug solver.statistics "LocalForbidden hardfail" begin end
         end;
         match::PatternMatchSoftFail => begin 
@@ -44,7 +44,7 @@ function propagate!(solver::Solver, c::LocalForbidden)
             @timeit_debug solver.statistics "LocalForbidden deduction" begin end
             #path = get_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_path(node, match.hole))
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
             remove!(solver, path, match.ind)
         end
     end

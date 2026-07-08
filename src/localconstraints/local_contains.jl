@@ -16,13 +16,13 @@ Enforce that the `rule` appears at or below the `path` at least once.
 Uses a helper function to retrieve a list of holes that can potentially hold the target rule.
 If there is only a single hole that can potentially hold the target rule, that hole will be filled with that rule.
 """
-function propagate!(solver::Solver, c::LocalContains)
+function propagate!(solver::Solver, c::LocalContains, when_satisfied)
     node = get_node_at_location(solver, c.path)
     @timeit_debug solver.statistics "LocalContains propagation" begin end
     @match _contains(node, c.rule) begin
         true => begin 
             @timeit_debug solver.statistics "LocalContains satisfied" begin end
-            deactivate!(solver, c)
+            when_satisfied(solver, c)
         end
         false => begin 
             @timeit_debug solver.statistics "LocalContains inconsistency" begin end
@@ -34,7 +34,7 @@ function propagate!(solver::Solver, c::LocalContains)
                 if isuniform(holes[1])
                     @timeit_debug solver.statistics "LocalContains deduction" begin end
                     path = vcat(c.path, get_path(node, holes[1]))
-                    deactivate!(solver, c)
+                    when_satisfied(solver, c)
                     remove_all_but!(solver, path, c.rule)
                 else
                     # we cannot deduce anything yet, new holes can appear underneath this hole
