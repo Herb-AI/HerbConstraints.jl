@@ -8,8 +8,8 @@ Enforces that a given `tree` appears at or below the given `path` at least once.
     This is a stateful constraint can only be propagated by the UniformSolver.
     The `indices` and `candidates` fields should not be set by the user.
 """
-@auto_hash_equals mutable struct LocalContainsSubtree <: AbstractLocalConstraint
-	path::Vector{Int}
+@auto_hash_equals fields=(path, tree) mutable struct LocalContainsSubtree <: AbstractLocalConstraint
+    path::Vector{Int}
     tree::AbstractRuleNode
     candidates::Union{Vector{AbstractRuleNode}, Nothing}
     indices::Union{StateSparseSet, Nothing}

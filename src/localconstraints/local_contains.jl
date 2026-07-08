@@ -5,7 +5,7 @@ LocalContains
 Enforces that a given `rule` appears at or below the given `path` at least once.
 """
 @auto_hash_equals struct LocalContains <: AbstractLocalConstraint
-	path::Vector{Int}
+    path::Vector{Int}
     rule::Int
 end
 

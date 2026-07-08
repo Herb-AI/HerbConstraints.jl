@@ -5,7 +5,7 @@
 Enforces that a given `rule` appears at or below the given `path` at most once.
 In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
-@auto_hash_equals struct LocalUnique <: AbstractLocalConstraint
+@auto_hash_equals fields=(path, rule) struct LocalUnique <: AbstractLocalConstraint
     path::Vector{Int}
     rule::Int
     holes::Vector{AbstractHole}
