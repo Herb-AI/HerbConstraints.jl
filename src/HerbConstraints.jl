@@ -6,7 +6,6 @@ using DataStructures
 using DocStringExtensions
 using MLStyle
 using TimerOutputs
-import AutoHashEquals: @auto_hash_equals
 
 
 """
