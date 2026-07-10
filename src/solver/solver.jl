@@ -18,7 +18,7 @@ Each solver should implement at least:
 - `notify_tree_manipulation`
 - `deactivate!`
 """
-abstract type Solver end
+abstract type Solver{S<:AbstractLocalConstraint} end
 
 
 """

@@ -11,13 +11,14 @@ A state contains of:
    When a propagator spots an inconsistency, this field will be set to false.
    Tree manipulations and further propagations are not allowed on infeasible states
 """
-mutable struct SolverState
+mutable struct SolverState{C<:AbstractLocalConstraint}
     tree::AbstractRuleNode
-    active_constraints::Set{AbstractLocalConstraint}
+    active_constraints::Set{C}
     isfeasible::Bool
 end
 
 SolverState(tree::AbstractRuleNode) = SolverState(tree, Set{AbstractLocalConstraint}(), true)
+SolverState{C}(tree::AbstractRuleNode) where C = SolverState{C}(tree, Set{C}(), true)
 
 function Base.copy(state::SolverState) 
     tree = deepcopy(state.tree)

@@ -67,6 +67,7 @@ function _forbidden_combination_root_matches(node::AbstractRuleNode, root::Domai
     return !are_disjoint(node.domain, root.domain)
 end
 
+local_constraint_types(::ForbiddenCombination) = LocalForbiddenCombination
 function on_new_node(solver::Solver, c::ForbiddenCombination, path::Vector{Int})
     node = get_node_at_location(solver, path)
     _forbidden_combination_root_matches(node, c.root) || return

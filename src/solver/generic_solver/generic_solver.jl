@@ -13,10 +13,10 @@ Each [`SolverState`](@ref) holds an independent propagation program. Program ite
 - `save_state!`
 - `load_state!`
 """
-mutable struct GenericSolver <: Solver
+mutable struct GenericSolver{C} <: Solver{C}
     grammar::AbstractGrammar
-    state::Union{SolverState, Nothing}
-    schedule::PriorityQueue{AbstractLocalConstraint, Int}
+    state::Union{SolverState{C}, Nothing}
+    schedule::PriorityQueue{C, Int}
     statistics::Union{TimerOutput, Nothing}
     fix_point_running::Bool
     max_size::Int
@@ -42,7 +42,8 @@ Constructs a new solver, with an initial state of the provided [`AbstractRuleNod
 """
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
     stats = with_statistics ? TimerOutput("Generic Solver") : nothing
-    solver = GenericSolver(grammar, nothing, PriorityQueue{AbstractLocalConstraint, Int}(), stats, false, max_size, max_depth)
+    constraint_types = local_constraint_types(grammar)
+    solver = GenericSolver(grammar, nothing, PriorityQueue{constraint_types, Int}(), stats, false, max_size, max_depth)
     new_state!(solver, init_node)
     return solver
 end
@@ -123,10 +124,10 @@ end
 
 Overwrites the current state and propagates constraints on the `tree` from the ground up
 """
-function new_state!(solver::GenericSolver, tree::AbstractRuleNode)
+function new_state!(solver::GenericSolver{C}, tree::AbstractRuleNode) where C
     @timeit_debug solver.statistics "new_state!" begin end
     empty!(solver.schedule)
-    solver.state = SolverState(tree)
+    solver.state = SolverState{C}(tree)
     function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
         if (node isa AbstractHole)
             simplify_hole!(solver, path)

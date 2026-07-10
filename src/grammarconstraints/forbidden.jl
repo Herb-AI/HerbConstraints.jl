@@ -27,6 +27,7 @@ struct Forbidden <: AbstractGrammarConstraint
     tree::AbstractRuleNode
 end
 
+local_constraint_types(::Forbidden) = LocalForbidden
 function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     if c.tree isa RuleNode
