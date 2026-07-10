@@ -44,8 +44,10 @@ function propagate!(solver::Solver, c::LocalForbidden, when_satisfied)
             @timeit_debug solver.statistics "LocalForbidden deduction" begin end
             #path = get_path(get_tree(solver), match.hole)
             path = vcat(c.path, get_path(node, match.hole))
-            when_satisfied(solver, c)
             remove!(solver, path, match.ind)
+            if pattern_match(node, c.tree) isa PatternMatchHardFail
+                when_satisfied(solver, c)
+            end
         end
     end
 end
