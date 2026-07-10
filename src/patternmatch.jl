@@ -39,7 +39,7 @@ struct PatternMatchSoftFail <: PatternMatchResult
 end
 
 #Shared reference to a dict of vars to reduce memory allocations.
-VARS = Dict{Symbol, AbstractRuleNode}()
+const VARS = Dict{Symbol, AbstractRuleNode}()
 
 """
     pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode)::PatternMatchResult

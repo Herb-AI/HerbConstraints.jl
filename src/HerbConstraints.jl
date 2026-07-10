@@ -32,7 +32,9 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
-
+local_constraint_types(::Type{<:AbstractGrammarConstraint}) = AbstractLocalConstraint
+local_constraint_types(::AGC) where {AGC<:AbstractGrammarConstraint} = local_constraint_types(AGC) 
+local_constraint_types(grammar::AbstractGrammar) = Union{local_constraint_types.(grammar.constraints)...}
 
 """
     function get_priority(::AbstractLocalConstraint)

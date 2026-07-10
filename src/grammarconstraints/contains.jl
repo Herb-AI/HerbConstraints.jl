@@ -6,6 +6,7 @@ struct Contains <: AbstractGrammarConstraint
     rule::Int
 end
 
+local_constraint_types(::Contains) = LocalContains
 function on_new_node(solver::Solver, c::Contains, path::Vector{Int})
     if length(path) == 0
         #only post a local constraint at the root

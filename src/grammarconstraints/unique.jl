@@ -14,6 +14,7 @@ function on_new_node(solver::Solver, c::Unique, path::Vector{Int})
         post!(solver, LocalUnique(path, c.rule))
     end
 end
+local_constraint_types(::Unique) = LocalUnique
 
 
 """

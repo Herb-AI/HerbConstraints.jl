@@ -1,16 +1,16 @@
 """
 A DFS-based solver that uses `StateHole`s that support backtracking.
 """
-mutable struct UniformSolver <: Solver
+mutable struct UniformSolver{C<:AbstractLocalConstraint} <: Solver{C}
     grammar::AbstractGrammar
     sm::StateManager
     tree::Union{RuleNode, StateHole}
     path_to_node::Dict{Vector{Int}, AbstractRuleNode}
     node_to_path::Dict{AbstractRuleNode, Vector{Int}}
-    isactive::Dict{AbstractLocalConstraint, StateInt}
-    canceledconstraints::Set{AbstractLocalConstraint}
+    isactive::Dict{C, StateInt}
+    canceledconstraints::Set{C}
     isfeasible::Bool
-    schedule::PriorityQueue{AbstractLocalConstraint, Int}
+    schedule::PriorityQueue{C, Int}
     fix_point_running::Bool
     statistics::Union{TimerOutput, Nothing}
 end
@@ -20,21 +20,23 @@ end
     UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode)
 """
 function UniformSolver(grammar::AbstractGrammar, fixed_shaped_tree::AbstractRuleNode; with_statistics=false)
+    
     @assert !contains_nonuniform_hole(fixed_shaped_tree) "$(fixed_shaped_tree) contains non-uniform holes"
+    constraint_types = local_constraint_types(grammar)
     sm = StateManager()
     tree = StateHole(sm, fixed_shaped_tree)
     path_to_node = Dict{Vector{Int}, AbstractRuleNode}()
     node_to_path = Dict{AbstractRuleNode, Vector{Int}}()
-    isactive = Dict{AbstractLocalConstraint, StateInt}()
-    canceledconstraints = Set{AbstractLocalConstraint}()
-    schedule = PriorityQueue{AbstractLocalConstraint, Int}()
+    isactive = Dict{constraint_types, StateInt}()
+    canceledconstraints = Set{constraint_types}()
+    schedule = PriorityQueue{constraint_types, Int}()
     fix_point_running = false
     statistics = @match with_statistics begin
         ::TimerOutput => with_statistics
         ::Bool => with_statistics ? TimerOutput("Uniform Solver") : nothing
         ::Nothing => nothing
     end
-    solver = UniformSolver(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
+    solver = UniformSolver{constraint_types}(grammar, sm, tree, path_to_node, node_to_path, isactive, canceledconstraints, true, schedule, fix_point_running, statistics)
     notify_new_nodes(solver, tree, Vector{Int}())
     fix_point!(solver)
     return solver
