@@ -17,13 +17,13 @@ Supports the following functions:
 - `increment!`
 - `decrement!`
 """
-mutable struct StateInt <: Integer
-    sm::AbstractStateManager
+mutable struct StateInt{S<:AbstractStateManager} <: Integer
+    sm::S
     val::Int
     last_state_id::Int
 
-    function StateInt(sm, val)
-        return new(sm, val, sm.current_state_id-1)
+    function StateInt(sm::S, val) where S
+        return new{S}(sm, val, sm.current_state_id-1)
     end
 end
 StateInt(val::Integer) = StateInt(StateManager(), val)

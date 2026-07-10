@@ -20,6 +20,8 @@ Each solver should implement at least:
 """
 abstract type Solver{S<:AbstractLocalConstraint} end
 
+solver_node_types(::Type{S}) where S<:Solver = AbstractRuleNode
+solver_node_types(::S) where S<:Solver = solver_node_types(Type{S})
 
 """
     fix_point!(solver::Solver)
@@ -41,7 +43,10 @@ function fix_point!(solver::Solver)
         # popfirst! returns a (constraint => priority) pair.
         # we only need the constraint so we discard the priority with "_"
         (constraint, _) = popfirst!(solver.schedule)
+        path = constraint.path
+        # Main.@infiltrate length(path) == 3 && path[1:3] == [2, 1, 2] && check(8, get_node_at_location(solver, path[1:3])) && check(7, get_node_at_location(solver, [2, 1, 1])) && check_exact(16, get_node_at_location(solver, [2, 1])) && isfeasible(solver)
         propagate!(solver, constraint)
+        # Main.@infiltrate length(path) == 3 && path[1:3] == [2, 1, 2] && check(8, get_node_at_location(solver, path[1:3])) && check(7, get_node_at_location(solver, [2, 1, 1])) && check_exact(16, get_node_at_location(solver, [2, 1])) && isfeasible(solver)
     end
     solver.fix_point_running = false
 end

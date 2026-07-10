@@ -13,16 +13,17 @@ Each [`SolverState`](@ref) holds an independent propagation program. Program ite
 - `save_state!`
 - `load_state!`
 """
-mutable struct GenericSolver{C} <: Solver{C}
-    grammar::AbstractGrammar
-    state::Union{SolverState{C}, Nothing}
+mutable struct GenericSolver{G<:AbstractGrammar,R,C} <: Solver{C}
+    grammar::G
+    state::SolverState{R,C}
     schedule::PriorityQueue{C, Int}
     statistics::Union{TimerOutput, Nothing}
     fix_point_running::Bool
     max_size::Int
     max_depth::Int
 end
-
+solver_node_types(::GenericSolver) = solver_node_types(GenericSolver)
+solver_node_types(::Type{GenericSolver}) = Union{RuleNode, StateHole, UniformHole, Hole}
 
 """
     GenericSolver(grammar::AbstractGrammar, sym::Symbol)
@@ -43,8 +44,11 @@ Constructs a new solver, with an initial state of the provided [`AbstractRuleNod
 function GenericSolver(grammar::AbstractGrammar, init_node::AbstractRuleNode; with_statistics=false, max_size = typemax(Int), max_depth = typemax(Int))
     stats = with_statistics ? TimerOutput("Generic Solver") : nothing
     constraint_types = local_constraint_types(grammar)
-    solver = GenericSolver(grammar, nothing, PriorityQueue{constraint_types, Int}(), stats, false, max_size, max_depth)
-    new_state!(solver, init_node)
+    node_types = solver_node_types(GenericSolver)
+    state = SolverState{node_types,constraint_types}(init_node)
+    schedule = PriorityQueue{constraint_types, Int}()
+    solver = GenericSolver(grammar, state, schedule, stats, false, max_size, max_depth)
+    _on_new_state!(solver, init_node)
     return solver
 end
 
@@ -118,28 +122,32 @@ function post!(solver::GenericSolver, constraint::AbstractLocalConstraint)
     solver.fix_point_running = temp
 end
 
+function _dfs_simplify!(solver::GenericSolver, node::AbstractRuleNode, path::Vector{Int})
+    if (node isa AbstractHole)
+        simplify_hole!(solver, path)
+    end
+    for (i, childnode) ∈ enumerate(get_children(node))
+        _dfs_simplify!(solver, childnode, push!(copy(path), i))
+    end
+end
+
+function _on_new_state!(solver::GenericSolver, tree::AbstractRuleNode)
+    _dfs_simplify!(solver, tree, Vector{Int}()) #try to simplify all holes in the new state. 
+    tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
+    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
+    fix_point!(solver)
+end
 
 """
     new_state!(solver::GenericSolver, tree::AbstractRuleNode)
 
 Overwrites the current state and propagates constraints on the `tree` from the ground up
 """
-function new_state!(solver::GenericSolver{C}, tree::AbstractRuleNode) where C
+function new_state!(solver::GenericSolver{G, R, C}, tree::AbstractRuleNode) where {G, R, C}
     @timeit_debug solver.statistics "new_state!" begin end
     empty!(solver.schedule)
-    solver.state = SolverState{C}(tree)
-    function _dfs_simplify(node::AbstractRuleNode, path::Vector{Int})
-        if (node isa AbstractHole)
-            simplify_hole!(solver, path)
-        end
-        for (i, childnode) ∈ enumerate(get_children(node))
-            _dfs_simplify(childnode, push!(copy(path), i))
-        end
-    end
-    _dfs_simplify(tree, Vector{Int}()) #try to simplify all holes in the new state. 
-    tree = get_tree(solver) #the tree might have been replaced by the previous function, so we need to get the updated tree
-    notify_new_nodes(solver, tree, Vector{Int}()) #notify the grammar constraints about all nodes in the new state
-    fix_point!(solver)
+    solver.state = SolverState{R, C}(tree)
+    _on_new_state!(solver, tree)
 end
 
 
