@@ -346,11 +346,11 @@ function notify_new_nodes(solver::GenericSolver, node::AbstractRuleNode, path::V
 end
 
 """
-    notify_new_constraints(solver::GenericSolver, node::AbstractRuleNode, constraints::Vector{AbstractGrammarConstraint}, path::Vector{Int})
+    notify_new_constraints(solver::GenericSolver, node::AbstractRuleNode, constraints::Vector{<:AbstractGrammarConstraint}, path::Vector{Int})
 
 Notify all existing nodes about the new `constraints` at the provided `path`.
 """
-function notify_new_constraints(solver::GenericSolver, node::AbstractRuleNode, constraints::Vector{AbstractGrammarConstraint}, path::Vector{Int})
+function notify_new_constraints(solver::GenericSolver, node::AbstractRuleNode, constraints::Vector{<:AbstractGrammarConstraint}, path::Vector{Int})
     if !isfeasible(solver) return end
     for (i, childnode) ∈ enumerate(get_children(node))
         notify_new_constraints(solver, childnode, constraints, push!(copy(path), i))
@@ -361,11 +361,11 @@ function notify_new_constraints(solver::GenericSolver, node::AbstractRuleNode, c
 end
 
 """
-    add_constraints!(solver::GenericSolver, constraints::Vector{AbstractGrammarConstraint})
+    add_constraints!(solver::GenericSolver, constraints::Vector{<:AbstractGrammarConstraint})
 
 Add the `constraints` to the solver and schedule them for propagation.
 """
-function add_constraints!(solver::GenericSolver, constraints::Vector{AbstractGrammarConstraint})
+function add_constraints!(solver::GenericSolver, constraints::Vector{<:AbstractGrammarConstraint})
     notify_new_constraints(solver, get_tree(solver), constraints, Vector{Int}())
     fix_point!(solver)
 end
