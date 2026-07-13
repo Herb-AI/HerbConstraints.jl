@@ -6,8 +6,8 @@ This [`AbstractGrammarConstraint`] enforces that a given `subtree` appears in th
 !!! warning:
     This constraint can only be propagated by the UniformSolver
 """
-struct ContainsSubtree <: AbstractGrammarConstraint
-    tree::AbstractRuleNode
+struct ContainsSubtree{R<:AbstractRuleNode} <: AbstractGrammarConstraint
+    tree::R
 end
 
 local_constraint_types(::ContainsSubtree) = LocalContainsSubtree

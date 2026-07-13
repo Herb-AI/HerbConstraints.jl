@@ -23,8 +23,8 @@ variable in the pattern, the matched subtrees must be identical.
 Any rule in the domain that makes the match attempt successful is removed.
 
 """
-struct Forbidden <: AbstractGrammarConstraint
-    tree::AbstractRuleNode
+struct Forbidden{R<:AbstractRuleNode} <: AbstractGrammarConstraint
+    tree::R
 end
 
 local_constraint_types(::Forbidden) = LocalForbidden
