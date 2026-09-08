@@ -12,6 +12,7 @@ struct DomainRuleNode <: AbstractRuleNode
     domain::BitVector
     children::Vector{AbstractRuleNode}
 end
+HerbCore.get_children(drn::DomainRuleNode) = drn.children
 
 function DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}, children::Vector{<:AbstractRuleNode})
     domain = falses(length(grammar.rules))

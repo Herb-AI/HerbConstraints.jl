@@ -22,14 +22,7 @@ If there is only a single hole that can potentially hold the target rule, that h
 """
 function propagate!(solver::Solver, c::LocalUnique, when_satisfied)
     @timeit_debug solver.statistics "LocalUnique propagation" begin end
-    if (solver isa GenericSolver) | isempty(c.holes)
-        empty!(c.holes)
-        node = get_node_at_location(solver, c.path)
-        count = _count_occurrences!(node, c.rule, c.holes)
-    else
-        #only search for the target rule in the cached list of holes
-        count = _count_occurrences(c.holes, c.rule)
-    end
+    count = _count_occurrences!(solver, c)
     if count >= 2
         set_infeasible!(solver)
         @timeit_debug solver.statistics "LocalUnique inconsistency" begin end
@@ -50,6 +43,23 @@ function propagate!(solver::Solver, c::LocalUnique, when_satisfied)
     end
 end
 
+function _populate_hole_cache!(solver::Solver, c::LocalUnique)
+    empty!(c.holes)
+    node = get_node_at_location(solver, c.path)
+    return _count_occurrences!(node, c.rule, c.holes)
+end
+
+function _count_occurrences!(solver::GenericSolver, c::LocalUnique)
+    return _populate_hole_cache!(solver, c)
+end
+function _count_occurrences!(solver::UniformSolver, c::LocalUnique)
+    return if isempty(c.holes)
+        _populate_hole_cache!(solver, c)
+    else
+        _count_occurrences(c.holes, c.rule)
+    end
+end
+
 """
     function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
 
@@ -65,7 +75,7 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
     count = 0
     if isfilled(node)
         # if the rulenode is the second occurence of the rule, hardfail
-        if get_rule(node) == rule
+        if get_rule(node)::Int == rule
             count += 1
             if count > 1
                 return count
@@ -77,7 +87,7 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
             push!(holes, node)
         end
     end
-    for child ∈ get_children(node)
+    for child::Union{RuleNode, Hole, StateHole, UniformHole} ∈ get_children(node)
         count += _count_occurrences!(child, rule, holes)
         if count > 1
             return count

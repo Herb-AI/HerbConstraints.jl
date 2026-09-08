@@ -27,7 +27,7 @@ end
 ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) =
     ForbiddenSequence(sequence, ignore_if)
 
-local_constraint_types(::ForbiddenSequence) = LocalForbiddenSequence
+local_constraint_types(::Type{<:ForbiddenSequence}) = LocalForbiddenSequence
 function on_new_node(solver::Solver, c::ForbiddenSequence, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
     @match get_node_at_location(solver, path) begin

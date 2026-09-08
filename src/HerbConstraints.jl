@@ -32,7 +32,13 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
-local_constraint_types(::Type{<:AbstractGrammarConstraint}) = AbstractLocalConstraint
+function local_constraint_types(::Type{U}) where U<:AbstractGrammarConstraint
+    if U isa Union
+        return Union{local_constraint_types(U.a), local_constraint_types(U.b)} 
+    else
+        return AbstractLocalConstraint
+    end
+end
 local_constraint_types(::AGC) where {AGC<:AbstractGrammarConstraint} = local_constraint_types(AGC) 
 local_constraint_types(grammar::AbstractGrammar) = Union{local_constraint_types.(grammar.constraints)...}
 

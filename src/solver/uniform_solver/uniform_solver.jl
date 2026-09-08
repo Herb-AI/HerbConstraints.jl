@@ -239,6 +239,7 @@ end
 Function to be called if any inconsistency has been detected
 """
 function set_infeasible!(solver::UniformSolver)
+    @debug "UniformSolver infeasible" rulenode2expr(solver.tree[1], solver.grammar)
     solver.isfeasible = false
 end
 

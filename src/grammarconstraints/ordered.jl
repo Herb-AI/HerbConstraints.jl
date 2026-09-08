@@ -43,7 +43,7 @@ function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
     end
     post!(solver, LocalOrdered(path, c.tree, c.order))
 end
-local_constraint_types(::Ordered) = LocalOrdered
+local_constraint_types(::Type{<:Ordered}) = LocalOrdered
 
 """
     check_tree(c::Ordered, tree::AbstractRuleNode)::Bool

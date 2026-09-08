@@ -82,7 +82,7 @@ function _contains(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole
 end
 
 function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{AbstractHole})::Union{Vector{AbstractHole}, Bool}
-    for child ∈ children
+    for child::Union{RuleNode, StateHole, UniformHole, Hole} ∈ children
         if _contains(child, rule, holes) == true
             return true
         end

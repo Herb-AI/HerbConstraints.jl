@@ -10,7 +10,7 @@ struct ContainsSubtree{R<:AbstractRuleNode} <: AbstractGrammarConstraint
     tree::R
 end
 
-local_constraint_types(::ContainsSubtree) = LocalContainsSubtree
+local_constraint_types(::Type{<:ContainsSubtree}) = LocalContainsSubtree
 function on_new_node(solver::UniformSolver, c::ContainsSubtree, path::Vector{Int})
     if length(path) == 0
         post!(solver, LocalContainsSubtree(path, c.tree, nothing, nothing))

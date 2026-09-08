@@ -28,7 +28,7 @@ solver_node_types(::S) where S<:Solver = solver_node_types(Type{S})
 
 Propagate constraints in the current state until no further dedecutions can be made
 """
-function fix_point!(solver::Solver)
+function fix_point!(solver::Solver{S}) where S
     if solver.fix_point_running
         return
     end
@@ -42,7 +42,7 @@ function fix_point!(solver::Solver)
         end
         # popfirst! returns a (constraint => priority) pair.
         # we only need the constraint so we discard the priority with "_"
-        (constraint, _) = popfirst!(solver.schedule)
+        (constraint::S, _) = popfirst!(solver.schedule::PriorityQueue{S, Int})
         path = constraint.path
         propagate!(solver, constraint)
     end
