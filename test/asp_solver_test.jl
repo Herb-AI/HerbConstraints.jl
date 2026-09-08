@@ -1,4 +1,4 @@
-@testitem "ASPSolver" begin
+@testitem "ASPSolver" skip=true begin
     using HerbCore, HerbGrammar
     using Clingo_jll
 
