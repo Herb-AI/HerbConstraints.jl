@@ -119,3 +119,8 @@ function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
     end
     count
 end
+
+function check_tree(c::LocalUnique, tree)
+    node = get_node_at_location(tree, c.path)
+    return _count_occurrences!(node, c.rule, AbstractHole[]) <= 1
+end

@@ -1,3 +1,75 @@
+@testitem "check_tree" tags = [:Unique, :check_tree] begin
+    using HerbCore
+
+    unique1 = Unique(1)
+
+    tree_two_leaves = RuleNode(3, [
+        RuleNode(3, [
+            RuleNode(1),
+            RuleNode(2)
+        ]),
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(1)
+        ])
+    ])
+
+    tree_two_inner = RuleNode(3, [
+        RuleNode(1, [
+            RuleNode(2),
+            RuleNode(2)
+        ]),
+        RuleNode(1, [
+            RuleNode(2),
+            RuleNode(2)
+        ])
+    ])
+
+    tree_one_leaf = RuleNode(3, [
+        RuleNode(3, [
+            RuleNode(1),
+            RuleNode(2)
+        ]),
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(2)
+        ])
+    ])
+
+    tree_one_inner = RuleNode(3, [
+        RuleNode(1, [
+            RuleNode(2),
+            RuleNode(2)
+        ]),
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(2)
+        ])
+    ])
+
+    tree_zero = RuleNode(3, [
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(2)
+        ]),
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(2)
+        ])
+    ])
+
+    @test check_tree(unique1, tree_two_leaves) == false
+    @test check_tree(LocalUnique(Int[], 1), tree_two_leaves) == false
+    @test check_tree(unique1, tree_two_inner) == false
+    @test check_tree(LocalUnique(Int[], 1), tree_two_inner) == false
+
+    @test check_tree(unique1, tree_one_leaf) == true
+    @test check_tree(LocalUnique(Int[], 1), tree_one_leaf) == true
+    @test check_tree(unique1, tree_one_inner) == true
+    @test check_tree(LocalUnique(Int[], 1), tree_one_inner) == true
+    @test check_tree(unique1, tree_zero) == true
+    @test check_tree(LocalUnique(Int[], 1), tree_zero) == true
+end
 @testitem "Unique" begin
     using HerbCore, HerbGrammar
     
@@ -9,70 +81,6 @@
 
     unique1 = Unique(1)
     addconstraint!(grammar, unique1)
-
-    @testset "check_tree" begin
-        tree_two_leaves = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(1)
-            ])
-        ])
-
-        tree_two_inner = RuleNode(3, [
-            RuleNode(1, [
-                RuleNode(2),
-                RuleNode(2)
-            ]),
-            RuleNode(1, [
-                RuleNode(2),
-                RuleNode(2)
-            ])
-        ])
-
-        tree_one_leaf = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(2)
-            ])
-        ])
-
-        tree_one_inner = RuleNode(3, [
-            RuleNode(1, [
-                RuleNode(2),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(2)
-            ])
-        ])
-
-        tree_zero = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(2)
-            ])
-        ])
-
-        @test check_tree(unique1, tree_two_leaves) == false
-        @test check_tree(unique1, tree_two_inner) == false
-
-        @test check_tree(unique1, tree_one_leaf) == true
-        @test check_tree(unique1, tree_one_inner) == true
-        @test check_tree(unique1, tree_zero) == true
-    end
 
     @testset "propagate infeasible" begin
         node = RuleNode(3, [
