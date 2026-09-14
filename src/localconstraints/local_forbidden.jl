@@ -52,3 +52,11 @@ function propagate!(solver::Solver, c::LocalForbidden, when_satisfied)
         end
     end
 end
+
+function check_tree(c::LocalForbidden, tree)
+    node = get_node_at_location(tree, c.path)
+    res = pattern_match(node, c.tree)
+    
+    # A success means the forbidden pattern is matched
+    return !(res isa PatternMatchSuccess)
+end
