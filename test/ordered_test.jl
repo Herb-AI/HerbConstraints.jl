@@ -1,157 +1,191 @@
-@testitem "Ordered" begin
-    using HerbCore, HerbGrammar
-    
-    @testset "check_tree true, length(order)=2" begin
-        ordered = Ordered(RuleNode(4, [
-                VarNode(:a),
-                VarNode(:b)
-            ]), [:a, :b])
-        tree11 = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(1)
-        ])
-        tree12 = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(2)
-        ])
-        tree22 = RuleNode(4, [
-            RuleNode(2),
-            RuleNode(2)
-        ])
-        tree22_mismatchedroot = RuleNode(3, [
-            RuleNode(2),
-            RuleNode(2)
-        ])
-        tree_large_true = RuleNode(3, [
-            RuleNode(4, [
-                RuleNode(2),
-                RuleNode(3, [
-                    RuleNode(2),
-                    RuleNode(2)
-                ])
-            ]),
-            RuleNode(2)
-        ])
-        @test check_tree(ordered, tree11) == true
-        @test check_tree(ordered, tree12) == true
-        @test check_tree(ordered, tree22) == true
-        @test check_tree(ordered, tree22_mismatchedroot) == true
-        @test check_tree(ordered, tree_large_true) == true
-    end
+@testitem "check_tree true, length(order)=2" tags = [:Ordered, :check_tree] begin
+    using HerbCore
 
-    @testset "check_tree false, length(order)=2" begin
-        ordered = Ordered(RuleNode(4, [
-                VarNode(:a),
-                VarNode(:b)
-            ]), [:a, :b])
-        tree21 = RuleNode(4, [
+    tree = RuleNode(4, [
+        VarNode(:a),
+        VarNode(:b)
+    ])
+    order = [:a, :b]
+    ordered = Ordered(tree, order)
+    ordered_local = LocalOrdered([], tree, order) 
+    tree11 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(1)
+    ])
+    tree12 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(2)
+    ])
+    ordered_local = LocalOrdered([], tree, order) 
+    tree22 = RuleNode(4, [
+        RuleNode(2),
+        RuleNode(2)
+    ])
+    tree22_mismatchedroot = RuleNode(3, [
+        RuleNode(2),
+        RuleNode(2)
+    ])
+    tree_large_true = RuleNode(3, [
+        RuleNode(4, [
             RuleNode(2),
-            RuleNode(1)
-        ])
-        tree_large_false = RuleNode(3, [
-            RuleNode(4, [
-                RuleNode(3, [
-                    RuleNode(2),
-                    RuleNode(2)
-                ]),
+            RuleNode(3, [
+                RuleNode(2),
+                RuleNode(2)
+            ])
+        ]),
+        RuleNode(2)
+    ])
+    @test check_tree(ordered, tree11) == true
+    @test check_tree(ordered_local, tree11) == true
+    @test check_tree(ordered, tree12) == true
+    @test check_tree(ordered_local, tree12) == true
+    @test check_tree(ordered, tree22) == true
+    @test check_tree(ordered_local, tree22) == true
+    @test check_tree(ordered, tree22_mismatchedroot) == true
+    @test check_tree(ordered_local, tree22_mismatchedroot) == true
+    @test check_tree(ordered, tree_large_true) == true
+    @test check_tree(ordered_local, tree_large_true) == true
+    @test check_tree(LocalOrdered([1], tree, order), tree_large_true) == true
+end
+
+@testitem "check_tree false, length(order)=2" tags = [:Ordered, :check_tree] begin
+    using HerbCore
+
+    tree = RuleNode(4, [
+        VarNode(:a),
+        VarNode(:b)
+    ])
+    order = [:a, :b]
+    ordered = Ordered(tree, order)
+    tree21 = RuleNode(4, [
+        RuleNode(2),
+        RuleNode(1)
+    ])
+    tree_large_false = RuleNode(3, [
+        RuleNode(4, [
+            RuleNode(3, [
+                RuleNode(2),
                 RuleNode(2)
             ]),
             RuleNode(2)
-        ])
-        @test check_tree(ordered, tree21) == false
-        @test check_tree(ordered, tree_large_false) == false
-    end
+        ]),
+        RuleNode(2)
+    ])
+    @test check_tree(ordered, tree21) == false
+    @test check_tree(LocalOrdered([], tree, order), tree21) == false
+    @test check_tree(ordered, tree_large_false) == false
+    @test check_tree(LocalOrdered([1], tree, order), tree_large_false) == false
+end
+@testitem "check_tree true, length(order)=3" tags = [:Ordered, :check_tree] begin
+    using HerbCore
 
-    @testset "check_tree true, length(order)=3" begin
-        ordered = Ordered(RuleNode(4, [
-                VarNode(:a),
-                VarNode(:b),
-                VarNode(:c)
-            ]), [:a, :b, :c])
-        tree111 = RuleNode(4, [
+    tree = RuleNode(4, [
+        VarNode(:a),
+        VarNode(:b),
+        VarNode(:c)
+    ])
+    order = [:a, :b, :c]
+    ordered = Ordered(tree, order)
+    ordered_local = LocalOrdered([], tree, order)
+    tree111 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(1),
+        RuleNode(1)
+    ])
+    tree112 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(1),
+        RuleNode(2)
+    ])
+    tree122 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(2),
+        RuleNode(2)
+    ])
+    tree111_mismatchedroot = RuleNode(5, [
+        RuleNode(1),
+        RuleNode(1),
+        RuleNode(1)
+    ])
+    tree123 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(2),
+        RuleNode(3, [
             RuleNode(1),
             RuleNode(1),
-            RuleNode(1)
         ])
-        tree112 = RuleNode(4, [
+    ])
+    tree133 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(3, [
             RuleNode(1),
             RuleNode(1),
-            RuleNode(2)
+        ]),
+        RuleNode(3, [
+            RuleNode(1),
+            RuleNode(1),
         ])
-        tree122 = RuleNode(4, [
+    ])
+    @test check_tree(ordered, tree111) == true
+    @test check_tree(ordered_local, tree111) == true
+    @test check_tree(ordered, tree112) == true
+    @test check_tree(ordered_local, tree112) == true
+    @test check_tree(ordered, tree122) == true
+    @test check_tree(ordered_local, tree122) == true
+    @test check_tree(ordered, tree111_mismatchedroot) == true
+    @test check_tree(ordered_local, tree111_mismatchedroot) == true
+    @test check_tree(ordered, tree123) == true
+    @test check_tree(ordered_local, tree123) == true
+    @test check_tree(ordered, tree133) == true
+    @test check_tree(ordered_local, tree133) == true
+end
+@testitem "check_tree false, length(order)=3" tags = [:Ordered, :check_tree] begin
+    using HerbCore
+    tree = RuleNode(4, [
+            VarNode(:a),
+            VarNode(:b),
+            VarNode(:c)
+        ])
+    order = [:a, :b, :c]
+    ordered = Ordered(tree, order)
+    tree121 = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(2),
+        RuleNode(1)
+    ])
+    tree133_leftchild_false = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(1),
+        ]),
+        RuleNode(3, [
+            RuleNode(1),
+            RuleNode(1),
+        ])
+    ])
+    tree133_rightchild_false = RuleNode(4, [
+        RuleNode(1),
+        RuleNode(3, [
             RuleNode(1),
             RuleNode(2),
-            RuleNode(2)
-        ])
-        tree111_mismatchedroot = RuleNode(5, [
+        ]),
+        RuleNode(3, [
             RuleNode(1),
             RuleNode(1),
-            RuleNode(1)
         ])
-        tree123 = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(2),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(1),
-            ])
-        ])
-        tree133 = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(1),
-            ]),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(1),
-            ])
-        ])
-        @test check_tree(ordered, tree111) == true
-        @test check_tree(ordered, tree112) == true
-        @test check_tree(ordered, tree122) == true
-        @test check_tree(ordered, tree111_mismatchedroot) == true
-        @test check_tree(ordered, tree123) == true
-        @test check_tree(ordered, tree133) == true
-    end
+    ])
+    @test check_tree(ordered, tree121) == false
+    @test check_tree(LocalOrdered([], tree, order), tree121) == false
+    @test check_tree(ordered, tree133_leftchild_false) == false
+    @test check_tree(LocalOrdered([], tree, order), tree133_leftchild_false) == false
+    @test check_tree(ordered, tree133_rightchild_false) == false
+    @test check_tree(LocalOrdered([], tree, order), tree133_leftchild_false) == false
+end
 
-    @testset "check_tree false, length(order)=3" begin
-        ordered = Ordered(RuleNode(4, [
-                VarNode(:a),
-                VarNode(:b),
-                VarNode(:c)
-            ]), [:a, :b, :c])
-        tree121 = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(2),
-            RuleNode(1)
-        ])
-        tree133_leftchild_false = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(1),
-            ]),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(1),
-            ])
-        ])
-        tree133_rightchild_false = RuleNode(4, [
-            RuleNode(1),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2),
-            ]),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(1),
-            ])
-        ])
-        @test check_tree(ordered, tree121) == false
-        @test check_tree(ordered, tree133_leftchild_false) == false
-        @test check_tree(ordered, tree133_rightchild_false) == false
-    end
+@testitem "Ordered" begin
+    using HerbCore, HerbGrammar
+
     @testset "update_rule_indices" begin
         @testset "interface without grammar" begin
             ordered = Ordered(RuleNode(4, [
