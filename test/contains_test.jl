@@ -1,36 +1,45 @@
+@testitem "check_tree true" tags = [:Contains, :check_tree] begin
+    using HerbCore
+    contains = Contains(2)
+
+    tree1 = RuleNode(2)
+    tree2 = RuleNode(2, [
+        RuleNode(3, [
+            RuleNode(2),
+            RuleNode(1)
+        ]),
+        RuleNode(2)
+    ])
+
+    @test check_tree(contains, tree1) == true
+    @test check_tree(LocalContains([], 2), tree1) == true
+    @test check_tree(contains, tree2) == true
+    @test check_tree(LocalContains([], 2), tree2) == true
+end
+
+@testitem "check_tree false" tags = [:Contains, :check_tree] begin
+    using HerbCore
+    contains = Contains(2)
+
+    tree1 = RuleNode(4)
+    tree2 = RuleNode(4, [
+        RuleNode(3, [
+            RuleNode(4),
+            RuleNode(1)
+        ]),
+        RuleNode(4)
+    ])
+
+    @test check_tree(contains, tree1) == false
+    @test check_tree(LocalContains([], 2), tree1) == false
+    @test check_tree(contains, tree2) == false
+    @test check_tree(LocalContains([], 2), tree2) == false
+end
 @testitem "Contains" begin
     using HerbGrammar, HerbCore
 
     contains = Contains(2)
    
-    @testset "check_tree true" begin
-        tree1 = RuleNode(2)
-        tree2 = RuleNode(2, [
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(1)
-            ]),
-            RuleNode(2)
-        ])
-
-        @test check_tree(contains, tree1) == true
-        @test check_tree(contains, tree2) == true
-    end
-
-    @testset "check_tree false" begin
-        tree1 = RuleNode(4)
-        tree2 = RuleNode(4, [
-            RuleNode(3, [
-                RuleNode(4),
-                RuleNode(1)
-            ]),
-            RuleNode(4)
-        ])
-
-        @test check_tree(contains, tree1) == false
-        @test check_tree(contains, tree2) == false
-    end
-
     @testset "update_rule_indices!" begin
         grammar = @csgrammar begin
             Int = 1

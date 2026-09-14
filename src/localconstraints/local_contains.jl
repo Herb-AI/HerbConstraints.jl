@@ -94,3 +94,13 @@ function _contains(children::Vector{AbstractRuleNode}, rule::Int, holes::Vector{
     end
     return holes
 end
+
+function _check_contains(::Vector{AbstractHole})
+    error("Checking a contains constraint on a tree with holes is not supported")
+end
+_check_contains(res::Bool) = res
+
+function check_tree(c::LocalContains, tree)
+    node = get_node_at_location(tree, c.path)
+    return _check_contains(_contains(node, c.rule))
+end
