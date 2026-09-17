@@ -1,7 +1,7 @@
 """
     Forbidden <: AbstractGrammarConstraint
 
-This [`AbstractGrammarConstraint`] forbids any subtree that matches the pattern given by `tree` to be generated.
+Forbids any subtree that matches the pattern given by `tree` to be generated.
 A pattern is a tree of [`AbstractRuleNode`](@ref)s. 
 
 # Example

@@ -9,22 +9,35 @@ using TimerOutputs
 
 
 """
-    abstract type AbstractGrammarConstraint <: AbstractConstraint
+    AbstractGrammarConstraint <: AbstractConstraint
 
-Abstract type representing all user-defined constraints.
-Each grammar constraint has a related [AbstractLocalConstraint](@ref) that is responsible for propagating the constraint at a specific location in the tree.
-Grammar constraints should implement `on_new_node` to post a [`AbstractLocalConstraint`](@ref) at that new node
+Abstract type representing all grammar-level constraints.
+
+A grammar-level constraint is a constraint that has not been applied to a
+specific location in the tree. Each grammar constraint has a related
+[AbstractLocalConstraint](@ref) that is responsible for propagating the
+constraint at a specific location in the tree.
+
+Grammar constraints should implement `on_new_node` to post a
+[`AbstractLocalConstraint`](@ref) at that new node. Optionally,
+a grammar constraint can overload [`ismonotone`](@ref) and
+[`isantimonotone`](@ref) to give hints to solvers about when constraints can
+safely be disabled.
 """
 abstract type AbstractGrammarConstraint <: AbstractConstraint end
 
 """
-    abstract type AbstractLocalConstraint <: AbstractConstraint
+    AbstractLocalConstraint <: AbstractConstraint
 
 Abstract type representing all local constraints.
-Each local constraint contains a `path` that points to a specific location in the tree at which the constraint applies.
 
-Each local constraint should implement a [`propagate!`](@ref)-function.
+Each local constraint has a property `path` that points to a specific location
+in the tree at which the constraint applies.
+
+Each local constraint must implement a [`propagate!`](@ref) function.
+
 Inside the [`propagate!`](@ref) function, the constraint can use the following solver functions:
+
 - `remove!`: Elementary tree manipulation. Removes a value from a domain. (other tree manipulations are: `remove_above!`, `remove_below!`, `remove_all_but!`)
 - `deactivate!`: Prevent repropagation. Call this as soon as the constraint is satisfied.
 - `set_infeasible!`: Report a non-trivial inconsistency. Call this if the constraint can never be satisfied. An empty domain is considered a trivial inconsistency, such inconsistencies are already handled by tree manipulations.
@@ -32,9 +45,8 @@ Inside the [`propagate!`](@ref) function, the constraint can use the following s
 """
 abstract type AbstractLocalConstraint <: AbstractConstraint end
 
-
 """
-    function get_priority(::AbstractLocalConstraint)
+    get_priority(::AbstractLocalConstraint)
 
 Used to determine which constraint to propagate first in [`fix_point!`](@ref).
 Constraints with fast propagators and/or strong inference should be propagated first.

@@ -1,6 +1,7 @@
 """
-Contains <: AbstractGrammarConstraint
-This [`AbstractGrammarConstraint`] enforces that a given `rule` appears in the program tree at least once.
+    Contains <: AbstractGrammarConstraint
+
+Enforces that a given `rule` appears in the program tree at least once.
 """
 struct Contains <: AbstractGrammarConstraint
     rule::Int
