@@ -9,6 +9,8 @@ struct LocalContains <: AbstractLocalConstraint
     rule::Int
 end
 
+ismonotone(::Type{<:LocalContains}) = true
+
 """
     function propagate!(solver::Solver, c::LocalContains)
 

@@ -50,6 +50,8 @@ function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
     post!(solver, LocalOrdered(path, c.tree, c.order))
 end
 
+isantimonotone(::Type{<:Ordered}) = true
+
 """
     check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
 

@@ -12,6 +12,8 @@ mutable struct LocalOrdered <: AbstractLocalConstraint
     order::Vector{Symbol}
 end
 
+isantimonotone(::Type{<:LocalOrdered}) = true
+
 """
     function propagate!(solver::Solver, c::LocalOrdered)
 

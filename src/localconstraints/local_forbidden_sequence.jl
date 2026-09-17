@@ -10,6 +10,8 @@ struct LocalForbiddenSequence <: AbstractLocalConstraint
     ignore_if::Vector{Int}
 end
 
+isantimonotone(::Type{<:LocalForbiddenSequence}) = true
+
 """
     shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
 

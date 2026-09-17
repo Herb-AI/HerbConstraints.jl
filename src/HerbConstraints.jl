@@ -55,6 +55,58 @@ function get_priority(::AbstractLocalConstraint)
     return 0
 end
 
+"""
+    ismonotone(::T) where T <: AbstractConstraint
+    ismonotone(::Type{T}) where T <: AbstractConstraint
+
+Whether `T` is monotone.
+
+If a constraint of type `T` is monotone, then when a tree `t1` **satisfies** a
+constraint of type `T`, it implies that the constraint is satisfied for *any*
+tree `t2` such that `!treeisdisjoint(t1, t2)`.
+
+See the docstring for [`treeisdisjoint`](@ref) for an explanation of when two
+trees are disjoint.
+
+New types `NewConstraint` should implement a
+`ismonotone(::Type{NewConstraint})` method.
+
+See also: [`isantimonotone`](@ref)
+"""
+function ismonotone(::T) where T <: AbstractConstraint
+    return ismonotone(T)
+end
+
+function ismonotone(::Type{<:AbstractConstraint})
+    return false
+end
+
+"""
+    isantimonotone(::T) where T <: AbstractConstraint
+    isantimonotone(::Type{T}) where T <: AbstractConstraint
+
+Whether `T` is anti-monotone.
+
+If a constraint of type `T` is anti-monotone, then when a tree `t1` **violates** a
+constraint of type `T`, it implies that the constraint is violated for *any*
+tree `t2` such that `!treeisdisjoint(t1, t2)`.
+
+See the docstring for [`treeisdisjoint`](@ref) for an explanation of when two
+trees are disjoint.
+
+New types `NewConstraint` should implement a
+`ismonotone(::Type{NewConstraint})` method.
+
+See also: [`ismonotone`](@ref)
+"""
+function isantimonotone(::T) where T <: AbstractConstraint
+    return isantimonotone(T)
+end
+
+function isantimonotone(::Type{<:AbstractConstraint})
+    return false
+end
+
 include("varnode.jl")
 include("domainrulenode.jl")
 
@@ -175,6 +227,9 @@ export
     StateHole,
     freeze_state,
     update_rule_indices!,
-    ASPSolver
+    ASPSolver,
+
+    ismonotone,
+    isantimonotone
 
 end # module HerbConstraints

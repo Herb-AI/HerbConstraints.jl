@@ -1,15 +1,19 @@
 
 """
-    LocalForbidden
+    LocalForbidden <: AbstractLocalConstraint
 
 Forbids the a subtree that matches the `tree` to be generated at the location 
 provided by the path. 
-Use a `Forbidden` constraint for enforcing this throughout the entire search space.
+
+Use a `Forbidden` constraint for enforcing this throughout the entire search
+space.
 """
 struct LocalForbidden <: AbstractLocalConstraint
     path::Vector{Int}
     tree::AbstractRuleNode
 end
+
+isantimonotone(::Type{<:LocalForbidden}) = true
 
 """
     function propagate!(solver::Solver, c::LocalForbidden)

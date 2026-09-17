@@ -42,6 +42,8 @@ function on_new_node(solver::Solver, c::Forbidden, path::Vector{Int})
     post!(solver, LocalForbidden(path, c.tree))
 end
 
+isantimonotone(::Type{<:Forbidden}) = true
+
 """
     check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
 

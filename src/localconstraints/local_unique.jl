@@ -13,6 +13,8 @@ end
 
 LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
 
+isantimonotone(::Type{<:LocalUnique}) = true
+
 """
     function propagate!(solver::Solver, c::LocalUnique)
 

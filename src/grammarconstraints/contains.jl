@@ -14,6 +14,8 @@ function on_new_node(solver::Solver, c::Contains, path::Vector{Int})
     end
 end
 
+ismonotone(::Type{<:Contains}) = true
+
 """
     check_tree(c::Contains, tree::AbstractRuleNode)::Bool
 

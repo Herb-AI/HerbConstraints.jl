@@ -16,6 +16,7 @@ function on_new_node(solver::Solver, c::Unique, path::Vector{Int})
     end
 end
 
+isantimonotone(::Type{<:Unique}) = true
 
 """
     _count_occurrences(rulenode::AbstractRuleNode, rule::Int)::Int

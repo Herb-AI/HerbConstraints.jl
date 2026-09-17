@@ -29,6 +29,8 @@ struct ForbiddenSequence <: AbstractGrammarConstraint
     ignore_if::Vector{Int}
 end
 
+isantimonotone(::Type{<:ForbiddenSequence}) = true
+
 ForbiddenSequence(sequence::Vector{Int}; ignore_if=Vector{Int}()) =
     ForbiddenSequence(sequence, ignore_if)
 

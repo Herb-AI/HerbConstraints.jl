@@ -16,6 +16,8 @@ function on_new_node(solver::UniformSolver, c::ContainsSubtree, path::Vector{Int
     end
 end
 
+ismonotone(::Type{<:ContainsSubtree}) = true
+
 function on_new_node(::GenericSolver, ::ContainsSubtree, ::Vector{Int}) end
 
 """
