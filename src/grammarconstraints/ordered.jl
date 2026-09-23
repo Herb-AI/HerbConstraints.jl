@@ -136,6 +136,15 @@ HerbCore.is_domain_valid(c::Ordered, grammar::AbstractGrammar) = HerbCore.is_dom
 
 Base.:(==)(c1::Ordered, c2::Ordered) = (c1.tree == c2.tree) && (c1.order == c2.order)
 
+"""
+    isantimonotone(::Ordered)::Bool
+
+Returns `true`. An [`Ordered`](@ref) constraint is anti-monotone: once the variable assignments
+are fixed (no holes remain in the matched pattern) and the ordering is violated, filling further
+holes elsewhere in the tree cannot undo that violation.
+"""
+isantimonotone(::Ordered) = true
+
 function HerbGrammar.is_constraint_valid(c::Ordered, grammar::AbstractGrammar; allow_empty_children::Bool)
     return HerbGrammar.is_tree_valid(c.tree, grammar; allow_empty_children=allow_empty_children)
 end
