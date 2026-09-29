@@ -89,7 +89,7 @@ function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{Ab
             push!(holes, node)
         end
     end
-    for child::Union{RuleNode, Hole, StateHole, UniformHole} ∈ get_children(node)
+    for child ∈ get_children(node)
         count += _count_occurrences!(child, rule, holes)
         if count > 1
             return count
