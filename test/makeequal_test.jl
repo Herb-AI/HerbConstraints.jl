@@ -42,7 +42,8 @@
         solver, left, right = create_dummy_solver(left, right)
 
         @test HerbConstraints.make_equal!(solver, left, right) isa HerbConstraints.MakeEqualSuccess
-        @test left == RuleNode(4, [RuleNode(1), RuleNode(2)])
+        expect = @rulenode 4{1,2}
+        @test left == expect
         @test left == right
     end
 

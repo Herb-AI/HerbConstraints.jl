@@ -1,5 +1,7 @@
-@testitem "ContainsSubtree" begin
-    using HerbCore, HerbGrammar
+@testsetup module ContainsSubtreeSetup
+    using HerbCore, HerbGrammar, HerbConstraints
+
+    export has_active_constraints, @rulenode, RuleNode
 
     function has_active_constraints(solver::UniformSolver)::Bool
         for c ∈ keys(solver.isactive)
@@ -9,7 +11,8 @@
         end
         return false
     end
-
+end
+@testitem "With/without 1 VarNode" tags = [:ContainsSubtree, :check_tree] setup = [ContainsSubtreeSetup] begin
     @testset "check_tree$with_varnode" for with_varnode ∈ ["", " (with VarNode)"]
         contains_subtree = ContainsSubtree(
             RuleNode(3, [
@@ -18,59 +21,62 @@
             ])
         )
 
-        tree_true = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(2)
-        ])
-
-        tree_false = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(2),
-                RuleNode(2)
-            ]),
-            RuleNode(2)
-        ])
+        tree_true = @rulenode 3{3{1,2},2}
+        tree_false = @rulenode 3{3{2,2},2} 
 
         @test check_tree(contains_subtree, tree_true) == true
         @test check_tree(contains_subtree, tree_false) == false
     end
-
-    @testset "check_tree, 2 VarNodes" begin
-        contains_subtree = ContainsSubtree(
-            RuleNode(3, [
-                VarNode(:a),
-                VarNode(:a)
-            ])
-        )
-
-        tree_true = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
+end
+@testitem "2 VarNodes" tags = [:ContainsSubtree, :check_tree] setup = [ContainsSubtreeSetup] begin
+    contains_subtree = ContainsSubtree(
+        RuleNode(3, [
+            VarNode(:a),
+            VarNode(:a)
         ])
+    )
 
-        tree_false = RuleNode(3, [
-            RuleNode(3, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-            RuleNode(4, [
-                RuleNode(1),
-                RuleNode(2)
-            ]),
-        ])
+    tree_true = @rulenode 3{3{1,2},3{1,2}}
+    tree_false = @rulenode 3{3{1,2},4{1,2}}
 
-        @test check_tree(contains_subtree, tree_true) == true
-        @test check_tree(contains_subtree, tree_false) == false
+    @test check_tree(contains_subtree, tree_true) == true
+    @test check_tree(contains_subtree, tree_false) == false
+end
+
+@testitem "2 VarNodes, 2 candidates, softfails" tags = [:ContainsSubtree, :propagate!] setup = [ContainsSubtreeSetup] begin
+    using HerbGrammar: @csgrammar, addconstraint!
+    using HerbCore: isfilled
+
+    subtree = RuleNode(3, [
+        VarNode(:a),
+        VarNode(:a)
+    ])
+    grammar = @csgrammar begin
+        S = 1 | x
+        S = S + S
+        S = S * S
     end
+    addconstraint!(grammar, ContainsSubtree(subtree))
+
+    # 3{:a, :a} can appear at the root, or at child 1
+    # Three out of the four possible trees are valid:
+    # - 3{3{1, 1}, 4{1, 1}} VALID (contains the subtree at child 1)
+    # - 3{4{1, 1}, 4{1, 1}} VALID (contains the subtree at root)
+    # - 4{3{1, 1}, 4{1, 1}} VALID (contains the subtree at child 1)
+    # - 4{4{1, 1}, 4{1, 1}} INVALID
+    # no deductions can be made at this point.
+
+    tree = @rulenode UniformHole[0, 0, 1, 1]{UniformHole[0, 0, 1, 1]{1,1},4{1,1}}
+
+    solver = UniformSolver(grammar, tree)
+    tree = get_tree(solver)
+    @test isfeasible(solver)
+    @test !isfilled(tree)
+    @test !isfilled(tree.children[1])
+    @test has_active_constraints(solver)
+end
+@testitem "ContainsSubtree" tags = [:ContainsSubtree] setup = [ContainsSubtreeSetup] begin
+    using HerbCore, HerbGrammar, HerbConstraints
 
     @testset "propagate (UniformSolver)" begin
         @testset "1 VarNode" begin
@@ -103,13 +109,7 @@
             @testset "1 candidate" begin
                 # 3{1, :a} can only appear at the root
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    RuleNode(1),
-                    RuleNode(4, [
-                        UniformHole(BitVector((1, 1, 0, 0)), []),
-                        UniformHole(BitVector((1, 1, 0, 0)), [])
-                    ])
-                ])
+                tree = @rulenode UniformHole[0, 0, 1, 1]{1,4{UniformHole[1, 1, 0, 0],UniformHole[1, 1, 0, 0]}} 
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -166,10 +166,7 @@
                 # the first hole can be filled with a 3
                 # filling the other two holes is ambiguous
 
-                tree = UniformHole(BitVector((0, 0, 1, 1)), [
-                    UniformHole(BitVector((1, 1, 0, 0)), []),
-                    UniformHole(BitVector((1, 1, 0, 0)), [])
-                ])
+                tree = @rulenode UniformHole[0, 0, 1, 1]{UniformHole[1, 1, 0, 0],UniformHole[1, 1, 0, 0]}
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -189,19 +186,7 @@
                 # - 4{4{1, 1}, 4{1, 1}} INVALID
                 # no deductions can be made at this point.
 
-                tree = UniformHole(
-                    BitVector((0, 0, 1, 1)),
-                    [
-                        UniformHole(BitVector((0, 0, 1, 1)), [
-                            RuleNode(1),
-                            RuleNode(1)
-                        ])
-                        RuleNode(4, [
-                            RuleNode(1),
-                            RuleNode(1)
-                        ])
-                    ]
-                )
+                tree = @rulenode UniformHole[0, 0, 1, 1]{UniformHole[0, 0, 1, 1]{1,1},4{1,1}}
 
                 solver = UniformSolver(grammar, tree)
                 tree = get_tree(solver)
@@ -275,8 +260,10 @@
             tree = get_tree(solver)
 
             for rule ∈ 1:6
-                @test domain_root_target[rule] == tree.domain[rule]
-                @test domain_leaf_target[rule] == tree.children[1].domain[rule]
+                @testset let rule=rule, drt = domain_root_target, dlt = domain_leaf_target, td = tree.domain, tdc = tree.children[1].domain
+                    @test domain_root_target[rule] == tree.domain[rule]
+                    @test domain_leaf_target[rule] == tree.children[1].domain[rule]
+                end
             end
         end
 

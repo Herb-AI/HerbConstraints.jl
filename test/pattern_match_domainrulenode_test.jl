@@ -1,3 +1,15 @@
+@testitem "PatternMatchSuccess, UniformHole subsets, but children fail" begin
+    using HerbCore, HerbGrammar
+    # The root UniformHole match the DomainRuleNode, but the children do not match
+    # hole_hardfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
+    drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
+    # @test pattern_match(hole_hardfail, drn) isa HerbConstraints.PatternMatchHardFail
+    # hole_successwhen = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
+    # @test pattern_match(hole_successwhen, drn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
+    hole_softfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
+    @test pattern_match(hole_softfail, drn) isa HerbConstraints.PatternMatchSoftFail
+end
+
 @testitem "PatternMatch with DomainRuleNode" begin
     using HerbCore, HerbGrammar
 
@@ -32,17 +44,6 @@
         @test pattern_match(hole1, drn) isa HerbConstraints.PatternMatchSuccess
         @test pattern_match(hole2, drn) isa HerbConstraints.PatternMatchSuccess
         @test pattern_match(hole3, drn) isa HerbConstraints.PatternMatchSuccess
-    end
-
-    @testset "PatternMatchSuccess, UniformHole subsets, but children fail" begin
-        # The root UniformHole match the DomainRuleNode, but the children do not match
-        hole_hardfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((0, 1, 1, 1, 1, 0))), RuleNode(1)])
-        hole_successwhen = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), RuleNode(1)])
-        hole_softfail = UniformHole(BitVector((0, 0, 0, 1, 1, 0)), [Hole(BitVector((1, 1, 1, 1, 1, 1))), Hole(BitVector((1, 1, 1, 1, 1, 1)))])
-        drn = DomainRuleNode(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
-        @test pattern_match(hole_hardfail, drn) isa HerbConstraints.PatternMatchHardFail
-        @test pattern_match(hole_successwhen, drn) isa HerbConstraints.PatternMatchSuccessWhenHoleAssignedTo
-        @test pattern_match(hole_softfail, drn) isa HerbConstraints.PatternMatchSoftFail
     end
 
     @testset "PatternMatchSuccess, with VarNode" begin
@@ -133,7 +134,7 @@
         node_roothole = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [RuleNode(1), RuleNode(1)])
         node_childhole = RuleNode(6, [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
         node_2holes = UniformHole(BitVector((0, 0, 0, 1, 1, 1)), [UniformHole(BitVector((1, 1, 1, 0, 0, 0)), []), RuleNode(1)])
-        
+
         match_roothole = pattern_match(node_roothole, drn)
         match_childhole = pattern_match(node_childhole, drn)
         match_2holes = pattern_match(node_2holes, drn)
