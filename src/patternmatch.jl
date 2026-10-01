@@ -86,7 +86,7 @@ function match_when_hole_assigned_to_state(ms)
     )
 end
 
-function PatternMatchResult(st::MatchState)::PatternMatchResult
+function PatternMatchResult(st::MatchState)
     if hardfail_state(st)
         return PatternMatchHardFail()
     elseif match_when_hole_assigned_to_state(st)
@@ -190,7 +190,7 @@ end
 Recursively tries to match [`AbstractRuleNode`](@ref) `rn` with [`AbstractRuleNode`](@ref) `mn`.
 Returns a `PatternMatchResult` that describes if the pattern was matched.
 """
-function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode, vars=Dict{Symbol, AbstractRuleNode}())::PatternMatchResult
+function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode, vars=Dict{Symbol, AbstractRuleNode}())
     st = get_final_match_result(rn, mn, vars)
     return PatternMatchResult(st)
 end
