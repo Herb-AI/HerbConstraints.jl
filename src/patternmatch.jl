@@ -2,20 +2,35 @@
     abstract type PatternMatchResult end
 
 A result of the `pattern_match` function. Can be one of 4 cases:
+
 - [`PatternMatchSuccess`](@ref) when the pattern matches exactly.
-- [`PatternMatchHardFail`](@ref) when the pattern does not match (and there is no refinement of any holes in the tree such that it would match--some pair of domains is disjoint between the node and the pattern)
-- [`PatternMatchSuccessWhenHoleAssignedTo`](@ref) when the pattern matches except for one hole, and all that is needed to make the pattern match is for that hole's domain to be assigned to one from a set of values.
-- [`PatternMatchSoftFail`](@ref) when the pattern *could* match, depending on the way holes are refined.
+
+- [`PatternMatchHardFail`](@ref) when the pattern does not match (and there is
+    no refinement of any holes in the tree such that it would match--some pair of
+    domains is disjoint between the node and the pattern)
+
+- [`PatternMatchSuccessWhenHoleAssignedTo`](@ref) when the pattern matches
+    except for one hole, and all that is needed to make the pattern match is for
+    that hole's domain to be assigned to one from a set of values.
+
+- [`PatternMatchSoftFail`](@ref) when the pattern *could* match, depending on
+    the way holes are refined. Either:
+    - More than one hole is involved, or
+    - A single hole needs to be filled with a tree of size 2 or larger.
 """
 abstract type PatternMatchResult end
 
 """
-The pattern is exactly matched and does not involve any holes at all
+    PatternMatchSuccess <: PatternMatchResult
+
+See [`PatternMatchResult`](@ref).
 """
 struct PatternMatchSuccess <: PatternMatchResult end
 
 """
-The pattern can be matched when the `hole` is filled with any of the given `ind`(s). Only one hole is involved.
+    PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
+
+See [`PatternMatchResult`](@ref).
 """
 struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
     hole::AbstractHole
@@ -28,14 +43,16 @@ struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
 end
 
 """
-The pattern is not matched and can never be matched by filling in holes. 
+    PatternMatchHardFail <: PatternMatchResult
+
+See [`PatternMatchResult`](@ref).
 """
 struct PatternMatchHardFail <: PatternMatchResult end
 
 """
-The pattern can still be matched in a non-trivial way. Includes two cases:
-- multiple holes are involved. this result stores a reference to one of them
-- a single hole is involved, but needs to be filled with a node of size >= 2
+    PatternMatchSoftFail <: PatternMatchResult
+
+See [`PatternMatchResult`](@ref).
 """
 struct PatternMatchSoftFail <: PatternMatchResult
     hole::AbstractHole
@@ -72,21 +89,17 @@ end
 function PatternMatchResult(st::MatchState)::PatternMatchResult
     if hardfail_state(st)
         return PatternMatchHardFail()
-    end
-
-    if match_when_hole_assigned_to_state(st)
+    elseif match_when_hole_assigned_to_state(st)
         (; hole, target_domain) = st
         return PatternMatchSuccessWhenHoleAssignedTo(hole, target_domain)
-    end
-    if softfail_state(st)
+    elseif softfail_state(st)
         (; hole) = st
         return PatternMatchSoftFail(hole)
-    end
-
-    if success_state(st)
+    elseif success_state(st)
         return PatternMatchSuccess()
+    else
+        error("Unreachable, match state not in one of the expected configurations")
     end
-    error("Unreachable, match state not in one of the expected configurations")
 end
 
 function get_big_hole_or_nothing(h1::H1, h2::H2) where {H1, H2}
