@@ -1,37 +1,27 @@
 """
-    abstract type PatternMatchResult end
+    PatternMatchResult
 
-A result of the `pattern_match` function. Can be one of 4 cases:
+A result of the `pattern_match` function. 4 subtypes are defined:
 
-- [`PatternMatchSuccess`](@ref) when the pattern matches exactly.
+- `PatternMatchSuccess` when the pattern matches exactly.
 
-- [`PatternMatchHardFail`](@ref) when the pattern does not match (and there is
+- `PatternMatchHardFail` when the pattern does not match (and there is
     no refinement of any holes in the tree such that it would match--some pair of
-    domains is disjoint between the node and the pattern)
+    domains is disjoint between the node and the pattern).
 
-- [`PatternMatchSuccessWhenHoleAssignedTo`](@ref) when the pattern matches
+- `PatternMatchSuccessWhenHoleAssignedTo` when the pattern matches
     except for one hole, and all that is needed to make the pattern match is for
     that hole's domain to be assigned to one from a set of values.
 
-- [`PatternMatchSoftFail`](@ref) when the pattern *could* match, depending on
+- `PatternMatchSoftFail` when the pattern *could* match, depending on
     the way holes are refined. Either:
     - More than one hole is involved, or
     - A single hole needs to be filled with a tree of size 2 or larger.
 """
 abstract type PatternMatchResult end
 
-"""
-    PatternMatchSuccess <: PatternMatchResult
-
-See [`PatternMatchResult`](@ref).
-"""
 struct PatternMatchSuccess <: PatternMatchResult end
 
-"""
-    PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
-
-See [`PatternMatchResult`](@ref).
-"""
 struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
     hole::AbstractHole
     ind::Union{Int, Vector{Int}}
@@ -42,18 +32,8 @@ struct PatternMatchSuccessWhenHoleAssignedTo <: PatternMatchResult
     end
 end
 
-"""
-    PatternMatchHardFail <: PatternMatchResult
-
-See [`PatternMatchResult`](@ref).
-"""
 struct PatternMatchHardFail <: PatternMatchResult end
 
-"""
-    PatternMatchSoftFail <: PatternMatchResult
-
-See [`PatternMatchResult`](@ref).
-"""
 struct PatternMatchSoftFail <: PatternMatchResult
     hole::AbstractHole
 end
@@ -132,14 +112,18 @@ function update_match(state::M, zn) where M
     
     if node2 isa VarNode
         matching = get!(vars, nv2.name, node1)
-        if matching !== node1
+        # if not literally the same node
+        # check that the two subtrees match
+        if matching !== node1   
             match_res = get_final_match_result(matching, node1, vars)
-            if success_state(match_res)
+            if success_state(match_res) # try swapping in case node1 is actually the "wider" node
+                # meaning the node with the larger domain
                 match_res = get_final_match_result(node1, matching, vars)
             end
             if hardfail_state(match_res)
                 return M(; hole, vars, disjoint = true, n_holes, found_big_hole, target_domain)
             end
+            # merge the sub-pattern match result into this one
             n_holes += match_res.n_holes
             hole = !isnothing(match_res.hole) ? match_res.hole : hole
             target_domain = !isnothing(match_res.target_domain) ? match_res.target_domain : target_domain
@@ -150,11 +134,11 @@ function update_match(state::M, zn) where M
     if !isfilled(node1) || !HerbCore.has_definite_children(typeof(node1))
         if !isnothing(get_big_hole_or_nothing(node1, node2))
             n_holes += 1
-            hole = node1
+            hole = node1 # node1 would need to be filled with a tree of size > 2 to match
             return M(; hole, vars, disjoint, found_big_hole=true, n_holes, target_domain)
         end
         int = intersect_domains(node1, node2)
-        if length(nv1) > length(int)
+        if length(nv1) > length(int) # node1 will need to shrink to match `int`
             target_domain = int
             n_holes += 1
             hole = node1
