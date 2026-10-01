@@ -51,24 +51,23 @@ end
 
     function MatchState{H, V}(hole::H, target_domain, vars::V, disjoint, found_big_hole, n_holes) where {H, V}
         ms = new{H, V}(hole, target_domain, vars, disjoint, found_big_hole, n_holes)
-        @assert hardfail_state(ms) || success_state(ms) || match_when_hole_assigned_to_state(ms) || softfail_state(ms)
+        @assert count((hardfail_state(ms), success_state(ms), match_when_hole_assigned_to_state(ms), softfail_state(ms))) == 1
         return ms
     end
 end
 
-exit_early(ms) = hardfail_state(ms)
-
-hardfail_state(ms) = is_hardfail(ms) && !(is_success(ms) || is_match_when_hole_assigned_to(ms) || is_softfail(ms))
-is_hardfail(ms) = ms.disjoint
-
-softfail_state(ms) = is_softfail(ms) && !(is_hardfail(ms) || is_success(ms) || is_match_when_hole_assigned_to(ms))
-is_softfail(ms) = !ms.disjoint && !isnothing(ms.hole) && (ms.n_holes >= 2 || ms.found_big_hole)
-
-success_state(ms) = is_success(ms) && !(is_hardfail(ms) || is_match_when_hole_assigned_to(ms) || is_softfail(ms))
-is_success(ms) = !ms.disjoint && ms.n_holes == 0
-
-match_when_hole_assigned_to_state(ms) = is_match_when_hole_assigned_to(ms) && !(is_hardfail(ms) || is_success(ms) || is_softfail(ms))
-is_match_when_hole_assigned_to(ms) = !ms.disjoint && ms.n_holes == 1 && !ms.found_big_hole && !isnothing(ms.target_domain) && !isnothing(ms.hole)
+hardfail_state(ms) = ms.disjoint
+softfail_state(ms) = !ms.disjoint && !isnothing(ms.hole) && (ms.n_holes >= 2 || ms.found_big_hole)
+success_state(ms) = !ms.disjoint && ms.n_holes == 0
+function match_when_hole_assigned_to_state(ms)
+    return (
+        !ms.disjoint
+        && ms.n_holes == 1
+        && !ms.found_big_hole
+        && !isnothing(ms.target_domain)
+        && !isnothing(ms.hole)
+    )
+end
 
 function PatternMatchResult(st::MatchState)::PatternMatchResult
     if hardfail_state(st)
@@ -166,7 +165,7 @@ function get_final_match_result(rn, mn, vars::V) where V
     stateful_acc = Iterators.Stateful(acc)
 
     st = popfirst!(stateful_acc)
-    while !exit_early(st) && !Base.isdone(stateful_acc)
+    while !hardfail_state(st) && !Base.isdone(stateful_acc)
         st = popfirst!(stateful_acc)
     end
     return st
