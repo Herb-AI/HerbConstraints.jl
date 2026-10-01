@@ -5,11 +5,10 @@
 - `domain`: A `StateSparseSet` representing the rule nodes this hole can take. If size(domain) == 1, this hole should act like a `RuleNode`
 - `children`: The children of this hole in the expression tree.
 """
-mutable struct StateHole <: AbstractUniformHole
-	domain::StateSparseSet
-	children::Vector{AbstractRuleNode}
+@auto_hash_equals mutable struct StateHole <: AbstractUniformHole
+    domain::StateSparseSet
+    children::Vector{AbstractRuleNode}
 end
-
 
 """
 Converts a [`UniformHole`](@ref) to a [`StateHole`](@ref)
@@ -83,28 +82,6 @@ function Base.show(io::IO, node::StateHole; separator=",")
 end
 
 HerbCore.get_children(hole::StateHole) = hole.children
-
-
-function Base.:(==)(A::StateHole, B::StateHole)
-	isfilled(A) && isfilled(B) &&
-    	(get_rule(A) == get_rule(B)) && 
-		(length(A.children) == length(B.children)) &&
-		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
-end
-
-function Base.:(==)(A::RuleNode, B::StateHole)
-	isfilled(B) &&
-    	(get_rule(A) == get_rule(B)) && 
-		(length(A.children) == length(B.children)) &&
-		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
-end
-
-function Base.:(==)(A::StateHole, B::RuleNode)
-	isfilled(A) &&
-    	(get_rule(A) == get_rule(B)) && 
-		(length(A.children) == length(B.children)) &&
-		all(isequal(a, b) for (a, b) in zip(A.children, B.children))
-end
 
 """
 	freeze_state(hole::StateHole)::RuleNode

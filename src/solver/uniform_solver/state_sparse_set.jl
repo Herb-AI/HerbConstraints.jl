@@ -1,4 +1,4 @@
-struct StateSparseSet
+@auto_hash_equals struct StateSparseSet
     values::Vector{Int}
     indices::Vector{Int}
     size::StateInt
@@ -6,6 +6,8 @@ struct StateSparseSet
     max::StateInt
     n::Int
 end
+Base.:(==)(sss::StateSparseSet, x::Int) = length(sss) == 1 ? findfirst(sss) == x : false
+Base.:(==)(x::Int, sss::StateSparseSet) = sss == x
 
 """
 Create a new `StateSparseSet` with values [1, 2, ..., n]
@@ -17,6 +19,9 @@ function StateSparseSet(sm::StateManager, n::Int)
     min = StateInt(sm, 1)
     max = StateInt(sm, n)
     return StateSparseSet(values, indices, size, min, max, n)
+end
+function Base.to_index(sss::StateSparseSet)
+    return Base.to_index(collect(sss))
 end
 
 """
@@ -132,9 +137,7 @@ function Base.in(val::Int, set::StateSparseSet)
     return set.indices[val] <= get_value(set.size)
 end
 
-
-Base.eltype(::StateSparseSet) = Int
-
+Base.eltype(::Type{<:StateSparseSet}) = Int
 
 function Base.iterate(set::StateSparseSet)
     index = 1

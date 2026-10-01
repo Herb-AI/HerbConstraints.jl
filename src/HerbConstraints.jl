@@ -6,6 +6,8 @@ using DataStructures
 using DocStringExtensions
 using MLStyle
 using TimerOutputs
+import AbstractTrees as AT
+using AutoHashEquals: @auto_hash_equals
 
 
 """

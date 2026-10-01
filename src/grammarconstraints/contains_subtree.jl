@@ -27,7 +27,7 @@ function on_new_node(::GenericSolver, ::ContainsSubtree, ::Vector{Int}) end
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`ContainsSubtree`](@ref) constraint.
 """
 function check_tree(c::ContainsSubtree, tree::AbstractRuleNode)::Bool
-    if pattern_match(c.tree, tree) isa PatternMatchSuccess
+    if pattern_match(tree, c.tree) isa PatternMatchSuccess
         return true
     end
     return any(check_tree(c, child) for child ∈ get_children(tree))

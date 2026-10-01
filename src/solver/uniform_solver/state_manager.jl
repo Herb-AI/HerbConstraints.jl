@@ -30,6 +30,7 @@ StateInt(val::Integer) = StateInt(StateManager(), val)
 
 Base.promote_rule(::Type{<:StateInt}, ::Type{<:Integer}) = StateInt 
 Base.:(==)(si1::StateInt, si2::StateInt) = si1.val == si2.val 
+Base.hash(si::StateInt, x::UInt) = hash(si.val, x)
 
 function Base.show(io::IO, ::MIME"text/plain", si::StateInt)
     if get(io, :compact, false)

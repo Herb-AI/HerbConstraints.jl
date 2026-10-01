@@ -15,6 +15,8 @@ but also larger subtrees such as `RuleNode(3, [RuleNode(4, [RuleNode(1)]), RuleN
 struct VarNode <: AbstractRuleNode
     name::Symbol
 end
+Base.hash(vn::VarNode, x::UInt) = hash(vn.name, x)
+Base.:(==)(vn1::VarNode, vn2::VarNode) = vn1.name == vn2.name
 
 function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
     print(io, node.name)
@@ -24,6 +26,21 @@ function Base.show(io::IO, node::VarNode; separator=",", last_child::Bool=true)
 end
 
 HerbCore.isuniform(::VarNode) = false
+HerbCore.get_children(::VarNode) = VarNode[]
+HerbCore.has_definite_children(::Type{<:VarNode}) = false
+function HerbCore.get_rule(vn::HerbConstraints.VarNode)
+    return vn
+end
+Base.to_index(i::VarNode) = i
+Base.hasfastin(::Type{<:VarNode}) = true
+Base.in(x, ::VarNode) = true
+# Base.IteratorSize(::Type{<:VarNode}) = Base.HasLength()
+# Base.length(::VarNode) = 0
+Base.iterate(::VarNode) = nothing
+struct WildcardValue end
+Base.eltype(::Type{T}) where T <: VarNode = WildcardValue 
+Base.promote_rule(::Type{<:WildcardValue}, ::Type{T}) where T = T 
+Base.in(::Set{<:WildcardValue}) = Returns(true)
 
 """
     contains_varnode(rn::AbstractRuleNode, name::Symbol)

@@ -72,7 +72,7 @@ function check_tree(c::LocalOrdered, tree)
     node = get_node_at_location(tree, c.path)
 
     vars = Dict{Symbol, AbstractRuleNode}()
-    res = pattern_match(c.tree, node, vars)
+    res = pattern_match(node, c.tree, vars)
 
     if res isa PatternMatchSuccess
         return all(vars[n1] <= vars[n2] for (n1, n2) in zip(c.order[1:end-1], c.order[2:end]))

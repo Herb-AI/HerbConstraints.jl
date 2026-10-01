@@ -13,6 +13,8 @@ struct DomainRuleNode <: AbstractRuleNode
     children::Vector{AbstractRuleNode}
 end
 HerbCore.get_children(drn::DomainRuleNode) = drn.children
+HerbCore.has_definite_children(::Type{<:DomainRuleNode}) = true
+AT.nodevalue(drn::DomainRuleNode) = drn.domain
 
 function DomainRuleNode(grammar::AbstractGrammar, rules::Vector{Int}, children::Vector{<:AbstractRuleNode})
     domain = falses(length(grammar.rules))

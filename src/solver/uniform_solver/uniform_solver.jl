@@ -6,7 +6,7 @@ mutable struct UniformSolver{G<:AbstractGrammar, R<:AbstractRuleNode, C<:Abstrac
     sm::StateManager
     tree::R
     path_to_node::Dict{Vector{Int}, R}
-    node_to_path::Dict{R, Vector{Int}}
+    node_to_path::IdDict{R, Vector{Int}}
     isactive::Dict{C, StateInt}
     canceledconstraints::Set{C}
     isfeasible::Bool

@@ -45,7 +45,7 @@ function propagate!(solver::UniformSolver, c::LocalContainsSubtree, when_satisfi
             # Initial propagation: pattern match all nodes, only store the candidates for re-propagation
             c.candidates = Vector{AbstractRuleNode}()
             for node ∈ get_nodes(solver)
-                @match pattern_match(c.tree, node) begin
+                @match pattern_match(node, c.tree) begin
                     ::PatternMatchHardFail => ()
                     ::PatternMatchSuccess => begin
                         @timeit_debug solver.statistics "LocalContainsSubtree satisfied (initial propagation)" begin end
