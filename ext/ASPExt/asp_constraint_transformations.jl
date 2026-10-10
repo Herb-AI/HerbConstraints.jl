@@ -37,6 +37,63 @@ function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint:
     return output
 end
 
+function _combination_constraint_node_to_ASP(::AbstractGrammar, rulenode::RuleNode, node_index::Int64, label::String)
+    return "node(X$(node_index),$(get_rule(rulenode)))", String[]
+end
+
+function _combination_constraint_node_to_ASP(grammar::AbstractGrammar, rulenode::DomainRuleNode, node_index::Int64, label::String)
+    return "node(X$(node_index),D$(node_index)),allowed($(label)x$(node_index),D$(node_index))",
+    ["allowed($(label)x$(node_index),$x).\n" for x in filter(i -> rulenode.domain[i], 1:length(grammar.rules))]
+end
+
+function _combination_constraint_rulenode_to_ASP(
+    grammar::AbstractGrammar,
+    rulenode::AbstractRuleNode,
+    node_index::Int64,
+    label::String,
+)
+    if rulenode isa VarNode
+        varnode_equality = enforce_varnode_equality(rulenode, node_index)
+        return "node(X$(node_index),X$(node_index))" * varnode_equality, "", node_index
+    end
+
+    tree_facts, additional_facts = "", ""
+    tmp_facts, tmp_additional = _combination_constraint_node_to_ASP(grammar, rulenode, node_index, label)
+    tree_facts *= tmp_facts
+    additional_facts *= join(tmp_additional, "")
+    varnode_equality = enforce_varnode_equality(rulenode, node_index)
+    parent_index = node_index
+    node_index += 1
+
+    for (child_ind, child) in enumerate(get_children(rulenode))
+        if child isa VarNode
+            tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index))"
+            node_index += 1
+        else
+            tmp_facts, tmp_additional = _combination_constraint_node_to_ASP(grammar, child, node_index, label)
+            tree_facts *= ",child(X$(parent_index),$(child_ind),X$(node_index))"
+            tree_facts *= ",$(tmp_facts)"
+            additional_facts *= join(tmp_additional, "")
+            node_index += 1
+        end
+    end
+
+    tree_facts *= varnode_equality
+    return tree_facts, additional_facts, node_index
+end
+
+function HerbConstraints.constraint_to_ASP(grammar::AbstractGrammar, constraint::ForbiddenCombination, constraint_index::Int64)
+    output = ""
+    for (option_index, children) in enumerate(constraint.children)
+        pattern = HerbConstraints._forbidden_combination_pattern(constraint.root, children)
+        label = "c$(constraint_index)o$(option_index)"
+        tree_facts, domains, _ = _combination_constraint_rulenode_to_ASP(grammar, pattern, 1, label)
+        output *= domains
+        output *= "subtree($(label)) :- $(tree_facts).\n:- subtree($(label)).\n"
+    end
+    return output
+end
+
 """
     constraint_to_ASP(::AbstractGrammar, constraint::Contains, constraint_index::Int64)
 
