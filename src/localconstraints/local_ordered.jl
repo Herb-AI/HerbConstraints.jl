@@ -6,7 +6,7 @@ specified in `order` when the pattern is applied at the location given by `path`
 
 Use an `Ordered` constraint for enforcing this throughout the entire search space.
 """
-mutable struct LocalOrdered <: AbstractLocalConstraint
+@auto_hash_equals mutable struct LocalOrdered <: AbstractLocalConstraint
     path::Vector{Int}
     tree::AbstractRuleNode
     order::Vector{Symbol}

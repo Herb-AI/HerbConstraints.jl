@@ -23,7 +23,7 @@ variable in the pattern, the matched subtrees must be identical.
 Any rule in the domain that makes the match attempt successful is removed.
 
 """
-struct Forbidden{R<:AbstractRuleNode} <: AbstractGrammarConstraint
+@auto_hash_equals struct Forbidden{R<:AbstractRuleNode} <: AbstractGrammarConstraint
     tree::R
 end
 
@@ -45,19 +45,47 @@ end
 
 isantimonotone(::Type{<:Forbidden}) = true
 
+function check_forbidden(forbidden_pattern, cache)
+    return t -> check_forbidden(t, forbidden_pattern, objectid(forbidden_pattern), cache)
+    # return Base.Fix2(check_forbidden, forbidden_pattern)
+end
+function check_forbidden(tree, forbidden_pattern, forbidden_pattern_id, cache)
+    return !success_state(get_final_match_result!(tree, forbidden_pattern))
+    # return get!(cache, objectid((tree, forbidden_pattern_id))) do
+    #     !success_state(get_final_match_result!(tree, forbidden_pattern))
+    # end
+end
+
+struct StatefulDropWhile{I<:Iterators.Stateful,P<:Function}
+    pred::P
+    xs::I
+end
+
+function Iterators.iterate(ibl::StatefulDropWhile)
+    st = ibl.xs
+    y = peek(st)
+    while !Base.isdone(st)
+        if !ibl.pred(y)
+            break
+        else
+            popfirst!(st)
+            y = peek(st)
+        end
+    end
+    y
+end
+
+Base.IteratorSize(::Type{<:StatefulDropWhile}) = Base.SizeUnknown()
+Base.eltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = eltype(I)
+Base.IteratorEltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = Base.IteratorEltype(I)
+
 """
     check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
-function check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
-    @match pattern_match(tree, c.tree) begin
-        ::PatternMatchHardFail => ()
-        ::PatternMatchSoftFail => ()
-        ::PatternMatchSuccess => return false
-        ::PatternMatchSuccessWhenHoleAssignedTo => ()
-    end
-    return all(check_tree(c, child) for child ∈ tree.children)
+function check_tree(c::Forbidden, tree::AbstractRuleNode, cache)::Bool
+    return all(check_forbidden(c.tree, cache), AT.PreOrderDFS(tree))
 end
 
 """
@@ -131,8 +159,6 @@ end
 
 HerbCore.is_domain_valid(c::Forbidden, n_rules::Integer) = HerbCore.is_domain_valid(c.tree, n_rules)
 HerbCore.is_domain_valid(c::Forbidden, grammar::AbstractGrammar) = HerbCore.is_domain_valid(c.tree, length(grammar.rules))
-
-Base.:(==)(c1::Forbidden, c2::Forbidden) = (c1.tree == c2.tree)
 
 function HerbGrammar.is_constraint_valid(c::Forbidden, grammar::AbstractGrammar; allow_empty_children::Bool)
     return HerbGrammar.is_tree_valid(c.tree, grammar; allow_empty_children=allow_empty_children)

@@ -38,6 +38,8 @@ struct PatternMatchSoftFail <: PatternMatchResult
     hole::AbstractHole
 end
 
+# no defaults here because we don't want to accidentally reset something
+# when updating state. keep everything explicit.
 @kwdef struct MatchState{H, V}
     hole::Union{Nothing,H}
     target_domain::Union{Nothing,Vector{Int}}
@@ -51,6 +53,36 @@ end
         @assert count((hardfail_state(ms), success_state(ms), match_when_hole_assigned_to_state(ms), softfail_state(ms))) == 1
         return ms
     end
+end
+function (Base).hash(x::MatchState, h::UInt)
+    (Base).hash((getfield)(x, :n_holes), (Base).hash((getfield)(x, :found_big_hole), (Base).hash((getfield)(x, :disjoint), (Base).hash((getfield)(x, :vars), (Base).hash((getfield)(x, :target_domain), (Base).hash((getfield)(x, :hole), (Base).hash(:MatchState, h)))))))
+end
+function (Base).:(==)(a::MatchState, b::MatchState)
+    begin
+        found_missing = false
+        cmp = (getfield)(a, :hole) == (getfield)(b, :hole)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        cmp = (getfield)(a, :target_domain) == (getfield)(b, :target_domain)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        cmp = (getfield)(a, :vars) == (getfield)(b, :vars)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        cmp = (getfield)(a, :disjoint) == (getfield)(b, :disjoint)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        cmp = (getfield)(a, :found_big_hole) == (getfield)(b, :found_big_hole)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        cmp = (getfield)(a, :n_holes) == (getfield)(b, :n_holes)
+        cmp === false && return false
+        (ismissing)(cmp) && (found_missing = true)
+        return (ifelse)(found_missing, missing, true)
+    end
+end
+function (Base).isequal(a::MatchState, b::MatchState)
+    (((((true && (isequal)((getfield)(a, :hole), (getfield)(b, :hole))) && (isequal)((getfield)(a, :target_domain), (getfield)(b, :target_domain))) && (isequal)((getfield)(a, :vars), (getfield)(b, :vars))) && (isequal)((getfield)(a, :disjoint), (getfield)(b, :disjoint))) && (isequal)((getfield)(a, :found_big_hole), (getfield)(b, :found_big_hole))) && (isequal)((getfield)(a, :n_holes), (getfield)(b, :n_holes))
 end
 
 hardfail_state(ms) = ms.disjoint
@@ -100,25 +132,28 @@ function intersect_domains(h1, h2)
     return int
 end
 
-function update_match(state::M, zn) where M
+_is_variable(::Any) = false
+_is_variable(::VarNode) = true
+
+# @memoize
+function update_match_unpacked(state::M, node1, nv1, node2, nv2) where M
     (; vars, n_holes, disjoint, hole, found_big_hole, target_domain) = state
-    node1, node2 = HerbCore.nodes(zn)
-    @assert !(node1 isa VarNode) "VarNodes are only allowed in the second argument of pattern_match"
-    nv1, nv2 = AT.nodevalue(zn)
+    @assert !_is_variable(node1) "VarNodes are only allowed in the second argument of pattern_match"
 
     if isdisjoint(nv1, nv2)
         return M(; hole, vars, disjoint = true, found_big_hole, n_holes, target_domain)
     end
     
-    if node2 isa VarNode
+    if _is_variable(node2)
+        vars = isnothing(vars) ? Dict{Symbol, AbstractRuleNode}() : vars
         matching = get!(vars, nv2.name, node1)
         # if not literally the same node
         # check that the two subtrees match
         if matching !== node1   
-            match_res = get_final_match_result(matching, node1, vars)
+            match_res = get_final_match_result!(matching, node1, vars)
             if success_state(match_res) # try swapping in case node1 is actually the "wider" node
                 # meaning the node with the larger domain
-                match_res = get_final_match_result(node1, matching, vars)
+                match_res = get_final_match_result!(node1, matching, vars)
             end
             if hardfail_state(match_res)
                 return M(; hole, vars, disjoint = true, n_holes, found_big_hole, target_domain)
@@ -148,9 +183,37 @@ function update_match(state::M, zn) where M
     return M(; hole, vars, n_holes, disjoint, found_big_hole, target_domain)
 end
 
-function get_final_match_result(rn, mn, vars::V) where V
+function update_match(state::M, zn) where M
+    node1, node2 = HerbCore.nodes(zn)
+    nv1, nv2 = AT.nodevalue(zn)
+    return update_match_unpacked(state, node1, nv1, node2, nv2)
+end
+
+function Base.iterate(itr::Iterators.Accumulate{typeof(update_match)})
+    state = iterate(itr.itr)
+    if state === nothing
+        return nothing
+    end
+    val = itr.f(itr.init, state[1])
+
+    state_inner = state[2]
+    return isnothing(state_inner) ? (val, (val, nothing)) : (val, (val, state_inner)) 
+end
+
+function Base.iterate(itr::Iterators.Accumulate{typeof(update_match)}, state)
+    nxt = iterate(itr.itr, state[2])
+    if nxt === nothing
+        return nothing
+    end
+    val = itr.f(state[1], nxt[1])
+    nxt_inner = nxt[2]
+    return isnothing(nxt_inner) ? (val, (val, nothing)) : (val, (val, nxt_inner))
+end
+
+function get_final_match_result!(rn, mn, vars=nothing)
     dfs = AT.PreOrderDFS(zip(rn, mn))
-    init = MatchState{Union{Nothing,AbstractHole}, V}(;
+    # Main.@infiltrate
+    match_state = MatchState{Union{Nothing,AbstractHole}, Union{Nothing, Dict{Symbol, AbstractRuleNode}}}(;
         hole = nothing,
         target_domain = nothing,
         vars,
@@ -158,14 +221,15 @@ function get_final_match_result(rn, mn, vars::V) where V
         disjoint = false,
         found_big_hole = false
     )
-    acc = Iterators.accumulate(update_match, dfs; init)
-    stateful_acc = Iterators.Stateful(acc)
+    acc = Iterators.accumulate(update_match, dfs; init=match_state)
 
-    st = popfirst!(stateful_acc)
-    while !hardfail_state(st) && !Base.isdone(stateful_acc)
-        st = popfirst!(stateful_acc)
+    next = iterate(acc)
+    while !isnothing(next)
+        match_state, iter_state = next
+        hardfail_state(match_state) && return match_state
+        next = iterate(acc, iter_state)
     end
-    return st
+    return match_state
 end
 
 """
@@ -174,7 +238,7 @@ end
 Recursively tries to match [`AbstractRuleNode`](@ref) `rn` with [`AbstractRuleNode`](@ref) `mn`.
 Returns a `PatternMatchResult` that describes if the pattern was matched.
 """
-function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode, vars=Dict{Symbol, AbstractRuleNode}())
-    st = get_final_match_result(rn, mn, vars)
+function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode, vars=nothing)
+    st = get_final_match_result!(rn, mn, vars)
     return PatternMatchResult(st)
 end

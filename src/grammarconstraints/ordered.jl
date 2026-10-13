@@ -30,10 +30,11 @@ For example, consider the tree `1(a, 2(b, 3(c, 4))))`:
     the index of the assignment to `v` less than the index of the assignment to
     `w`, violating the order.
 """
-struct Ordered <: AbstractGrammarConstraint
-    tree::AbstractRuleNode
+struct Ordered{R} <: AbstractGrammarConstraint
+    tree::R
     order::Vector{Symbol}
 end
+Ordered(tree, order) = Ordered{AbstractRuleNode}(tree, order)
 
 function on_new_node(solver::Solver, c::Ordered, path::Vector{Int})
     #minor optimization: prevent the first hardfail (https://github.com/orgs/Herb-AI/projects/6/views/1?pane=issue&itemId=55570518)
@@ -62,13 +63,11 @@ function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
     vars = Dict{Symbol,AbstractRuleNode}()
     if pattern_match(tree, c.tree, vars) isa PatternMatchSuccess
         # Check variable ordering
-        for (var₁, var₂) ∈ zip(c.order[1:end-1], c.order[2:end])
-            if vars[var₁] > vars[var₂]
-                return false
-            end
+        for (var₁, var₂) ∈ @views zip(c.order[1:end-1], c.order[2:end])
+            vars[var₁] <= vars[var₂] || return false
         end
     end
-    return all(check_tree(c, child) for child ∈ tree.children)
+    return all(check_tree(c, child) for child ∈ AT.children(tree))
 end
 
 """

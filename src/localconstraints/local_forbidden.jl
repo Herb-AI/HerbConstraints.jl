@@ -8,8 +8,8 @@ provided by the path.
 Use a `Forbidden` constraint for enforcing this throughout the entire search
 space.
 """
-struct LocalForbidden <: AbstractLocalConstraint
-    path::Vector{Int}
+struct LocalForbidden{P} <: AbstractLocalConstraint
+    path::P
     tree::AbstractRuleNode
 end
 

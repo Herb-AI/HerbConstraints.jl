@@ -5,13 +5,13 @@
 Enforces that a given `rule` appears at or below the given `path` at most once.
 In case of the UniformSolver, cache the list of `holes`, since no new holes can appear.
 """
-struct LocalUnique <: AbstractLocalConstraint
-    path::Vector{Int}
+struct LocalUnique{P} <: AbstractLocalConstraint
+    path::P
     rule::Int
     holes::Vector{AbstractHole}
 end
 
-LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
+LocalUnique(path, rule::Int) = LocalUnique(path, rule, AbstractHole[])
 
 isantimonotone(::Type{<:LocalUnique}) = true
 

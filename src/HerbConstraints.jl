@@ -8,6 +8,8 @@ using MLStyle
 using TimerOutputs
 import AbstractTrees as AT
 using AutoHashEquals: @auto_hash_equals
+using Memoize: @memoize
+using LRUCache: LRU
 
 
 """
@@ -168,6 +170,12 @@ include("grammarconstraints/contains.jl")
 include("grammarconstraints/contains_subtree.jl")
 include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
+
+function check_tree(c, tree, cache)
+    return get!(cache, objectid((c, tree))) do
+        check_tree(c, tree)
+    end
+end
 
 # Implemented in ASPExt
 function rulenode_to_ASP end
