@@ -172,9 +172,10 @@ include("grammarconstraints/forbidden_sequence.jl")
 include("grammarconstraints/unique.jl")
 
 function check_tree(c, tree, cache)
-    return get!(cache, objectid((c, tree))) do
-        check_tree(c, tree)
-    end
+    return check_tree(c, tree)
+    # return get!(cache, objectid((c, tree))) do
+    #     check_tree(c, tree)
+    # end
 end
 
 # Implemented in ASPExt

@@ -238,7 +238,7 @@ end
 Recursively tries to match [`AbstractRuleNode`](@ref) `rn` with [`AbstractRuleNode`](@ref) `mn`.
 Returns a `PatternMatchResult` that describes if the pattern was matched.
 """
-function pattern_match(rn::AbstractRuleNode, mn::AbstractRuleNode, vars=nothing)
+function pattern_match(rn, mn, vars=nothing)
     st = get_final_match_result!(rn, mn, vars)
     return PatternMatchResult(st)
 end

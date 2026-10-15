@@ -46,11 +46,12 @@ end
 isantimonotone(::Type{<:Forbidden}) = true
 
 function check_forbidden(forbidden_pattern, cache)
-    return t -> check_forbidden(t, forbidden_pattern, objectid(forbidden_pattern), cache)
+    return t -> check_forbidden(t, forbidden_pattern, nothing, nothing) #objectid(forbidden_pattern), cache)
     # return Base.Fix2(check_forbidden, forbidden_pattern)
 end
 function check_forbidden(tree, forbidden_pattern, forbidden_pattern_id, cache)
-    return !success_state(get_final_match_result!(tree, forbidden_pattern))
+    return !(pattern_match(tree, forbidden_pattern) isa PatternMatchSuccess)
+    # return !success_state(get_final_match_result!(tree, forbidden_pattern))
     # return get!(cache, objectid((tree, forbidden_pattern_id))) do
     #     !success_state(get_final_match_result!(tree, forbidden_pattern))
     # end
@@ -84,7 +85,7 @@ Base.IteratorEltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = Base.IteratorE
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
-function check_tree(c::Forbidden, tree::AbstractRuleNode, cache)::Bool
+function check_tree(c::Forbidden, tree, cache=nothing)::Bool
     return all(check_forbidden(c.tree, cache), AT.PreOrderDFS(tree))
 end
 

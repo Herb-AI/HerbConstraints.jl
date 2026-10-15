@@ -59,7 +59,7 @@ isantimonotone(::Type{<:Ordered}) = true
 
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Ordered`](@ref) constraint.
 """
-function check_tree(c::Ordered, tree::AbstractRuleNode)::Bool
+function check_tree(c::Ordered, tree)::Bool
     vars = Dict{Symbol,AbstractRuleNode}()
     if pattern_match(tree, c.tree, vars) isa PatternMatchSuccess
         # Check variable ordering
