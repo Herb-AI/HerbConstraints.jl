@@ -45,40 +45,12 @@ end
 
 isantimonotone(::Type{<:Forbidden}) = true
 
-function check_forbidden(forbidden_pattern, cache)
-    return t -> check_forbidden(t, forbidden_pattern, nothing, nothing) #objectid(forbidden_pattern), cache)
-    # return Base.Fix2(check_forbidden, forbidden_pattern)
+function check_forbidden(forbidden_pattern)
+    return t -> check_forbidden(t, forbidden_pattern) #objectid(forbidden_pattern), cache)
 end
-function check_forbidden(tree, forbidden_pattern, forbidden_pattern_id, cache)
+function check_forbidden(tree, forbidden_pattern)
     return !(pattern_match(tree, forbidden_pattern) isa PatternMatchSuccess)
-    # return !success_state(get_final_match_result!(tree, forbidden_pattern))
-    # return get!(cache, objectid((tree, forbidden_pattern_id))) do
-    #     !success_state(get_final_match_result!(tree, forbidden_pattern))
-    # end
 end
-
-struct StatefulDropWhile{I<:Iterators.Stateful,P<:Function}
-    pred::P
-    xs::I
-end
-
-function Iterators.iterate(ibl::StatefulDropWhile)
-    st = ibl.xs
-    y = peek(st)
-    while !Base.isdone(st)
-        if !ibl.pred(y)
-            break
-        else
-            popfirst!(st)
-            y = peek(st)
-        end
-    end
-    y
-end
-
-Base.IteratorSize(::Type{<:StatefulDropWhile}) = Base.SizeUnknown()
-Base.eltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = eltype(I)
-Base.IteratorEltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = Base.IteratorEltype(I)
 
 """
     check_tree(c::Forbidden, tree::AbstractRuleNode)::Bool
@@ -86,7 +58,11 @@ Base.IteratorEltype(::Type{StatefulDropWhile{I,P}}) where {I,P} = Base.IteratorE
 Checks if the given [`AbstractRuleNode`](@ref) tree abides the [`Forbidden`](@ref) constraint.
 """
 function check_tree(c::Forbidden, tree, cache=nothing)::Bool
-    return all(check_forbidden(c.tree, cache), AT.PreOrderDFS(tree))
+    for t in AT.PreOrderDFS(tree)
+        matches = pattern_match(tree, c.tree) isa PatternMatchSuccess
+        matches && return false # if it matches, that means the forbidden pattern is there, tree does not check
+    end
+    return true
 end
 
 """
