@@ -20,7 +20,7 @@ ASPExt = "Clingo_jll"
 [compat]
 Clingo_jll = "5.7.1"
 DataStructures = "0.19"
-DocStringExtensions = "0.9.5"
+DocStringExtensions = "0.9.5, 0.10"
 HerbCore = "1.1"
 HerbGrammar = "1.1"
 MLStyle = "^0.4.17"
