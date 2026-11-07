@@ -133,6 +133,7 @@ function intersect_domains(h1, h2)
 end
 
 _is_variable(::Any) = false
+_is_variable(id::AT.IndexNode) = _is_variable(AT.nodevalue(id))
 _is_variable(::VarNode) = true
 
 # @memoize
@@ -140,12 +141,12 @@ function update_match_unpacked(state::M, node1, nv1, node2, nv2) where M
     (; vars, n_holes, disjoint, hole, found_big_hole, target_domain) = state
     @assert !_is_variable(node1) "VarNodes are only allowed in the second argument of pattern_match"
 
-    if isdisjoint(nv1, nv2)
+    if !(nv2 isa Symbol) && isdisjoint(nv1, nv2)
         return M(; hole, vars, disjoint = true, found_big_hole, n_holes, target_domain)
     end
     
     if _is_variable(node2)
-        vars = isnothing(vars) ? Dict{Symbol, AbstractRuleNode}() : vars
+        vars = isnothing(vars) ? OrderedDict{Symbol, AbstractRuleNode}() : vars
         matching = get!(vars, nv2.name, node1)
         # if not literally the same node
         # check that the two subtrees match
@@ -212,8 +213,7 @@ end
 
 function get_final_match_result!(rn, mn, vars=nothing)
     dfs = AT.PreOrderDFS(zip(rn, mn))
-    # Main.@infiltrate
-    match_state = MatchState{Union{Nothing,AbstractHole}, Union{Nothing, Dict{Symbol, AbstractRuleNode}}}(;
+    match_state = MatchState{Union{Nothing,AbstractHole}, Union{Nothing, OrderedDict{Symbol,AbstractRuleNode}}}(;
         hole = nothing,
         target_domain = nothing,
         vars,

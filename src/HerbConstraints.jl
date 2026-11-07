@@ -3,6 +3,7 @@ module HerbConstraints
 using HerbCore
 using HerbGrammar
 using DataStructures
+using OrderedCollections: OrderedDict
 using DocStringExtensions
 using MLStyle
 using TimerOutputs
