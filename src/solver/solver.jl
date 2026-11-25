@@ -70,6 +70,6 @@ Returns true if the `constraint` should be scheduled for propagation.
 Default behavior: return true iff the manipulation happened at or below the constraint path.
 """
 function shouldschedule(::Solver, constraint::AbstractLocalConstraint, path::Vector{Int})::Bool
-    return (length(path) >= length(constraint.path)) && (path[1:length(constraint.path)] == constraint.path)
+    return (length(path) >= length(constraint.path)) && (@view(path[1:length(constraint.path)]) == constraint.path)
 end
 
