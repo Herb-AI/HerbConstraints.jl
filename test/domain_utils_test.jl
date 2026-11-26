@@ -131,6 +131,7 @@
         # Removing the smallest rule of X (1) shrinks X, but doesn't move it behind Y
         @test partition(Hole(BitVector((0, 1, 1, 0, 0))), g) == [BitVector((0, 0, 1, 0, 0)), Y]
         @test partition(Hole(BitVector((0, 1, 0, 0, 0))), g) == [Y]
+        @test [shape_id(g, r) for r ∈ 1:5] == [1, 2, 1, 4, 4]
         # The subdomains don't depend on the order either
         @test partition(Hole(BitVector((0, 1, 1, 1, 1))), g) ==
               [BitVector((0, 0, 1, 0, 0)), Y, BitVector((0, 0, 0, 1, 1))]

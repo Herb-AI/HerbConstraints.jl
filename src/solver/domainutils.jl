@@ -68,12 +68,31 @@ function is_subdomain(specific_tree::AbstractRuleNode, general_tree::AbstractRul
 end
 
 """
+    shape_id(grammar::AbstractGrammar, rule::Int)::Int
+
+The shape id of `rule`: the smallest index of a rule in `grammar` with the same type and the same child types.
+Two rules have the same shape id if and only if a hole can hold both as one fixed shape (see [`partition`](@ref)).
+It depends on the grammar only, not on the domain of any hole.
+"""
+function shape_id(grammar::AbstractGrammar, rule::Int)::Int
+    same_childtypes = grammar.bychildtypes[rule]
+    smallest = rule
+    for r ∈ grammar.bytype[grammar.types[rule]]
+        if r < smallest && same_childtypes[r]
+            smallest = r
+        end
+    end
+    return smallest
+end
+
+"""
     partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
 
 Partition a [Hole](@ref) into subdomains grouped by childtypes and the parent type.
 
 Each subdomain holds the rules of the hole's domain that share one shape (the same type and the same child types).
-The subdomains are ordered by the smallest rule index of their shape in the **grammar**, not in the hole's domain.
+The subdomains are ordered by their shape's [`shape_id`](@ref): the smallest rule index of the shape in the
+**grammar**, not in the hole's domain.
 So the order doesn't depend on which rules are left in the domain: removing rules (for example by a constraint)
 removes or shrinks subdomains, but never reorders the remaining ones.
 The top-down iterators rely on this for an order that doesn't depend on the constraints.
@@ -81,7 +100,7 @@ The top-down iterators rely on this for an order that doesn't depend on the cons
 function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
     domain = copy(hole.domain)
     fixed_shaped_domains = BitVector[]
-    shape_minima = Int[]
+    shape_ids = Int[]
     while true
         rule = findfirst(domain)
         if isnothing(rule)
@@ -91,13 +110,12 @@ function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVect
         parent_mask = falses(length(domain))
         parent_mask[grammar.bytype[grammar.types[rule]]] .= true
 
-        shape_mask = grammar.bychildtypes[rule] .& parent_mask
-        push!(shape_minima, findfirst(shape_mask))
-        fixed_shaped_domain = shape_mask .& hole.domain
+        fixed_shaped_domain = grammar.bychildtypes[rule] .& parent_mask .& hole.domain
         push!(fixed_shaped_domains, fixed_shaped_domain)
+        push!(shape_ids, shape_id(grammar, rule))
         domain .-= fixed_shaped_domain
     end
-    return fixed_shaped_domains[sortperm(shape_minima)]
+    return fixed_shaped_domains[sortperm(shape_ids)]
 end
 
 """

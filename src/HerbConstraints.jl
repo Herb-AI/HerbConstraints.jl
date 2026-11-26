@@ -145,6 +145,7 @@ export
     #domainutils
     is_subdomain,
     partition,
+    shape_id,
     are_disjoint,
     get_intersection,
 
