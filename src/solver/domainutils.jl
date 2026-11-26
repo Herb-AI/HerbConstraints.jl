@@ -71,24 +71,33 @@ end
     partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
 
 Partition a [Hole](@ref) into subdomains grouped by childtypes and the parent type.
+
+Each subdomain holds the rules of the hole's domain that share one shape (the same type and the same child types).
+The subdomains are ordered by the smallest rule index of their shape in the **grammar**, not in the hole's domain.
+So the order doesn't depend on which rules are left in the domain: removing rules (for example by a constraint)
+removes or shrinks subdomains, but never reorders the remaining ones.
+The top-down iterators rely on this for an order that doesn't depend on the constraints.
 """
 function partition(hole::Hole, grammar::ContextSensitiveGrammar)::Vector{BitVector}
     domain = copy(hole.domain)
-    fixed_shaped_domains = []
+    fixed_shaped_domains = BitVector[]
+    shape_minima = Int[]
     while true
         rule = findfirst(domain)
         if isnothing(rule)
             break
         end
-        
+
         parent_mask = falses(length(domain))
         parent_mask[grammar.bytype[grammar.types[rule]]] .= true
 
-        fixed_shaped_domain = grammar.bychildtypes[rule] .& parent_mask .& hole.domain
+        shape_mask = grammar.bychildtypes[rule] .& parent_mask
+        push!(shape_minima, findfirst(shape_mask))
+        fixed_shaped_domain = shape_mask .& hole.domain
         push!(fixed_shaped_domains, fixed_shaped_domain)
         domain .-= fixed_shaped_domain
     end
-    return fixed_shaped_domains
+    return fixed_shaped_domains[sortperm(shape_minima)]
 end
 
 """
