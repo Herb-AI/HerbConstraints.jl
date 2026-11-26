@@ -118,6 +118,25 @@
         @test domains[3] == BitVector((0, 0, 0, 1))
     end
 
+    @testset "partition orders the shapes by the grammar, not by the domain" begin
+        g = @csgrammar begin
+            S = a(T)        # 1   shape X = {1, 3}
+            S = b(T, T)     # 2   shape Y = {2}
+            S = e(T)        # 3
+            T = 1 | 2       # 4, 5
+        end
+        X = BitVector((1, 0, 1, 0, 0))
+        Y = BitVector((0, 1, 0, 0, 0))
+        @test partition(Hole(BitVector((1, 1, 1, 0, 0))), g) == [X, Y]
+        # Removing the smallest rule of X (1) shrinks X, but doesn't move it behind Y
+        @test partition(Hole(BitVector((0, 1, 1, 0, 0))), g) == [BitVector((0, 0, 1, 0, 0)), Y]
+        @test partition(Hole(BitVector((0, 1, 0, 0, 0))), g) == [Y]
+        @test [shape_id(g, r) for r ∈ 1:5] == [1, 2, 1, 4, 4]
+        # The subdomains don't depend on the order either
+        @test partition(Hole(BitVector((0, 1, 1, 1, 1))), g) ==
+              [BitVector((0, 0, 1, 0, 0)), Y, BitVector((0, 0, 0, 1, 1))]
+    end
+
     @testset "are_disjoint" begin
         #(BitVector, BitVector)
         @test are_disjoint(BitVector((1, 1, 1, 1)), BitVector((0, 0, 0, 0))) == true
