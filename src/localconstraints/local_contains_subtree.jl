@@ -21,7 +21,7 @@ end
 Enforces that a given `tree` appears at or below the given `path` at least once.
 """
 function LocalContainsSubtree(path::Vector{Int}, tree::AbstractRuleNode)
-    LocalContainsSubtree(path, tree, Vector{AbstractRuleNode}(), nothing)
+    LocalContainsSubtree(path, tree, nothing, nothing)
 end
 
 
