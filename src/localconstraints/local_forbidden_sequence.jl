@@ -10,13 +10,6 @@ struct LocalForbiddenSequence <: AbstractLocalConstraint
     ignore_if::Vector{Int}
 end
 
-"""
-    isantimonotone(::LocalForbiddenSequence)::Bool
-
-Returns `true`. A [`LocalForbiddenSequence`](@ref) constraint is anti-monotone: if the forbidden
-vertical sequence of rules is already present along the constrained path, no completion can
-remove those nodes, so the violation persists in all completions.
-"""
 isantimonotone(::LocalForbiddenSequence) = true
 
 """
@@ -96,7 +89,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         return
     end
 
-    # Smallest match with a maximum of 1 hole (Optional, slightly stronger inference without making all possible matches) 
+    # Smallest match with a maximum of 1 hole (Optional, slightly stronger inference without making all possible matches)
     i = length(c.sequence)
     forbidden_assignment = nothing
     for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))

@@ -15,13 +15,7 @@ mutable struct LocalContainsSubtree <: AbstractLocalConstraint
     indices::Union{StateSparseSet, Nothing}
 end
 
-"""
-    ismonotone(::LocalContainsSubtree)::Bool
 
-Returns `true`. A [`LocalContainsSubtree`](@ref) constraint is monotone: once the required
-subtree is present at or below the constrained path, filling holes can only add nodes, never
-remove existing ones, so the constraint remains satisfied in all completions.
-"""
 ismonotone(::LocalContainsSubtree) = true
 
 """

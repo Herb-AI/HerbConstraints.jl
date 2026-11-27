@@ -2,8 +2,8 @@
 """
     LocalForbidden
 
-Forbids the a subtree that matches the `tree` to be generated at the location 
-provided by the path. 
+Forbids the a subtree that matches the `tree` to be generated at the location
+provided by the path.
 Use a `Forbidden` constraint for enforcing this throughout the entire search space.
 """
 struct LocalForbidden <: AbstractLocalConstraint
@@ -11,13 +11,6 @@ struct LocalForbidden <: AbstractLocalConstraint
     tree::AbstractRuleNode
 end
 
-"""
-    isantimonotone(::LocalForbidden)::Bool
-
-Returns `true`. A [`LocalForbidden`](@ref) constraint is anti-monotone: if the forbidden pattern
-is present at the constrained location in a partial tree, no completion can remove those nodes,
-so the violation persists in all completions.
-"""
 isantimonotone(::LocalForbidden) = true
 
 """
@@ -31,17 +24,17 @@ function propagate!(solver::Solver, c::LocalForbidden)
     node = get_node_at_location(solver, c.path)
     @timeit_debug solver.statistics "LocalForbidden propagation" begin end
     @match pattern_match(node, c.tree) begin
-        ::PatternMatchHardFail => begin 
+        ::PatternMatchHardFail => begin
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
             @timeit_debug solver.statistics "LocalForbidden hardfail" begin end
         end;
-        match::PatternMatchSoftFail => begin 
+        match::PatternMatchSoftFail => begin
             # The constraint needs to be re-propagated
             @timeit_debug solver.statistics "LocalForbidden softfail" begin end
         end
-        ::PatternMatchSuccess => begin 
+        ::PatternMatchSuccess => begin
             # The forbidden tree is exactly matched. This means the state is infeasible.
             @timeit_debug solver.statistics "LocalForbidden inconsistency" begin end
             set_infeasible!(solver) #throw(InconsistencyException())

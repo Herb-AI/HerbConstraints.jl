@@ -1,5 +1,5 @@
 """
-Enforces an order over two or more subtrees that fill the variables 
+Enforces an order over two or more subtrees that fill the variables
 specified in `order` when the pattern is applied at the location given by `path`.
 Use an `Ordered` constraint for enforcing this throughout the entire search space.
 """
@@ -9,13 +9,6 @@ mutable struct LocalOrdered <: AbstractLocalConstraint
     order::Vector{Symbol}
 end
 
-"""
-    isantimonotone(::LocalOrdered)::Bool
-
-Returns `true`. A [`LocalOrdered`](@ref) constraint is anti-monotone: once the variable
-assignments are fixed (no holes remain in the matched pattern) and the ordering is violated,
-filling further holes elsewhere in the tree cannot undo that violation.
-"""
 isantimonotone(::LocalOrdered) = true
 
 """
@@ -24,7 +17,7 @@ isantimonotone(::LocalOrdered) = true
 Enforce that the [`VarNode`](@ref)s in the `tree` are in the specified `order`.
 First the node located at the `path` is matched to see if the ordered constraint applies here.
 The nodes matching the variables are stored in the `vars` dictionary.
-Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.   
+Then the `order` is enforced within the [`make_less_than_or_equal!`](@ref) tree manipulation.
 """
 function propagate!(solver::Solver, c::LocalOrdered)
     @assert isfeasible(solver)
@@ -32,20 +25,20 @@ function propagate!(solver::Solver, c::LocalOrdered)
     @timeit_debug solver.statistics "LocalOrdered propagation" begin end
     vars = Dict{Symbol, AbstractRuleNode}()
     @match pattern_match(node, c.tree, vars) begin
-        ::PatternMatchHardFail => begin 
+        ::PatternMatchHardFail => begin
             # A match fail means that the constraint is already satisfied.
             # This constraint does not have to be re-propagated.
             deactivate!(solver, c)
             @timeit_debug solver.statistics "LocalOrdered match hardfail" begin end
         end;
-        ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin 
+        ::PatternMatchSoftFail || ::PatternMatchSuccessWhenHoleAssignedTo => begin
             # The constraint will re-propagated on any tree manipulation.
             @timeit_debug solver.statistics "LocalOrdered match softfail" begin end
             ()
         end
-        ::PatternMatchSuccess => begin 
+        ::PatternMatchSuccess => begin
             # The forbidden tree is exactly matched.
-            should_deactivate = true 
+            should_deactivate = true
             for (name1, name2) ∈ zip(c.order[1:end-1], c.order[2:end])
                 # Removing rules is handled inside make_less_than_or_equal!
                 @match make_less_than_or_equal!(solver, vars[name1], vars[name2]) begin

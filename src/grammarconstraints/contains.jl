@@ -107,7 +107,7 @@ HerbCore.is_domain_valid(c::Contains, grammar::AbstractGrammar) = HerbCore.is_do
 
 ismonotone(::Contains) = true
 
-Base.:(==)(c1::Contains, c2::Contains) = (c1 == c2)
-HerbCore.issame(c1::Contains, c2::Contains) = c1 == c2
+Base.:(==)(c1::Contains, c2::Contains) = (c1.rule == c2.rule)
+HerbCore.issame(c1::Contains, c2::Contains) = c1.rule == c2.rule
 
 HerbGrammar.is_constraint_valid(c::Contains, grammar::AbstractGrammar; allow_empty_children::Bool) = (c.rule <= length(grammar.rules)) && (c.rule >= 1)
