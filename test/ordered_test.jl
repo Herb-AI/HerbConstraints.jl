@@ -227,7 +227,7 @@
         @test HerbCore.is_domain_valid(ordered2, grammar) == false
 
     end
-    @testset "issame" begin
+    @testset "isequal" begin
         ordered1 = Ordered(RuleNode(4, [
                 VarNode(:a),
                 VarNode(:b)
@@ -240,8 +240,8 @@
                 VarNode(:a),
                 VarNode(:c)
             ]), [:a, :c])
-        @test HerbCore.issame(ordered1, ordered2) == true
-        @test HerbCore.issame(ordered1, ordered3) == false
+        @test ordered1 == ordered2
+        @test ordered1 != ordered3
 
     end
 end

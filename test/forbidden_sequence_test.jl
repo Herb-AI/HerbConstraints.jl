@@ -348,13 +348,13 @@
         constraint2 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5])
         @test HerbCore.is_domain_valid(constraint2, grammar) == true
     end
-    @testset "issame" begin
+    @testset "isequal" begin
         constraint1 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
         constraint2 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6, 7, 8])
         constraint3 = ForbiddenSequence([1, 2, 3], ignore_if=[4, 5, 6])
         constraint4 = ForbiddenSequence([1, 2, 5], ignore_if=[4, 5, 6])
-        @test HerbCore.issame(constraint1, constraint2) == true
-        @test HerbCore.issame(constraint1, constraint3) == false
-        @test HerbCore.issame(constraint3, constraint4) == false
+        @test constraint1 == constraint2
+        @test constraint1 != constraint3
+        @test constraint3 != constraint4
     end
 end

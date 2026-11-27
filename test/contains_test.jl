@@ -80,8 +80,8 @@
         @test HerbCore.is_domain_valid(Contains(8), grammar) == false
         @test HerbCore.is_domain_valid(Contains(3), grammar) == true
     end
-    @testset "issame" begin
-        @test HerbCore.issame(Contains(12), Contains(12)) == true
-        @test HerbCore.issame(Contains(12), Contains(12222)) == false
+    @testset "isequal" begin
+        @test Contains(12) == Contains(12)
+        @test Contains(12) != Contains(12222)
     end
 end
