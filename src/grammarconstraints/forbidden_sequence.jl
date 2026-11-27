@@ -123,7 +123,7 @@ Errors if rule indices exceeds number of grammar rules.
 
 # Arguments
 - `c`: The `ForbiddenSequence` constraint to be updated
-- `n_rules`: The new number of rules in the grammar  
+- `n_rules`: The new number of rules in the grammar
 - `mapping`: Dictionary mapping old rule indices to new rule indices
 """
 function HerbCore.update_rule_indices!(
@@ -161,6 +161,8 @@ HerbCore.is_domain_valid(c::ForbiddenSequence, n_rules::Integer) = all(i -> i <=
 HerbCore.is_domain_valid(c::ForbiddenSequence, grammar::ContextSensitiveGrammar) = HerbCore.is_domain_valid(c, length(grammar.rules))
 
 Base.:(==)(c1::ForbiddenSequence, c2::ForbiddenSequence) = (c1.sequence == c2.sequence) && (c1.ignore_if == c2.ignore_if)
+
+isantimonotone(::ForbiddenSequence) = true
 
 function HerbGrammar.is_constraint_valid(c::ForbiddenSequence, grammar::AbstractGrammar; allow_empty_children::Bool)
     n_rules = length(grammar.rules)

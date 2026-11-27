@@ -15,6 +15,9 @@ mutable struct LocalContainsSubtree <: AbstractLocalConstraint
     indices::Union{StateSparseSet, Nothing}
 end
 
+
+ismonotone(::LocalContainsSubtree) = true
+
 """
     LocalContainsSubtree(path::Vector{Int}, tree::AbstractRuleNode)
 

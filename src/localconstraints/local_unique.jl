@@ -11,6 +11,9 @@ struct LocalUnique <: AbstractLocalConstraint
     holes::Vector{AbstractHole}
 end
 
+
+isantimonotone(::LocalUnique) = true
+
 LocalUnique(path::Vector{Int}, rule::Int) = LocalUnique(path, rule, Vector{AbstractHole}())
 
 """
@@ -37,7 +40,7 @@ function propagate!(solver::Solver, c::LocalUnique)
         if all(isuniform(hole) for hole ∈ c.holes)
             @timeit_debug solver.statistics "LocalUnique deactivate" begin end
             deactivate!(solver, c)
-        end 
+        end
         for hole ∈ c.holes
             deductions = 0
             if (hole.domain[c.rule] == true) && !isfilled(hole)
@@ -57,9 +60,9 @@ Recursive helper function for the LocalUnique constraint.
 Returns the number of certain occurrences of the rule in the tree.
 All holes that potentially can hold the target rule are stored in the `holes` vector.
 
-!!! warning: 
-    Stops counting if the rule occurs more than once. 
-    Counting beyond 2 is not needed for LocalUnique. 
+!!! warning:
+    Stops counting if the rule occurs more than once.
+    Counting beyond 2 is not needed for LocalUnique.
 """
 function _count_occurrences!(node::AbstractRuleNode, rule::Int, holes::Vector{AbstractHole})::Int
     count = 0
@@ -91,9 +94,9 @@ end
 
 Counts the occurences of the `rule` in the cached list of `holes`.
 
-!!! warning: 
-    Stops counting if the rule occurs more than once. 
-    Counting beyond 2 is not needed for LocalUnique. 
+!!! warning:
+    Stops counting if the rule occurs more than once.
+    Counting beyond 2 is not needed for LocalUnique.
 """
 function _count_occurrences(holes::Vector{AbstractHole}, rule::Int)
     count = 0

@@ -9,6 +9,8 @@ struct LocalContains <: AbstractLocalConstraint
     rule::Int
 end
 
+ismonotone(::LocalContains) = true
+
 """
     function propagate!(solver::Solver, c::LocalContains)
 
@@ -20,11 +22,11 @@ function propagate!(solver::Solver, c::LocalContains)
     node = get_node_at_location(solver, c.path)
     @timeit_debug solver.statistics "LocalContains propagation" begin end
     @match _contains(node, c.rule) begin
-        true => begin 
+        true => begin
             @timeit_debug solver.statistics "LocalContains satisfied" begin end
             deactivate!(solver, c)
         end
-        false => begin 
+        false => begin
             @timeit_debug solver.statistics "LocalContains inconsistency" begin end
             set_infeasible!(solver)
         end

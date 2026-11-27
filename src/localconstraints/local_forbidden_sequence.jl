@@ -10,6 +10,8 @@ struct LocalForbiddenSequence <: AbstractLocalConstraint
     ignore_if::Vector{Int}
 end
 
+isantimonotone(::LocalForbiddenSequence) = true
+
 """
     shouldschedule(::Solver, constraint::LocalForbiddenSequence, path::Vector{Int})::Bool
 
@@ -87,7 +89,7 @@ function propagate!(solver::Solver, c::LocalForbiddenSequence)
         return
     end
 
-    # Smallest match with a maximum of 1 hole (Optional, slightly stronger inference without making all possible matches) 
+    # Smallest match with a maximum of 1 hole (Optional, slightly stronger inference without making all possible matches)
     i = length(c.sequence)
     forbidden_assignment = nothing
     for (path_idx, node) ∈ Iterators.reverse(enumerate(nodes))
